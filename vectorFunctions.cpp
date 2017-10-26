@@ -110,14 +110,14 @@ vector<float> VectorFunctions::dot (const vector<float>& m1,
     return output;
 }
 
-float VectorFunctions::crossEntropY(const vector<float>& output, 
+float VectorFunctions::crossEntropy(const vector<float>& output, 
                                     const vector<float>& labels) {
-   /*  Returns the cross entropY between two vectors.
+   /*  Returns the cross entropy between two vectors.
     *   Inputs:
     *       output: vector
     *       labels: vector
     *   Output: float, -sum(labels * log(output)), 
-    *           cross entropY between output and labels.
+    *           cross entropy between output and labels.
     */
     if(output.size() != labels.size()) {
         std::cerr << "Labels and output not of same length!" << endl;

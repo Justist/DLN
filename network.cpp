@@ -1,17 +1,23 @@
 #include "network.hpp"
 #include "overloads.cpp"
 
-Network::Network(int hiddenLayers, int layerLength, float seed) {
+Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed) {
 	/*
 	 * Create a neural network by initialising multiple layers of weights.
 	 * Each layer is a vector of floats, and the network is a vector of layers.
 	 * The network is stored in class variable weights.
 	 * Input:
+	 * 	outputLength: The length the outputvector should have.
 	 * 	hiddenLayers: The amount of hidden layers to be contained in the network.
 	 * 	layerLength: The length of each of the hidden layers.
 	 * 	seed: Random seed for the random number generation.
 	 */
-	srand(seed);
+	outSize = outputLength;
+	networkSeed = seed;
+	srand(networkSeed);
+	
+	VectorFunctions VF();
+	
 	for(int i = 0; i < hiddenLayers; i++) {
 		vector<float> layer(layerLength);
 		for(int j = 0; j < layerLength; j++) {
@@ -19,11 +25,11 @@ Network::Network(int hiddenLayers, int layerLength, float seed) {
 		}
 		weights.push_back(layer);
 	}
-	initialiseOutputLayer(seed);
+	initialiseOutputLayer();
 }
 
 /*Network::Network(int hiddenLayers, int layerLength, float seed) {
-	/*
+	/ *
 	 * Front-end for the constructor.
 	 * This front-end requires no arguments to be supplied.
 	 * Input:
@@ -51,17 +57,35 @@ Network::Network(vector<vector<float>> initWeights, bool outputIncluded, float s
 	 * 	      Default value is 42.
 	 */
 	weights = initWeights;
-	if(!outputIncluded) { initialiseOutputLayer(seed); }
+	networkSeed = seed;
+	if(!outputIncluded) { initialiseOutputLayer(); }
 }
 
 Network::~Network() {}
 
-void Network::initialiseOutputLayer(float seed) {
+void Network::initialiseOutputLayer() {
 	/*
-	 * Misschien wil ik nog ergens outputLength initialiseren...
+	 * Initialise the output weights of the network.
 	 */
-	/*for(int j = 0; j < outputLength; j++) {
+	srand(networkSeed);
+	vector<float> layer(outSize);
+	for(int j = 0; j < outSize; j++) {
 			layer[j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-	}*/
-	;
+	}
+	outputLayer = layer;
+}
+
+vector<float> Network::createOutput(const vector<float> input) {
+	/*
+	 * Runs the input through the network.
+	 * Input:
+	 * 	input: Vector of floats to which the weights are applied to calculate
+	 * 	       an output vector.
+	 * Output:
+	 * 	vector of floats, output of the network
+	 */
+	 vector<float> output(outSize);
+	 for(auto o : output) {
+	 	*o = VF.dot(...);
+	 }
 }
