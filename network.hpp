@@ -1,6 +1,9 @@
 #ifndef NETWORK_H
 #define NETWORK_h
 
+#include <cstring>
+#include <fstream>
+#include <sstream>
 #include "includes.hpp"
 #include "vectorFunctions.hpp"
 
@@ -12,6 +15,8 @@ class Network {
    	vector<float> outputLayer;
    	int outSize;
    	float networkSeed;
+   	float learningRate = 0.4;
+   	VectorFunctions* VF;
    	
    	void initialiseOutputLayer();
    public:
@@ -23,6 +28,12 @@ class Network {
       ~Network();
       
       vector<float> createOutput(const vector<float> input);
+      vector<float> getWeightLayer(unsigned int layer);
+      void backpropagate(const float errorRate);
+      void run(const vector<float> input, const vector<float> labels);
+      
+      void exportNetwork(const std::string fileName);
+      vector<vector<float>> importNetwork(const std::string fileName);
 };
 
 #endif
