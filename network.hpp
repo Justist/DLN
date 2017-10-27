@@ -29,7 +29,7 @@ class Network {
       
       vector<float> createOutput(const vector<float> input);
       vector<float> getWeightLayer(unsigned int layer);
-      void backpropagate(const float errorRate);
+      void backpropagate(const float errorRate, const vector<float> output);
       void run(const vector<float> input, const vector<float> labels);
       
       void exportNetwork(const std::string fileName);

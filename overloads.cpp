@@ -42,7 +42,7 @@ inline vector<float> operator*(const vector<float>& m, const float f){
 inline vector<float> operator*(const float f, const vector<float>& m){
     /*
      * Front-end for the * operator which takes the float as the second
-     * element. This also allows m * f instead of solelY f * m.
+     * element. This also allows m * f instead of solely f * m.
      */
     return m * f;
 }
@@ -96,6 +96,32 @@ inline vector<float> operator+(const vector<float>& m1, const vector<float>& m2)
     };
     
     return sum;
+}
+
+inline vector<float> operator+(const vector<float>& m, const float f){
+    /*  Returns the sum of a float and a vector (elementwise addition).
+        Inputs:
+            m: vector
+            f: float
+        Output: vector, m + f, containing the sums of each element in vector m 
+                and float f
+    */
+    const unsigned long VECTOR_SIZE = m.size();
+    vector<float> product (VECTOR_SIZE);
+    
+    for (unsigned i = 0; i != VECTOR_SIZE; ++i){
+        product[i] = m[i] + f;
+    };
+    
+    return product;
+}
+
+inline vector<float> operator+(const float f, const vector<float>& m){
+    /*
+     * Front-end for the + operator which takes the float as the second
+     * element. This also allows m + f instead of solely f + m.
+     */
+    return m + f;
 }
 
 #endif

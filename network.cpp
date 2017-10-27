@@ -161,7 +161,7 @@ vector<vector<float>> Network::importNetwork(const std::string fileName) {
    return network;
 }
 
-void Network::backpropagate(const float errorRate) {
+void Network::backpropagate(const float errorRate, const vector<float> output) {
    /*
     * Backpropagate through the network and adjust the weights based on the
     * given error rate and the learning rate.
@@ -169,7 +169,11 @@ void Network::backpropagate(const float errorRate) {
     *    errorRate, float, depicting the error rate based on which the weights
     *    are to be adjusted.
     */
-   ;
+   vector<float> delta = learningRate * errorRate * VF->sigmoid_d(output);
+   //for(float d : delta) std::cout << d << std::endl;
+   
+   //Improve this!
+   for(auto layer : weights) layer = layer + delta;
 }
 
 void Network::run(const vector<float> input, const vector<float> labels) {
@@ -182,5 +186,6 @@ void Network::run(const vector<float> input, const vector<float> labels) {
     */
    vector<float> output = createOutput(input);
    float error = VF->crossEntropy(output, labels);
-   backpropagate(error);
+   std::cout << error << std::endl;
+   backpropagate(error, output);
 }
