@@ -11,20 +11,26 @@ using std::vector;
 
 class Network {
    private:
-   	vector<vector<float>> weights;
-   	vector<float> outputLayer;
-   	int outSize;
-   	float networkSeed;
-   	float learningRate = 0.4;
-   	VectorFunctions* VF;
-   	
-   	void initialiseOutputLayer();
+      vector<vector<float>> weights;
+      vector<vector<float>> deltas;
+      vector<vector<float>> inputValues;
+      vector<float> outputLayer;
+      vector<float> outputDelta;
+      vector<float> outputLayerInput;
+      int layerSize;
+      int outSize;
+      float networkSeed;
+      float learningRate = 0.3;
+      VectorFunctions* VF;
+      vector<float> oldOutput;
+      
+      void initialiseOutputLayer();
    public:
-   	//Network(int hiddenLayers, int layerLength, float seed);
-   	Network(int outputlength, int hiddenLayers = 2, 
-   	        int layerLength = 4, float seed = 42);
-      Network(vector<vector<float>> initWeights, bool outputIncluded = true,
-              float seed = 42);
+      //Network(int hiddenLayers, int layerLength, float seed);
+      Network(int outputlength, int hiddenLayers = 2, 
+              int layerLength = 4, float seed = 42);
+      //Network(vector<vector<float>> initWeights, bool outputIncluded = true,
+      //        float seed = 42);
       ~Network();
       
       vector<float> createOutput(const vector<float> input);

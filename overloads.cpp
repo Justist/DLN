@@ -81,6 +81,42 @@ inline vector<float> operator-(const vector<float>& m1, const vector<float>& m2)
     return difference;
 }
 
+inline vector<float> operator-(const vector<float>& m, const float f){
+    /*  Returns the difference of a float and a vector (elementwise subtraction).
+        Inputs:
+            m: vector
+            f: float
+        Output: vector, m - f, containing the difference between each element in 
+                vector m and float f
+    */
+    const unsigned long VECTOR_SIZE = m.size();
+    vector<float> difference (VECTOR_SIZE);
+    
+    for (unsigned i = 0; i != VECTOR_SIZE; ++i){
+        difference[i] = m[i] - f;
+    };
+    
+    return difference;
+}
+
+inline vector<float> operator-(const float f, const vector<float>& m){
+    /*  Returns the difference of a float and a vector (elementwise subtraction).
+        Inputs:
+            f: float
+            m: vector
+        Output: vector, f - m, containing the difference between float f and 
+                each element in vector m
+    */
+    const unsigned long VECTOR_SIZE = m.size();
+    vector<float> difference (VECTOR_SIZE);
+    
+    for (unsigned i = 0; i != VECTOR_SIZE; ++i){
+        difference[i] = f - m[i];
+    };
+    
+    return difference;
+}
+
 inline vector<float> operator+(const vector<float>& m1, const vector<float>& m2){
     /*  Returns the elementwise sum of two vectors.
         Inputs: 
@@ -107,13 +143,13 @@ inline vector<float> operator+(const vector<float>& m, const float f){
                 and float f
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> product (VECTOR_SIZE);
+    vector<float> sum (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
-        product[i] = m[i] + f;
+        sum[i] = m[i] + f;
     };
     
-    return product;
+    return sum;
 }
 
 inline vector<float> operator+(const float f, const vector<float>& m){

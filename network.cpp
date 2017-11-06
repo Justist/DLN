@@ -15,15 +15,20 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
    outSize = outputLength;
    networkSeed = seed;
    srand(networkSeed);
+   layerSize = layerLength;
    
    VF = new VectorFunctions();
    
    for(int i = 0; i < hiddenLayers; i++) {
-      vector<float> layer(layerLength);
+      vector<float> weightLayer(layerSize), deltaLayer(layerSize), inputLayer(layerSize);
       for(int j = 0; j < layerLength; j++) {
-         layer[j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+         weightLayer[j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+         deltaLayer[j] = 0.0;
+         inputLayer[j] = 0.0;
       }
-      weights.push_back(layer);
+      weights.push_back(weightLayer);
+      deltas.push_back(deltaLayer);
+      inputValues.push_back(inputLayer);
    }
    initialiseOutputLayer();
 }
@@ -43,8 +48,9 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
    Network(hiddenLayers, layerLength, seed);
 }*/
 
-Network::Network(vector<vector<float>> initWeights, bool outputIncluded, float seed) {
-   /*
+//Use importNetwork instead!
+/*Network::Network(vector<vector<float>> initWeights, bool outputIncluded, float seed) {
+   / *
     * Create a neural network by copying another.
     * Input:
     *    initWeights: A neural network in the same form as the program uses.
@@ -55,14 +61,14 @@ Network::Network(vector<vector<float>> initWeights, bool outputIncluded, float s
     *    seed: Random seed for the random number generation when generating 
     *          the output layer, if needed.
     *          Default value is 42.
-    */
+    * /
    weights = initWeights;
    networkSeed = seed;
    
    VF = new VectorFunctions();
    
    if(!outputIncluded) { initialiseOutputLayer(); }
-}
+}*/
 
 Network::~Network() {}
 
@@ -86,7 +92,7 @@ vector<float> Network::getWeightLayer(unsigned int layer) {
     * Output:
     *    vector<float> containing the requested layer.
     */
-   if(layer > weights.size()) {
+   if(layer > layerSize) {
       std::cerr << "Layer does not exist!\nGiving layer 0 instead." << std::endl;
       layer = 0;
    }
@@ -103,10 +109,11 @@ vector<float> Network::createOutput(const vector<float> input) {
     *    vector of floats, output of the network
     */
    vector<float> output = input;
-   for(vector<float> w : weights) {
-      output = VF->dot(w, output, w.size(), 1, 1);
+   auto li = begin(inputValues);
+   for(auto lw = weights.begin(), li = inputValues.begin(), ew = weights.end(); lw != ew; lw++, li++) {
+      *li = VF->dot(*lw, output, layerSize, 1, 1);
    }
-   output = VF->sigmoid(VF->dot(outputLayer, output, outSize, 1, 1));
+   output = 1 - VF->sigmoid(VF->dot(outputLayer, *li, outSize, 1, 1));
    return output;
 }
 
@@ -169,11 +176,25 @@ void Network::backpropagate(const float errorRate, const vector<float> output) {
     *    errorRate, float, depicting the error rate based on which the weights
     *    are to be adjusted.
     */
-   vector<float> delta = learningRate * errorRate * VF->sigmoid_d(output);
+   //vector<float> delta = learningRate * errorRate * VF->sigmoid_d(output);
    //for(float d : delta) std::cout << d << std::endl;
-   
-   //Improve this!
-   for(auto layer : weights) layer = layer + delta;
+   float u = 0;
+   //For-loop over the layers.
+   for(auto lw = weights.begin(), ld = deltas.begin(), li = inputValues.begin(), ew = weights.end(); lw != ew; lw++, ld++, li++) {
+      //For-loop over the elements in each layer.
+      for(auto w = (*lw).begin(), d = (*ld).begin(), i = (*li).begin(), e = (*lw).end(); w != e; w++, d++, i++) {
+         u = learningRate * errorRate * (*i) * (*d);
+         (*w) += u;
+         (*d) = u;
+      }
+   }
+}
+
+void printOutputAndLabels(const vector<float> output, const vector<float> labels) {
+   std::cout << "Output\t\tLabel" << std::endl;
+   for(auto o = begin(output), l = begin(labels), e = end(output); o != e; o++, l++) {
+      std::cout << *o << "\t" << *l << std::endl;
+   }
 }
 
 void Network::run(const vector<float> input, const vector<float> labels) {
@@ -186,6 +207,10 @@ void Network::run(const vector<float> input, const vector<float> labels) {
     */
    vector<float> output = createOutput(input);
    float error = VF->crossEntropy(output, labels);
-   std::cout << error << std::endl;
+   if(oldOutput != output) {
+      printOutputAndLabels(output, labels);
+      oldOutput = output;
+   }
+   //std::cout << error << std::endl;
    backpropagate(error, output);
 }

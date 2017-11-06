@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
       a = RandomNumber(-1000, 1000);
       b = RandomNumber(-1000, 1000);
       m1 = {a, b};
-      if(a + b > 0) m2 = {1, 0};
-      else m2 = {0, 1};
+      if(a + b > 0) m2 = {1.0, 0.0};
+      else m2 = {0.0, 1.0};
       network.run(m1, m2);
    }
    return 0;
