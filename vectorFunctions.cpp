@@ -110,8 +110,8 @@ vector<float> VectorFunctions::dot (const vector<float>& m1,
     return output;
 }
 
-float VectorFunctions::crossEntropy(const vector<float>& output, 
-                                    const vector<float>& labels) {
+float VectorFunctions::crossEntropy(const vector<float> output, 
+                                    const vector<float> labels) {
    /*  Returns the cross entropy between two vectors.
     *   Inputs:
     *       output: vector

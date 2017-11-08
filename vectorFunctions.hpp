@@ -21,7 +21,7 @@ class VectorFunctions {
 		vector<float> sigmoid(const vector<float>&);
 		vector<float> dot (const vector<float>&, const vector<float>&, 
                          const int, const int, const int);
-		float crossEntropy(const vector<float>&, const vector<float>&);
+		float crossEntropy(const vector<float>, const vector<float>);
 };
 
 #endif

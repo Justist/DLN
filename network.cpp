@@ -12,6 +12,11 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
     *    layerLength: The length of each of the hidden layers.
     *    seed: Random seed for the random number generation.
     */
+    
+   std::cout << "\33c\r" << std::endl; //clean the terminal
+   printf("Training the network with %d layers containing %d nodes, with seed %.2f \
+           \nand learning rate %.2f\n\n\n\n\n", hiddenLayers, layerLength, 
+                                              seed, learningRate);
    outSize = outputLength;
    networkSeed = seed;
    srand(networkSeed);
@@ -78,7 +83,7 @@ void Network::initialiseOutputLayer() {
     */
    srand(networkSeed);
    vector<float> layer(outSize);
-   for(int j = 0; j < outSize; j++) {
+   for(unsigned int j = 0; j < outSize; j++) {
          layer[j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
    }
    outputLayer = layer;
@@ -109,11 +114,11 @@ vector<float> Network::createOutput(const vector<float> input) {
     *    vector of floats, output of the network
     */
    vector<float> output = input;
-   auto li = begin(inputValues);
    for(auto lw = weights.begin(), li = inputValues.begin(), ew = weights.end(); lw != ew; lw++, li++) {
       *li = VF->dot(*lw, output, layerSize, 1, 1);
+      output = *li;
    }
-   output = 1 - VF->sigmoid(VF->dot(outputLayer, *li, outSize, 1, 1));
+   output = 1 - VF->sigmoid(VF->dot(outputLayer, output, outSize, 1, 1));
    return output;
 }
 
@@ -180,9 +185,11 @@ void Network::backpropagate(const float errorRate, const vector<float> output) {
    //for(float d : delta) std::cout << d << std::endl;
    float u = 0;
    //For-loop over the layers.
-   for(auto lw = weights.begin(), ld = deltas.begin(), li = inputValues.begin(), ew = weights.end(); lw != ew; lw++, ld++, li++) {
+   for(auto lw = weights.begin(), ld = deltas.begin(), li = inputValues.begin(), 
+            ew = weights.end(); lw != ew; lw++, ld++, li++) {
       //For-loop over the elements in each layer.
-      for(auto w = (*lw).begin(), d = (*ld).begin(), i = (*li).begin(), e = (*lw).end(); w != e; w++, d++, i++) {
+      for(auto w = (*lw).begin(), d = (*ld).begin(), i = (*li).begin(), 
+               e = (*lw).end(); w != e; w++, d++, i++) {
          u = learningRate * errorRate * (*i) * (*d);
          (*w) += u;
          (*d) = u;
@@ -190,11 +197,29 @@ void Network::backpropagate(const float errorRate, const vector<float> output) {
    }
 }
 
-void printOutputAndLabels(const vector<float> output, const vector<float> labels) {
+void Network::printOutputAndLabels(const vector<float> output, 
+                                   const vector<float> labels) {
+   std::cout << "\33[1K\r" << std::endl; // go to start of line with the cursor
+   std::cout << "\33[6A\r" << std::endl; // go 6 lines up with the cursor
+   
    std::cout << "Output\t\tLabel" << std::endl;
-   for(auto o = begin(output), l = begin(labels), e = end(output); o != e; o++, l++) {
+   for(auto o = begin(output), l = begin(labels), e = end(output); 
+            o != e; o++, l++) {
       std::cout << *o << "\t" << *l << std::endl;
    }
+   std::cout << "Accuracy: " << accuracy << std::endl;
+}
+
+void Network::updateAccuracy(const vector<float> output, 
+                             const vector<float> labels) {
+   float argMax = std::distance(output.begin(), 
+                                std::max_element(output.begin(), output.end()));
+   if(labels[argMax] == 1) aantalgoed++;
+   else aantalslecht++;
+   //printf("aantalgoed: %d, aantalslecht %d, accuracy %f\n", aantalgoed, 
+   //                                                         aantalslecht, 
+   //                                                         accuracy);
+   accuracy = aantalgoed / (float) (aantalgoed + aantalslecht);
 }
 
 void Network::run(const vector<float> input, const vector<float> labels) {
@@ -208,6 +233,7 @@ void Network::run(const vector<float> input, const vector<float> labels) {
    vector<float> output = createOutput(input);
    float error = VF->crossEntropy(output, labels);
    if(oldOutput != output) {
+      updateAccuracy(output, labels);
       printOutputAndLabels(output, labels);
       oldOutput = output;
    }

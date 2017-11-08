@@ -17,10 +17,13 @@ class Network {
       vector<float> outputLayer;
       vector<float> outputDelta;
       vector<float> outputLayerInput;
-      int layerSize;
-      int outSize;
+      unsigned int layerSize;
+      unsigned int outSize;
       float networkSeed;
       float learningRate = 0.3;
+      float accuracy = 0.0;
+      unsigned int aantalgoed = 0;
+      unsigned int aantalslecht = 0;
       VectorFunctions* VF;
       vector<float> oldOutput;
       
@@ -40,6 +43,11 @@ class Network {
       
       void exportNetwork(const std::string fileName);
       vector<vector<float>> importNetwork(const std::string fileName);
+      
+      void printOutputAndLabels(const vector<float> output, 
+                                const vector<float> labels);
+      void updateAccuracy(const vector<float> output, 
+                          const vector<float> labels);
 };
 
 #endif
