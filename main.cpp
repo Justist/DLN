@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
    int outputlength = 2;
    Network network(outputlength);
    vector<float> m1(2), m2(outputlength);
+   vector<float> oldm1(2);
    float a, b;
    
    // Code to catch SIGINTs
@@ -50,6 +51,8 @@ int main(int argc, char** argv) {
       m1 = {a, b};
       if(a + b > 0) m2 = {1.0, 0.0};
       else m2 = {0.0, 1.0};
+      //if(oldm1 != m1) cout << "\na: " << a << " b: " << b << "\n\n\n\n" << endl;
+      oldm1 = m1;
       network.run(m1, m2);
    }
    if(wantToExport) {

@@ -16,7 +16,7 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
    std::cout << "\33c\r" << std::endl; //clean the terminal
    printf("Training the network with %d layers containing %d nodes, with seed %.2f \
            \nand learning rate %.2f\n\n\n\n\n", hiddenLayers, layerLength, 
-                                              seed, learningRate);
+                                                seed, learningRate);
    outSize = outputLength;
    networkSeed = seed;
    srand(networkSeed);
@@ -197,11 +197,18 @@ void Network::backpropagate(const float errorRate, const vector<float> output) {
    }
 }
 
+void clearXLines(const unsigned int lines) {
+   std::cout << "\33[2K\r"; // go to start of line with the cursor
+   for(unsigned int i = 0; i < lines; i++) {
+      std::cout << "\33[A\r"; // go 1 line up with the cursor
+      std::cout << "\33[2K\r"; // clear the current line
+   }
+}
+
 void Network::printOutputAndLabels(const vector<float> output, 
                                    const vector<float> labels) {
-   std::cout << "\33[1K\r" << std::endl; // go to start of line with the cursor
-   std::cout << "\33[6A\r" << std::endl; // go 6 lines up with the cursor
-   
+   clearXLines(4);
+   //std::cout << "\33[12A\r";
    std::cout << "Output\t\tLabel" << std::endl;
    for(auto o = begin(output), l = begin(labels), e = end(output); 
             o != e; o++, l++) {
