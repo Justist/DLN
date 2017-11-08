@@ -118,7 +118,7 @@ vector<float> Network::createOutput(const vector<float> input) {
       *li = VF->dot(*lw, output, layerSize, 1, 1);
       output = *li;
    }
-   output = 1 - VF->sigmoid(VF->dot(outputLayer, output, outSize, 1, 1));
+   output = VF->sigmoid(VF->dot(outputLayer, output, outSize, 1, 1));
    return output;
 }
 
@@ -145,7 +145,7 @@ void Network::exportNetwork(const std::string fileName) {
    }
 }
 
-vector<vector<float>> Network::importNetwork(const std::string fileName) {
+void Network::importNetwork(const std::string fileName) {
    /*
     * Import a network in given file and return it.
     * It is returned so the user can also specify if the outputlayer is
@@ -170,7 +170,9 @@ vector<vector<float>> Network::importNetwork(const std::string fileName) {
       }
       network.push_back(layer);
    }
-   return network;
+   weights = network;
+   outputLayer = weights.back();
+   weights.pop_back();
 }
 
 void Network::backpropagate(const float errorRate, const vector<float> output) {
@@ -207,7 +209,8 @@ void clearXLines(const unsigned int lines) {
 
 void Network::printOutputAndLabels(const vector<float> output, 
                                    const vector<float> labels) {
-   clearXLines(4);
+   unsigned int lines = 2 + outSize;
+   clearXLines(lines);
    //std::cout << "\33[12A\r";
    std::cout << "Output\t\tLabel" << std::endl;
    for(auto o = begin(output), l = begin(labels), e = end(output); 
@@ -219,9 +222,12 @@ void Network::printOutputAndLabels(const vector<float> output,
 
 void Network::updateAccuracy(const vector<float> output, 
                              const vector<float> labels) {
-   float argMax = std::distance(output.begin(), 
+   /*float argMax = std::distance(output.begin(), 
                                 std::max_element(output.begin(), output.end()));
    if(labels[argMax] == 1) aantalgoed++;
+   else aantalslecht++;*/
+   float comp = output[0] + labels[0];
+   if(comp >= 1.5 || comp < .5) aantalgoed++;
    else aantalslecht++;
    //printf("aantalgoed: %d, aantalslecht %d, accuracy %f\n", aantalgoed, 
    //                                                         aantalslecht, 

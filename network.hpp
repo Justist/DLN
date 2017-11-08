@@ -31,7 +31,7 @@ class Network {
    public:
       //Network(int hiddenLayers, int layerLength, float seed);
       Network(int outputlength, int hiddenLayers = 2, 
-              int layerLength = 4, float seed = 42);
+              int layerLength = 2, float seed = 42);
       //Network(vector<vector<float>> initWeights, bool outputIncluded = true,
       //        float seed = 42);
       ~Network();
@@ -42,7 +42,7 @@ class Network {
       void run(const vector<float> input, const vector<float> labels);
       
       void exportNetwork(const std::string fileName);
-      vector<vector<float>> importNetwork(const std::string fileName);
+      void importNetwork(const std::string fileName);
       
       void printOutputAndLabels(const vector<float> output, 
                                 const vector<float> labels);
