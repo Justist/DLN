@@ -32,4 +32,10 @@
 *.app
 
 # Exported networks
-netwerk*
+network*
+
+#LaTeX
+*.aux
+*.log
+*.pdf
+*.synctex.gz

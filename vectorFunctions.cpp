@@ -52,7 +52,7 @@ vector<float> VectorFunctions::sigmoid_d(const vector<float>& m1) {
     /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)), 
         where f(x) is sigmoid function.
         Input: m1, a vector.
-        Output: x(1 - x) for everY element of the input matrix m1.
+        Output: x(1 - x) for every element of the input matrix m1.
     */
     const unsigned long VECTOR_SIZE = m1.size();
     vector<float> output (VECTOR_SIZE);
@@ -67,7 +67,7 @@ vector<float> VectorFunctions::sigmoid_d(const vector<float>& m1) {
 vector<float> VectorFunctions::sigmoid(const vector<float>& m1) {
     /*  Returns the value of the sigmoid function f(x) = 1/(1 + e^-x).
         Input: m1, a vector.
-        Output: 1/(1 + e^-x) for everY element of the input matrix m1.
+        Output: 1/(1 + e^-x) for every element of the input matrix m1.
     */
     const unsigned long VECTOR_SIZE = m1.size();
     vector<float> output (VECTOR_SIZE);

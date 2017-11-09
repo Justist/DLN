@@ -175,7 +175,7 @@ void Network::importNetwork(const std::string fileName) {
    weights.pop_back();
 }
 
-void Network::backpropagate(const float errorRate, const vector<float> output) {
+void Network::backpropagate(const float errorRate/*, const vector<float> output*/) {
    /*
     * Backpropagate through the network and adjust the weights based on the
     * given error rate and the learning rate.
