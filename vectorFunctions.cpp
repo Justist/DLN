@@ -1,4 +1,5 @@
 #include "vectorFunctions.hpp"
+#include "overloads.cpp"
 
 float VectorFunctions::vectorsum(const vector<float> vec) {
    /*
@@ -64,6 +65,15 @@ vector<float> VectorFunctions::sigmoid_d(const vector<float>& m1) {
     return output;
 }
 
+float VectorFunctions::sigmoid_d(const float f1) {
+    /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)), 
+        where f(x) is sigmoid function.
+        Input: f1, a float.
+        Output: f1(1 - f1).
+    */
+    return f1 * (1 - f1);
+}
+
 vector<float> VectorFunctions::sigmoid(const vector<float>& m1) {
     /*  Returns the value of the sigmoid function f(x) = 1/(1 + e^-x).
         Input: m1, a vector.
@@ -112,12 +122,13 @@ vector<float> VectorFunctions::dot (const vector<float>& m1,
 
 float VectorFunctions::crossEntropy(const vector<float> output, 
                                     const vector<float> labels) {
-   /*  Returns the cross entropy between two vectors.
-    *   Inputs:
-    *       output: vector
-    *       labels: vector
-    *   Output: float, -sum(labels * log(output)), 
-    *           cross entropy between output and labels.
+   /*  
+    * Returns the cross entropy between two vectors.
+    * Inputs:
+    *    output: vector
+    *    labels: vector
+    * Output: float, -sum(labels * log(output)), 
+    *         cross entropy between output and labels.
     */
     if(output.size() != labels.size()) {
         std::cerr << "Labels and output not of same length!" << endl;
@@ -132,4 +143,20 @@ float VectorFunctions::crossEntropy(const vector<float> output,
         crossent += labels[i] * log(output[i]);
     };
     return -crossent;
+}
+
+float VectorFunctions::meanSquaredError(const vector<float> output, 
+                                       const vector<float> labels) {
+   /*
+    * Returns the mean square error between two vectors.
+    * 
+    */
+    if(output.size() != labels.size()) {
+        std::cerr << "Labels and output not of same length!" << endl;
+        std::cerr << "Labels length: " << labels.size() << endl;
+        std::cerr << "Output length: " << output.size() << endl;
+        exit(1);
+    }
+    vector<float> minus = output - labels;
+    return vectorsum(minus * minus) / output.size();
 }

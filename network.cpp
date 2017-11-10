@@ -38,43 +38,6 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
    initialiseOutputLayer();
 }
 
-/*Network::Network(int hiddenLayers, int layerLength, float seed) {
-   / *
-    * Front-end for the constructor.
-    * This front-end requires no arguments to be supplied.
-    * Input:
-    *    hiddenLayers: The amount of hidden layers to be contained in the network.
-    *                  Default value is 2.
-    *    layerLength: The length of each of the hidden layers.
-    *                 Default value is 4.
-    *    seed: Random seed for the random number generation.
-    *          Default value is 42.
-    * /
-   Network(hiddenLayers, layerLength, seed);
-}*/
-
-//Use importNetwork instead!
-/*Network::Network(vector<vector<float>> initWeights, bool outputIncluded, float seed) {
-   / *
-    * Create a neural network by copying another.
-    * Input:
-    *    initWeights: A neural network in the same form as the program uses.
-    *                 This is explained in the first constructor.
-    *    outputIncluded: Whether or not the initWeights contains weights for
-    *                    the output layer or only for the hidden layers.
-    *                    Default value is true.
-    *    seed: Random seed for the random number generation when generating 
-    *          the output layer, if needed.
-    *          Default value is 42.
-    * /
-   weights = initWeights;
-   networkSeed = seed;
-   
-   VF = new VectorFunctions();
-   
-   if(!outputIncluded) { initialiseOutputLayer(); }
-}*/
-
 Network::~Network() {}
 
 void Network::initialiseOutputLayer() {
@@ -183,25 +146,26 @@ void Network::backpropagate(const float errorRate/*, const vector<float> output*
     *    errorRate, float, depicting the error rate based on which the weights
     *    are to be adjusted.
     */
-   //vector<float> delta = learningRate * errorRate * VF->sigmoid_d(output);
-   //for(float d : delta) std::cout << d << std::endl;
-   float u = 0;
+   vector<float> u;
    //For-loop over the layers.
    for(auto lw = weights.begin(), ld = deltas.begin(), li = inputValues.begin(), 
             ew = weights.end(); lw != ew; lw++, ld++, li++) {
       //For-loop over the elements in each layer.
-      for(auto w = (*lw).begin(), d = (*ld).begin(), i = (*li).begin(), 
-               e = (*lw).end(); w != e; w++, d++, i++) {
-         u = learningRate * errorRate * (*i) * (*d);
-         (*w) += u;
-         (*d) = u;
-      }
+      u = *li * *ld * learningRate * errorRate;
+      *lw = *lw - u;
+      *ld = u;
+      //*lw = VF->sigmoid_d(*lw);
    }
 }
 
-void clearXLines(const unsigned int lines) {
+void clearXLines(const unsigned int x) {
+   /*
+    * Clears the current line and the x lines above.
+    * Input:
+    *    x, the amount of lines above the current line to clear.
+    */
    std::cout << "\33[2K\r"; // go to start of line with the cursor
-   for(unsigned int i = 0; i < lines; i++) {
+   for(unsigned int i = 0; i < x; i++) {
       std::cout << "\33[A\r"; // go 1 line up with the cursor
       std::cout << "\33[2K\r"; // clear the current line
    }
@@ -209,29 +173,42 @@ void clearXLines(const unsigned int lines) {
 
 void Network::printOutputAndLabels(const vector<float> output, 
                                    const vector<float> labels) {
+   /*
+    * Print both the output and the labels (what the output should be),
+    * so a comparison can be made by the user.
+    * First it calls a function to clear the previous output, then prints
+    * both the output and the labels, and then the updated accuracy.
+    * Inputs:
+    *    output, the output of the network
+    *    labels, what the output should be
+    */
    unsigned int lines = 2 + outSize;
    clearXLines(lines);
-   //std::cout << "\33[12A\r";
    std::cout << "Output\t\tLabel" << std::endl;
    for(auto o = begin(output), l = begin(labels), e = end(output); 
             o != e; o++, l++) {
       std::cout << *o << "\t" << *l << std::endl;
    }
-   std::cout << "Accuracy: " << accuracy << std::endl;
+   std::cout << "Accuracy: " << accuracy << " en teller: " << teller++ << std::endl;
 }
 
 void Network::updateAccuracy(const vector<float> output, 
                              const vector<float> labels) {
-   /*float argMax = std::distance(output.begin(), 
-                                std::max_element(output.begin(), output.end()));
-   if(labels[argMax] == 1) aantalgoed++;
-   else aantalslecht++;*/
-   float comp = output[0] + labels[0];
-   if(comp >= 1.5 || comp < .5) aantalgoed++;
-   else aantalslecht++;
-   //printf("aantalgoed: %d, aantalslecht %d, accuracy %f\n", aantalgoed, 
-   //                                                         aantalslecht, 
-   //                                                         accuracy);
+   /*
+    * Update the accuracy of the network, based on the output and what the 
+    * output should be.
+    * Input:
+    *    output, the output of the network
+    *    labels, what the output should be
+    */
+   float comp = 0.0;
+   const unsigned long VECTOR_SIZE = output.size();
+   for(unsigned long i = 0; i < VECTOR_SIZE; i++) {
+      comp = output[0] + labels[0];
+      if((comp >= 1.5) || (comp < .5)) aantalgoed++;
+      else aantalslecht++;
+   }
+
    accuracy = aantalgoed / (float) (aantalgoed + aantalslecht);
 }
 
@@ -244,12 +221,12 @@ void Network::run(const vector<float> input, const vector<float> labels) {
     *    labels, vector<float>, the labels to compare the output to.
     */
    vector<float> output = createOutput(input);
-   float error = VF->crossEntropy(output, labels);
+   float error = VF->meanSquaredError(output, labels); //VF->crossEntropy(output, labels);
    if(oldOutput != output) {
       updateAccuracy(output, labels);
       printOutputAndLabels(output, labels);
       oldOutput = output;
    }
    //std::cout << error << std::endl;
-   backpropagate(error, output);
+   backpropagate(error);
 }

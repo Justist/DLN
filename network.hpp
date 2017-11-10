@@ -20,25 +20,24 @@ class Network {
       unsigned int layerSize;
       unsigned int outSize;
       float networkSeed;
-      float learningRate = 0.3;
+      float learningRate = 0.8;
       float accuracy = 0.0;
       unsigned int aantalgoed = 0;
       unsigned int aantalslecht = 0;
       VectorFunctions* VF;
       vector<float> oldOutput;
       
+      unsigned int teller = 0;
+      
       void initialiseOutputLayer();
    public:
-      //Network(int hiddenLayers, int layerLength, float seed);
       Network(int outputlength, int hiddenLayers = 2, 
               int layerLength = 2, float seed = 42);
-      //Network(vector<vector<float>> initWeights, bool outputIncluded = true,
-      //        float seed = 42);
       ~Network();
       
       vector<float> createOutput(const vector<float> input);
       vector<float> getWeightLayer(unsigned int layer);
-      void backpropagate(const float errorRate, const vector<float> output);
+      void backpropagate(const float errorRate);
       void run(const vector<float> input, const vector<float> labels);
       
       void exportNetwork(const std::string fileName);

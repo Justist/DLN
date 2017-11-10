@@ -1,5 +1,6 @@
 #include "network.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
@@ -12,6 +13,11 @@ bool wantToExport = false;
 float RandomNumber(float Min, float Max) {
    /*
     * As copied from https://stackoverflow.com/a/4310296/1762311
+    * Creates a random float between the floats Min and Max, where
+    * both Min and Max can be either positive or negative.
+    * Inputs:
+    *    Min: Minimal float to be generated.
+    *    Max: Maximal float to be generated.
     */
    return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }
@@ -31,6 +37,12 @@ void SIGINThandler(int s) {
 }
 
 void exportNetwork(Network network, const unsigned int outputlength) {
+   /*
+    * Creates a filename based on the current datetime and the length
+    * of the output layer, then exports the network to a file with that name.
+    * Input:
+    *    outputlength, the length of the output layer
+    */
    auto t = std::time(nullptr);
    auto tm = *std::localtime(&t);
    std::ostringstream oss;
@@ -64,15 +76,20 @@ int main(int argc, char** argv) {
    sigIntHandler.sa_flags = 0;
    sigaction(SIGINT, &sigIntHandler, NULL);
    
+   using namespace std::chrono;
+   
+   
    while(sigintsent == false) {
-      srand (static_cast <unsigned> (time(0)));
-      a = RandomNumber(-1000, 1000);
-      b = RandomNumber(-1000, 1000);
+      srand(static_cast<long unsigned int>
+            (std::chrono::high_resolution_clock::now().
+                          time_since_epoch().count()));
+      a = static_cast<int>(rand()%2); //RandomNumber(-1000, 1000);
+      b = static_cast<int>(rand()%2); //RandomNumber(-1000, 1000);
       m1 = {a, b};
-      if(a + b > 0) m2 = {1.0}; //{1.0, 0.0};
+      if(a + b == 1) m2 = {1.0}; //{1.0, 0.0};
       else m2 = {0.0}; //{0.0, 1.0};
       //if(oldm1 != m1) cout << "\na: " << a << " b: " << b << "\n\n\n\n" << endl;
-      oldm1 = m1;
+      //oldm1 = m1;
       network.run(m1, m2);
    }
    if(wantToExport) {
