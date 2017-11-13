@@ -32,7 +32,7 @@ class Network {
       void initialiseOutputLayer();
    public:
       Network(int outputlength, int hiddenLayers = 1, 
-              int layerLength = 1, float seed = 420);
+              int layerLength = 2, float seed = 420.42);
       ~Network();
       
       vector<double> createOutput(const vector<double> input);

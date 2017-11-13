@@ -32,7 +32,8 @@ vector<double> VectorFunctions::epower(const vector<double> m) {
 }
 
 vector<double> VectorFunctions::transpose (double *m, const int C, const int R) {
-    /*  Returns a transpose matrix of input matrix.
+    /*
+     *  Returns a transpose matrix of input matrix.
      *  Inputs:
      *      m: vector, input matrix
      *      C: int, number of columns in the input matrix
@@ -156,8 +157,7 @@ double VectorFunctions::crossEntropy(const vector<double> output,
       std::cerr << "Output length: " << output.size() << endl;
       exit(1);
    }
-   //const unsigned long VECTOR_SIZE = output.size();
-
+   
    if(softmax) {
       return -vectorsum(labels * (input - log(vectorsum(epower(input)))));
    } else {
@@ -168,7 +168,8 @@ double VectorFunctions::crossEntropy(const vector<double> output,
       }
       return -crossent;
    }
-
+   
+//   const unsigned long VECTOR_SIZE = output.size();
 //   for (unsigned i = 0; i != VECTOR_SIZE; ++i){
 //      crossent += labels[i] * log(output[i]);
 //   };

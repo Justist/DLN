@@ -27,8 +27,8 @@ void SIGINThandler(int s) {
     * Handler to catch a SIGINT.
     * Used to escape the while-loop in the main function.
     */
-   cout << "\n\n\nSIGINT caught!" << endl;
-   cout << "Do you want to export the network? y/N" << endl;
+   cout << "\n\n\n\n\n\nSIGINT caught!" << endl;
+   cout << "\nDo you want to export the network? y/N" << endl;
    std::string answer;
    std::cin >> answer;
    std::transform(answer.begin(), answer.end(), answer.begin(), ::tolower);
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
    std::cin >> answer;
    std::transform(answer.begin(), answer.end(), answer.begin(), ::tolower);
    if(answer == "y") { 
-      cout << "Welk bestand wilt u importeren?" << endl;
+      cout << "Whcih file do you want to read from?" << endl;
       std::string bestand;
       std::cin >> bestand;
       network.importNetwork(bestand);

@@ -151,23 +151,18 @@ void Network::backpropagate(const double errorRate/*, const vector<float> output
     */
    vector<double> u;
    //For-loop over the layers.
-   for(auto lw = weights.begin(), ld = deltas.begin(), li = inputValues.begin(), 
-            ew = weights.end(); lw != ew; lw++, ld++, li++) {
+   for(auto lw = weights.rbegin(), ld = deltas.rbegin(), li = inputValues.rbegin(), 
+            ew = weights.rend(); lw != ew; lw++, ld++, li++) {
       //For-loop over the elements in each layer.
-      u = *li * *ld * learningRate * errorRate;
+      u = VF->sigmoid_d((*li)) * learningRate * errorRate * (*ld);
       
       std::cout << "\33[6A\r" << "u: ";
       for(float x : u) { printf("%.6f", x); }
-      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", VF->sigmoid_d(*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
+      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
       std::cout << "\33[6B\r";
-//      exit(0);
-//      if(VF->vectorsum(u) == 0.0) { 
-//         for(auto x = u.begin(), e = u.end(); x != e; x++) { *x = 0.01; } 
-//      }
       
       *lw = *lw + u;
       *ld = u;
-      //*lw = VF->sigmoid_d(*lw);
    }
 }
 
