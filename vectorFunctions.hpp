@@ -14,16 +14,18 @@ class VectorFunctions {
 		VectorFunctions() {}
 		~VectorFunctions() {}
 	
-		float vectorsum(const vector<float>);
-		vector<float> transpose (float*, const int, const int);
-		vector<float> softmax(const vector<float>);
-		vector<float> sigmoid_d(const vector<float>&);
-		float sigmoid_d(const float);
-		vector<float> sigmoid(const vector<float>&);
-		vector<float> dot (const vector<float>&, const vector<float>&, 
+		double vectorsum(const vector<double>);
+		vector<double> epower(const vector<double>);
+		vector<double> transpose (double*, const int, const int);
+		vector<double> softmax(const vector<double>);
+		vector<double> sigmoid_d(const vector<double>);
+		double sigmoid_d(const double);
+		vector<double> sigmoid(const vector<double>);
+		vector<double> dot (const vector<double>, const vector<double>, 
                          const int, const int, const int);
-		float crossEntropy(const vector<float>, const vector<float>);
-		float meanSquaredError(const vector<float>, const vector<float>);
+		double crossEntropy(const vector<double>, const vector<double>, 
+                          const vector<double>, const bool);
+		double meanSquaredError(const vector<double>, const vector<double>);
 };
 
 #endif

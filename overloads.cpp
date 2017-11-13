@@ -5,7 +5,7 @@
 
 using std::vector;
 
-inline vector<float> operator*(const vector<float>& m1, const vector<float>& m2){
+inline vector<double> operator*(const vector<double>& m1, const vector<double>& m2){
     /*  Returns the product of two vectors (elementwise multiplication).
         Inputs:
             m1: vector
@@ -13,7 +13,7 @@ inline vector<float> operator*(const vector<float>& m1, const vector<float>& m2)
         Output: vector, m1 * m2, product of two vectors m1 and m2
     */
     const unsigned long VECTOR_SIZE = m1.size();
-    vector <float> product (VECTOR_SIZE);
+    vector <double> product (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         product[i] = m1[i] * m2[i];
@@ -22,15 +22,15 @@ inline vector<float> operator*(const vector<float>& m1, const vector<float>& m2)
     return product;
 }
 
-inline vector<float> operator*(const vector<float>& m, const float f){
-    /*  Returns the product of a float and a vector (elementwise multiplication).
+inline vector<double> operator*(const vector<double>& m, const double f){
+    /*  Returns the product of a double and a vector (elementwise multiplication).
         Inputs:
             m: vector
-            f: float
-        Output: vector, m * f, product of vector m and float f
+            f: double
+        Output: vector, m * f, product of vector m and double f
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> product (VECTOR_SIZE);
+    vector<double> product (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         product[i] = m[i] * f;
@@ -39,23 +39,23 @@ inline vector<float> operator*(const vector<float>& m, const float f){
     return product;
 }
 
-inline vector<float> operator*(const float f, const vector<float>& m){
+inline vector<double> operator*(const double f, const vector<double>& m){
     /*
-     * Front-end for the * operator which takes the float as the second
+     * Front-end for the * operator which takes the double as the second
      * element. This also allows m * f instead of solely f * m.
      */
     return m * f;
 }
 
-inline vector<float> operator/(const vector<float>& m, const float f){
-    /*  Returns the product of a float and a vector (elementwise multiplication).
+inline vector<double> operator/(const vector<double>& m, const double f){
+    /*  Returns the product of a double and a vector (elementwise multiplication).
         Inputs:
             m: vector
-            f: float
-        Output: vector, m / f, vector m divided bY float f
+            f: double
+        Output: vector, m / f, vector m divided bY double f
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> product (VECTOR_SIZE);
+    vector<double> product (VECTOR_SIZE);
     
     for (unsigned i = 0; i < VECTOR_SIZE; ++i){
         product[i] = m[i] / f;
@@ -64,7 +64,7 @@ inline vector<float> operator/(const vector<float>& m, const float f){
     return product;
 }
 
-inline vector<float> operator-(const vector<float>& m1, const vector<float>& m2){
+inline vector<double> operator-(const vector<double>& m1, const vector<double>& m2){
     /*  Returns the difference between two vectors.
         Inputs:
             m1: vector
@@ -72,7 +72,7 @@ inline vector<float> operator-(const vector<float>& m1, const vector<float>& m2)
         Output: vector, m1 - m2, difference between two vectors m1 and m2.
     */
     const unsigned long VECTOR_SIZE = m1.size();
-    vector <float> difference (VECTOR_SIZE);
+    vector <double> difference (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         difference[i] = m1[i] - m2[i];
@@ -81,16 +81,16 @@ inline vector<float> operator-(const vector<float>& m1, const vector<float>& m2)
     return difference;
 }
 
-inline vector<float> operator-(const vector<float>& m, const float f){
-    /*  Returns the difference of a float and a vector (elementwise subtraction).
+inline vector<double> operator-(const vector<double>& m, const double f){
+    /*  Returns the difference of a double and a vector (elementwise subtraction).
         Inputs:
             m: vector
-            f: float
+            f: double
         Output: vector, m - f, containing the difference between each element in 
-                vector m and float f
+                vector m and double f
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> difference (VECTOR_SIZE);
+    vector<double> difference (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         difference[i] = m[i] - f;
@@ -99,16 +99,16 @@ inline vector<float> operator-(const vector<float>& m, const float f){
     return difference;
 }
 
-inline vector<float> operator-(const float f, const vector<float>& m){
-    /*  Returns the difference of a float and a vector (elementwise subtraction).
+inline vector<double> operator-(const double f, const vector<double>& m){
+    /*  Returns the difference of a double and a vector (elementwise subtraction).
         Inputs:
-            f: float
+            f: double
             m: vector
-        Output: vector, f - m, containing the difference between float f and 
+        Output: vector, f - m, containing the difference between double f and 
                 each element in vector m
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> difference (VECTOR_SIZE);
+    vector<double> difference (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         difference[i] = f - m[i];
@@ -117,7 +117,7 @@ inline vector<float> operator-(const float f, const vector<float>& m){
     return difference;
 }
 
-inline vector<float> operator+(const vector<float>& m1, const vector<float>& m2){
+inline vector<double> operator+(const vector<double>& m1, const vector<double>& m2){
     /*  Returns the elementwise sum of two vectors.
         Inputs: 
             m1: a vector
@@ -125,7 +125,7 @@ inline vector<float> operator+(const vector<float>& m1, const vector<float>& m2)
         Output: a vector, sum of the vectors m1 and m2.
     */
     const unsigned long VECTOR_SIZE = m1.size();
-    vector <float> sum (VECTOR_SIZE);
+    vector <double> sum (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         sum[i] = m1[i] + m2[i];
@@ -134,16 +134,16 @@ inline vector<float> operator+(const vector<float>& m1, const vector<float>& m2)
     return sum;
 }
 
-inline vector<float> operator+(const vector<float>& m, const float f){
-    /*  Returns the sum of a float and a vector (elementwise addition).
+inline vector<double> operator+(const vector<double>& m, const double f){
+    /*  Returns the sum of a double and a vector (elementwise addition).
         Inputs:
             m: vector
-            f: float
+            f: double
         Output: vector, m + f, containing the sums of each element in vector m 
-                and float f
+                and double f
     */
     const unsigned long VECTOR_SIZE = m.size();
-    vector<float> sum (VECTOR_SIZE);
+    vector<double> sum (VECTOR_SIZE);
     
     for (unsigned i = 0; i != VECTOR_SIZE; ++i){
         sum[i] = m[i] + f;
@@ -152,9 +152,9 @@ inline vector<float> operator+(const vector<float>& m, const float f){
     return sum;
 }
 
-inline vector<float> operator+(const float f, const vector<float>& m){
+inline vector<double> operator+(const double f, const vector<double>& m){
     /*
-     * Front-end for the + operator which takes the float as the second
+     * Front-end for the + operator which takes the double as the second
      * element. This also allows m + f instead of solely f + m.
      */
     return m + f;

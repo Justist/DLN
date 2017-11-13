@@ -1,7 +1,7 @@
 #include "vectorFunctions.hpp"
 #include "overloads.cpp"
 
-float VectorFunctions::vectorsum(const vector<float> vec) {
+double VectorFunctions::vectorsum(const vector<double> vec) {
    /*
     * Return the sum of the elements of a vector vec.
     * Input:
@@ -14,7 +14,24 @@ float VectorFunctions::vectorsum(const vector<float> vec) {
    return sum;
 }
 
-vector<float> VectorFunctions::transpose (float *m, const int C, const int R) {
+vector<double> VectorFunctions::epower(const vector<double> m) {
+   /*
+    * Returns a vector of float which is the given vector of floats but with
+    * each element x being a power of e, such that every element x in the
+    * given vector is an element e^x in the output vector.
+    * Input:
+    *    m: vector of floats
+    * Output:
+    *    vector of floats which are all e-powers
+    */
+    vector<double> output;
+    for(double x : m) {
+       output.push_back(std::exp(x));
+    }
+    return output;
+}
+
+vector<double> VectorFunctions::transpose (double *m, const int C, const int R) {
     /*  Returns a transpose matrix of input matrix.
      *  Inputs:
      *      m: vector, input matrix
@@ -22,7 +39,7 @@ vector<float> VectorFunctions::transpose (float *m, const int C, const int R) {
      *      R: int, number of rows in the input matrix
      *  Output: vector, transpose matrix mT of input matrix m
      */
-    vector<float> mT (C*R);
+    vector<double> mT (C*R);
     
     for(int n = 0; n!=C*R; n++) {
         int i = n/C;
@@ -33,7 +50,7 @@ vector<float> VectorFunctions::transpose (float *m, const int C, const int R) {
     return mT;
 }
 
-vector<float> VectorFunctions::softmax(const vector<float> vec) {
+vector<double> VectorFunctions::softmax(const vector<double> vec) {
     /*
      * Return the softmaxed version of given vector vec.
      * Input:
@@ -41,7 +58,7 @@ vector<float> VectorFunctions::softmax(const vector<float> vec) {
      * Output:
      *    smvec, softmaxed version of vec
      */
-     vector<float> smvec;
+     vector<double> smvec;
      double maxelem = *std::max_element(std::begin(vec), std::end(vec));
      for(auto v : vec) {
         smvec.push_back(std::exp(v - maxelem));
@@ -49,23 +66,24 @@ vector<float> VectorFunctions::softmax(const vector<float> vec) {
      return smvec;
 }
 
-vector<float> VectorFunctions::sigmoid_d(const vector<float>& m1) {
+vector<double> VectorFunctions::sigmoid_d(const vector<double> m1) {
     /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)), 
         where f(x) is sigmoid function.
         Input: m1, a vector.
         Output: x(1 - x) for every element of the input matrix m1.
     */
     const unsigned long VECTOR_SIZE = m1.size();
-    vector<float> output (VECTOR_SIZE);
+    vector<double> output (VECTOR_SIZE);
     
     for(unsigned i = 0; i < VECTOR_SIZE; i++) {
         output[i] = m1[i] * (1 - m1[i]);
     }
-    
+//    std::cout << "sigmoid_d input:" << m1[0] << std::endl;
+
     return output;
 }
 
-float VectorFunctions::sigmoid_d(const float f1) {
+double VectorFunctions::sigmoid_d(const double f1) {
     /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)), 
         where f(x) is sigmoid function.
         Input: f1, a float.
@@ -74,13 +92,13 @@ float VectorFunctions::sigmoid_d(const float f1) {
     return f1 * (1 - f1);
 }
 
-vector<float> VectorFunctions::sigmoid(const vector<float>& m1) {
+vector<double> VectorFunctions::sigmoid(const vector<double> m1) {
     /*  Returns the value of the sigmoid function f(x) = 1/(1 + e^-x).
         Input: m1, a vector.
         Output: 1/(1 + e^-x) for every element of the input matrix m1.
     */
     const unsigned long VECTOR_SIZE = m1.size();
-    vector<float> output (VECTOR_SIZE);
+    vector<double> output (VECTOR_SIZE);
     
     for( unsigned i = 0; i != VECTOR_SIZE; ++i ) {
         output[i] = 1 / (1 + exp(-m1[i]));
@@ -89,8 +107,8 @@ vector<float> VectorFunctions::sigmoid(const vector<float>& m1) {
     return output;
 }
 
-vector<float> VectorFunctions::dot (const vector<float>& m1, 
-                                    const vector<float>& m2, 
+vector<double> VectorFunctions::dot(const vector<double> m1, 
+                                    const vector<double> m2, 
                                     const int m1_rows, 
                                     const int m1_columns, 
                                     const int m2_columns) {
@@ -106,7 +124,7 @@ vector<float> VectorFunctions::dot (const vector<float>& m1,
      *  Output: vector, m1 * m2, product of two vectors m1 and m2, 
      *          a matrix of size m1_rows x m2_columns
      */
-    vector<float> output(m1_rows*m2_columns);
+    vector<double> output(m1_rows*m2_columns);
     
     for(int row = 0; row < m1_rows; row++) {
         for(int col = 0; col < m2_columns; col++) {
@@ -120,8 +138,10 @@ vector<float> VectorFunctions::dot (const vector<float>& m1,
     return output;
 }
 
-float VectorFunctions::crossEntropy(const vector<float> output, 
-                                    const vector<float> labels) {
+double VectorFunctions::crossEntropy(const vector<double> output,
+                                    const vector<double> input, 
+                                    const vector<double> labels,
+                                    const bool softmax) {
    /*  
     * Returns the cross entropy between two vectors.
     * Inputs:
@@ -130,23 +150,33 @@ float VectorFunctions::crossEntropy(const vector<float> output,
     * Output: float, -sum(labels * log(output)), 
     *         cross entropy between output and labels.
     */
-    if(output.size() != labels.size()) {
-        std::cerr << "Labels and output not of same length!" << endl;
-        std::cerr << "Labels length: " << labels.size() << endl;
-        std::cerr << "Output length: " << output.size() << endl;
-        exit(1);
-    }
-    const unsigned long VECTOR_SIZE = output.size();
-    float crossent = 0.0;
-    
-    for (unsigned i = 0; i != VECTOR_SIZE; ++i){
-        crossent += labels[i] * log(output[i]);
-    };
-    return -crossent;
+   if(output.size() != labels.size()) {
+      std::cerr << "Labels and output not of same length!" << endl;
+      std::cerr << "Labels length: " << labels.size() << endl;
+      std::cerr << "Output length: " << output.size() << endl;
+      exit(1);
+   }
+   //const unsigned long VECTOR_SIZE = output.size();
+
+   if(softmax) {
+      return -vectorsum(labels * (input - log(vectorsum(epower(input)))));
+   } else {
+      double crossent = 0.0;
+      for(auto o = output.begin(), l = labels.begin(), e = output.end(); 
+               o != e; o++, l++) {
+         crossent += (*l * log(*o)) + (1 - *l) * log(1 - *o);
+      }
+      return -crossent;
+   }
+
+//   for (unsigned i = 0; i != VECTOR_SIZE; ++i){
+//      crossent += labels[i] * log(output[i]);
+//   };
+   //return -crossent;
 }
 
-float VectorFunctions::meanSquaredError(const vector<float> output, 
-                                       const vector<float> labels) {
+double VectorFunctions::meanSquaredError(const vector<double> output, 
+                                       const vector<double> labels) {
    /*
     * Returns the mean square error between two vectors.
     * 
@@ -157,6 +187,6 @@ float VectorFunctions::meanSquaredError(const vector<float> output,
         std::cerr << "Output length: " << output.size() << endl;
         exit(1);
     }
-    vector<float> minus = output - labels;
+    vector<double> minus = output - labels;
     return vectorsum(minus * minus) / output.size();
 }
