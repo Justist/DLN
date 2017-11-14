@@ -34,8 +34,11 @@
 # Exported networks
 network*
 
-#LaTeX
+# LaTeX
 *.aux
 *.log
 *.pdf
 *.synctex.gz
+
+# Other stuff
+*.txt

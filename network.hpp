@@ -1,9 +1,6 @@
 #ifndef NETWORK_H
 #define NETWORK_h
 
-#include <cstring>
-#include <fstream>
-#include <sstream>
 #include "includes.hpp"
 #include "vectorFunctions.hpp"
 
@@ -20,12 +17,11 @@ class Network {
       unsigned int layerSize;
       unsigned int outSize;
       float networkSeed;
-      float learningRate = 0.005;
+      float learningRate = 0.5;
       float accuracy = 0.0;
       unsigned int aantalgoed = 0;
       unsigned int aantalslecht = 0;
       VectorFunctions* VF;
-//      vector<float> oldOutput;
       
       unsigned int teller = 0;
       

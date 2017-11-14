@@ -139,6 +139,20 @@ vector<double> VectorFunctions::dot(const vector<double> m1,
     return output;
 }
 
+double safeLog(const double x) {
+   /*
+    * Return the log value of x.
+    * If this would return NaN, then instead return 1.
+    * Input:
+    *    x, value to calculate the log-value of.
+    * Output:
+    *    The log value of x, or, if that'd be NaN, 1.
+    */
+   double y = log(x);
+   if(y != y) { return 1; }
+   return y;
+}
+
 double VectorFunctions::crossEntropy(const vector<double> output,
                                     const vector<double> input, 
                                     const vector<double> labels,
@@ -158,22 +172,35 @@ double VectorFunctions::crossEntropy(const vector<double> output,
       exit(1);
    }
    
+   double out = 0.0;
+   
+//   FILE * testoutput;
+//   testoutput = fopen("testoutput.txt", "w");
+   
    if(softmax) {
-      return -vectorsum(labels * (input - log(vectorsum(epower(input)))));
+      out = -vectorsum(labels * (input - log(vectorsum(epower(input)))));
    } else {
       double crossent = 0.0;
+      double firstLog, secondLog;
       for(auto o = output.begin(), l = labels.begin(), e = output.end(); 
                o != e; o++, l++) {
-         crossent += (*l * log(*o)) + (1 - *l) * log(1 - *o);
+         firstLog = (*o) == 0 ? 0 : log(*o);
+         secondLog = (1 - *o) == 0 ? 0 : log(1 - *o);
+         crossent += (*l * firstLog) + (1 - *l) * secondLog;
+         //fprintf(testoutput, "crossent = %f\n", crossent);
+         //fprintf(testoutput, "o = %f, l = %f, log(o) = %f, log(1 - o) = %f\n", 
+         //        *o, *l, safeLog(*o), safeLog(1 - *o));
+         //if(crossent != crossent) { printf("o: %f, l: %f", *o, *l); exit(0); }
       }
-      return -crossent;
+      out = -crossent;
    }
-   
+//   fclose(testoutput);
+   return out;
 //   const unsigned long VECTOR_SIZE = output.size();
 //   for (unsigned i = 0; i != VECTOR_SIZE; ++i){
 //      crossent += labels[i] * log(output[i]);
 //   };
-   //return -crossent;
+//   return -crossent;
 }
 
 double VectorFunctions::meanSquaredError(const vector<double> output, 

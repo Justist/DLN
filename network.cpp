@@ -15,8 +15,8 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
     
    std::cout << "\33c\r" << std::endl; //clean the terminal
    printf("Training the network with %d layers containing %d nodes, with seed %.2f \
-           \nand learning rate %.4f\n\n\n\n\n", hiddenLayers, layerLength, 
-                                                seed, learningRate);
+           \nand learning rate %.4f\n\n", hiddenLayers, layerLength, 
+                                          seed, learningRate);
    outSize = outputLength;
    networkSeed = seed;
    srand(networkSeed);
@@ -153,13 +153,12 @@ void Network::backpropagate(const double errorRate/*, const vector<float> output
    //For-loop over the layers.
    for(auto lw = weights.rbegin(), ld = deltas.rbegin(), li = inputValues.rbegin(), 
             ew = weights.rend(); lw != ew; lw++, ld++, li++) {
-      //For-loop over the elements in each layer.
-      u = VF->sigmoid_d((*li)) * learningRate * errorRate * (*ld);
+      u = learningRate * errorRate + (*ld);
       
-      std::cout << "\33[6A\r" << "u: ";
-      for(float x : u) { printf("%.6f", x); }
-      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
-      std::cout << "\33[6B\r";
+//      std::cout << "\33[6A\r" << "u: ";
+//      for(float x : u) { printf("%.6f\t", x); }
+//      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
+//      std::cout << "\33[6B\r";
       
       *lw = *lw + u;
       *ld = u;
@@ -230,7 +229,7 @@ void Network::run(const vector<double> input, const vector<double> labels) {
     *    labels, vector<float>, the labels to compare the output to.
     */
    vector<double> output = createOutput(input);
-   double error = VF->crossEntropy(output, input, labels, false);
+   double error = VF->crossEntropy(VF->softmax(output), input, labels, true);
    
    updateAccuracy(output, labels);
    printOutputAndLabels(output, labels);

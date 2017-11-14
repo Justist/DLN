@@ -1,10 +1,5 @@
+#include "includes.hpp"
 #include "network.hpp"
-
-#include <chrono>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
 
 // Global variables so they can be altered in a void function.
 bool sigintsent = false;
@@ -27,7 +22,7 @@ void SIGINThandler(int s) {
     * Handler to catch a SIGINT.
     * Used to escape the while-loop in the main function.
     */
-   cout << "\n\n\n\n\n\nSIGINT caught!" << endl;
+   cout << "\33[4B\rSIGINT caught!" << endl;
    cout << "\nDo you want to export the network? y/N" << endl;
    std::string answer;
    std::cin >> answer;
@@ -37,6 +32,15 @@ void SIGINThandler(int s) {
 }
 
 void AplusB(vector<double>& m1, vector<double>& m2) {
+   /*
+    * Generates input for the network.
+    * The 'problem' is whether the sum of two generated numbers 
+    * a and b is bigger than 0. If so, the network should return 1,
+    * else 0.
+    * Inputs:
+    *    m1, the vector which will contain a and b.
+    *    m2, the vector which will contain 1 if a + b > 0, else 0. 
+    */
    srand(static_cast<long unsigned int>
             (std::chrono::high_resolution_clock::now().
                           time_since_epoch().count()));
@@ -50,6 +54,14 @@ void AplusB(vector<double>& m1, vector<double>& m2) {
 }
 
 void XOR(vector<double>& m1, vector<double>& m2) {
+   /*
+    * Generates input for the network.
+    * The 'problem' is if a xor b is equal to 1. 
+    * If so, the network should return 1, else 0.
+    * Inputs:
+    *    m1, the vector which will contain a and b.
+    *    m2, the vector which will contain 1 if a xor b == 1, else 0. 
+    */
    srand(static_cast<long unsigned int>
             (std::chrono::high_resolution_clock::now().
                           time_since_epoch().count()));
@@ -102,9 +114,6 @@ int main(int argc, char** argv) {
    sigemptyset(&sigIntHandler.sa_mask);
    sigIntHandler.sa_flags = 0;
    sigaction(SIGINT, &sigIntHandler, NULL);
-   
-   using namespace std::chrono;
-   
    
    while(sigintsent == false) {
       AplusB(m1, m2);
