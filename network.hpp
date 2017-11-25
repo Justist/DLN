@@ -4,13 +4,14 @@
 #include "includes.hpp"
 #include "vectorFunctions.hpp"
 
+using std::map;
 using std::vector;
 
 class Network {
    private:
-      vector<vector<double>> weights;
+      vector<vector<double>> hiddenlayers;
       vector<vector<double>> deltas;
-      vector<vector<double>> inputValues;
+      vector<map<int, int>> weights;
       vector<double> outputLayer;
       vector<double> outputDelta;
       vector<double> outputLayerInput;

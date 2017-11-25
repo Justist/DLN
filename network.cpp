@@ -25,14 +25,14 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
    VF = new VectorFunctions();
    
    for(int i = 0; i < hiddenLayers; i++) {
-      vector<double> weightLayer(layerSize), 
-                     deltaLayer(layerSize), 
-                     inputLayer(layerSize);
+      map<int, int> weightLayer(layerSize); 
+      vector<double> deltaLayer(layerSize), 
+                     valueLayer(layerSize);
       for(int j = 0; j < layerLength; j++) {
          weightLayer[j] = static_cast <double> (rand()) / 
                           static_cast <double> (RAND_MAX);
          deltaLayer[j] = 1.0;
-         inputLayer[j] = 0.0;
+         valueLayer[j] = 0.0;
       }
       weights.push_back(weightLayer);
       deltas.push_back(deltaLayer);
@@ -53,21 +53,6 @@ void Network::initialiseOutputLayer() {
          layer[j] = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
    }
    outputLayer = layer;
-}
-
-vector<double> Network::getWeightLayer(unsigned int layer) {
-   /*
-    * Return the requested layer of weights.
-    * Input:
-    *    layer: Non-negative integer depicting the layer requested.
-    * Output:
-    *    vector<float> containing the requested layer.
-    */
-   if(layer > layerSize) {
-      std::cerr << "Layer does not exist!\nGiving layer 0 instead." << std::endl;
-      layer = 0;
-   }
-   return weights[layer];
 }
 
 vector<double> Network::createOutput(const vector<double> input) {
