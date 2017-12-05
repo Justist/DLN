@@ -1,49 +1,58 @@
 #ifndef NETWORK_H
-#define NETWORK_h
+#define NETWORK_H
 
 #include "includes.hpp"
 #include "vectorFunctions.hpp"
 
-using std::map;
 using std::vector;
 
 class Network {
    private:
-      vector<vector<double>> hiddenlayers;
-      vector<vector<double>> deltas;
-      vector<map<int, int>> weights;
-      vector<double> outputLayer;
-      vector<double> outputDelta;
-      vector<double> outputLayerInput;
-      unsigned int layerSize;
-      unsigned int outSize;
-      float networkSeed;
+      vector< vector< Node>> hiddenlayers;
+      vector< Node > inputLayer;
+      vector< OutputNode > outputLayer;
+      unsigned int hiddenLayerSize;
+      unsigned int hiddenLayerAmount;
+      unsigned int outputLayerSize;
+      unsigned int networkSeed;
+      double weightInit = 0.5;
       float learningRate = 0.5;
       float accuracy = 0.0;
       unsigned int aantalgoed = 0;
       unsigned int aantalslecht = 0;
-      VectorFunctions* VF;
+      VectorFunctions *VF;
       
       unsigned int teller = 0;
-      
-      void initialiseOutputLayer();
+   
    public:
-      Network(int outputlength, int hiddenLayers = 1, 
-              int layerLength = 2, float seed = 420.42);
-      ~Network();
+      explicit Network (unsigned int outputlength, unsigned int hiddenLayers = 1,
+                        unsigned int layerLength = 2, unsigned int seed = 420);
       
-      vector<double> createOutput(const vector<double> input);
-      vector<double> getWeightLayer(unsigned int layer);
-      void backpropagate(const double errorRate);
-      void run(const vector<double> input, const vector<double> labels);
+      ~Network ();
       
-      void exportNetwork(const std::string fileName);
-      void importNetwork(const std::string fileName);
+      void clearValues (vector< Node >& nodeLayer);
       
-      void printOutputAndLabels(const vector<double> output, 
-                                const vector<double> labels);
-      void updateAccuracy(const vector<double> output, 
-                          const vector<double> labels);
+      void clearValues (vector< vector< Node>>& nodeLayers);
+      
+      template< typename Iterator >
+      void initialiseWeights (Iterator& begin, Iterator& end,
+                              int weightSize);
+      
+      void createOutput (vector< double > input);
+      
+      //void backpropagate(double errorRate);
+      void run (vector< double > input, vector< double > labels);
+      
+      //void exportNetwork(std::string fileName);
+      //void importNetwork(std::string fileName);
+      
+      void printOutputAndLabels (vector< double > output,
+                                 vector< double > labels);
+      
+      void updateAccuracy (vector< double > output,
+                           vector< double > labels);
+   
+   vector< double > returnOutputValues ();
 };
 
 #endif

@@ -1,7 +1,8 @@
 #include "network.hpp"
 #include "overloads.cpp"
 
-Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed) {
+Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
+                  unsigned int layerLength, unsigned int seed) {
    /*
     * Create a neural network by initialising multiple layers of weights.
     * Each layer is a vector of floats, and the network is a vector of layers.
@@ -12,50 +13,79 @@ Network::Network(int outputLength, int hiddenLayers, int layerLength, float seed
     *    layerLength: The length of each of the hidden layers.
     *    seed: Random seed for the random number generation.
     */
-    
+   
    std::cout << "\33c\r" << std::endl; //clean the terminal
-   printf("Training the network with %d layers containing %d nodes, with seed %.2f \
-           \nand learning rate %.4f\n\n", hiddenLayers, layerLength, 
+   printf("Training the network with %d layers containing %d nodes, with seed %d \
+           \nand learning rate %.4f\n\n", hiddenLayers, layerLength,
                                           seed, learningRate);
-   outSize = outputLength;
+   outputLayerSize = outputLength;
    networkSeed = seed;
    srand(networkSeed);
-   layerSize = layerLength;
+   hiddenLayerSize = layerLength;
+   hiddenLayerAmount = hiddenLayers;
    
    VF = new VectorFunctions();
    
-   for(int i = 0; i < hiddenLayers; i++) {
-      map<int, int> weightLayer(layerSize); 
-      vector<double> deltaLayer(layerSize), 
-                     valueLayer(layerSize);
-      for(int j = 0; j < layerLength; j++) {
-         weightLayer[j] = static_cast <double> (rand()) / 
-                          static_cast <double> (RAND_MAX);
-         deltaLayer[j] = 1.0;
-         valueLayer[j] = 0.0;
-      }
-      weights.push_back(weightLayer);
-      deltas.push_back(deltaLayer);
-      inputValues.push_back(inputLayer);
+   // Fill the hiddenlayers with nodes
+   vector< double > defaultWeights(hiddenLayerSize, weightInit);
+   Node node = {defaultWeights, 0.0, 0.0};
+   Node biasNode = {defaultWeights, -1.0, 0.0};
+   for (unsigned int i = 0; i < hiddenLayers; i++) {
+      vector< Node > weightLayer(hiddenLayerSize, node);
+      weightLayer[0] = biasNode;
+      hiddenlayers.push_back(weightLayer);
    }
-   initialiseOutputLayer();
+   // Fill the outputlayer with nodes
+   OutputNode outputNode = {0.0, 0.0};
+   for (unsigned int j = 0; j < outputLayerSize; j++) {
+      outputLayer.push_back(outputNode);
+   }
 }
 
-Network::~Network() {}
+Network::~Network () = default;
 
-void Network::initialiseOutputLayer() {
+template< typename Iterator >
+void Network::initialiseWeights (Iterator& begin, Iterator& end, const int weightSize) {
    /*
-    * Initialise the output weights of the network.
+    * Initialise the weights of a given (part of a) vector of Nodes to weightInit.
+    * Input:
+    *    begin, the iterator pointing to the start of the vector (part)
+    *    end, the iterator pointing to the end of the vector (part)
+    *    weightSize, the size of the layer above, so the amount of weights the current node should have
     */
-   srand(networkSeed);
-   vector<double> layer(outSize);
-   for(unsigned int j = 0; j < outSize; j++) {
-         layer[j] = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+   vector< double > defaultWeights(weightSize, weightInit);
+   for (Iterator it = begin; it != end; ++it) {
+      (*it).weights = defaultWeights;
    }
-   outputLayer = layer;
 }
 
-vector<double> Network::createOutput(const vector<double> input) {
+void Network::clearValues (vector< vector< Node>>& nodeLayers) {
+   /*
+    * Call clearValues for each vector of Nodes in the network.
+    * Used to clear the network before feeding new input.
+    * Input:
+    *     nodeLayers, a vector of vectors of Nodes.
+    *       Basically the whole network.
+    */
+   for (vector< Node > nodeLayer : nodeLayers) {
+      clearValues(nodeLayer);
+   }
+}
+
+void Network::clearValues (vector< Node >& nodeLayer) {
+   /*
+    * Set the value of each node in the given nodeLayer to 0.
+    * The bias node, the first one, is set to -1.
+    * Input:
+    *     nodeLayer, vector of Nodes
+    */
+   for (Node node : nodeLayer) {
+      node.value = 0.0;
+   }
+   nodeLayer[0].value = -1.0;
+}
+
+void Network::createOutput (const vector< double > input) {
    /*
     * Runs the input through the network.
     * Input:
@@ -64,107 +94,143 @@ vector<double> Network::createOutput(const vector<double> input) {
     * Output:
     *    vector of floats, output of the network
     */
-   vector<double> output = input;
-   for(auto lw = weights.begin(), li = inputValues.begin(), ew = weights.end(); lw != ew; lw++, li++) {
-      *li = VF->dot(*lw, output, layerSize, 1, 1);
-      output = *li;
+   // Clear the network, set all values to 0.0 except for the bias nodes
+   clearValues(hiddenlayers);
+   for (OutputNode node : outputLayer) { node.value = 0.0; }
+   
+   // Then put the input values in the inputLayer
+   unsigned long inputSize = input.size();
+   unsigned long inputLayerSize = inputLayer.size();
+   
+   // If the input is larger than the inputLayer, make the inputLayer larger
+   if (inputSize > inputLayerSize) {
+      inputLayer.resize(inputSize);
+      auto begin = inputLayer.begin() + inputLayerSize;
+      auto end = inputLayer.end();
+      initialiseWeights(begin, end, hiddenLayerSize);
    }
-   output = VF->sigmoid(VF->dot(outputLayer, output, outSize, 1, 1));
-   return output;
-}
-
-void Network::exportNetwork(const std::string fileName) {
-   /*
-    * Export the network to a given file.
-    * Format for exporting is, when given network
-    * a1 b1
-    * a2 b2
-    * a3 b3
-    * is as follows:
-    * a1 a2 a3 
-    * b1 b2 b3 
-    * 
-    * Input:
-    *    fileName, string, name of the file the network will be written to.
-    */
-   std::ofstream of(fileName);
-   for(vector<double> layer : weights) {
-      for(double weight : layer) {
-         of << weight << " ";
+   
+   // Then set the inputLayer to the input.
+   for (unsigned int i = 0; i < input.size(); i++) {
+      inputLayer[i].value = input[i];
+   }
+   
+   // First calculate the first layer of the hidden layers with the input
+   for (Node inputNode : inputLayer) {
+      for (unsigned int j = 1; j < hiddenLayerSize; j++) {
+         hiddenlayers[0][j].value += inputNode.value * inputNode.weights[j];
       }
-      of << "\n";
    }
-}
-
-void Network::importNetwork(const std::string fileName) {
-   /*
-    * Import a network in given file and return it.
-    * It is returned so the user can also specify if the outputlayer is
-    * included.
-    * The network to be imported should be in the format as described
-    * in the comments of function Network::exportNetwork.
-    * Input:
-    *    fileName, string, name of the file the network will be read from.
-    * Output:
-    *    a vector<vector<float>> containing the network.
-    */
-   std::ifstream inF(fileName);
-   vector<vector<double>> network;
-   double f;
-   std::string line = "";
-   while (std::getline(inF, line, '\n')) {
-      std::stringstream ss(line);
-      vector<double> layer;
-      while(!ss.fail()) {
-         ss >> f;
-         layer.push_back(f);
+   
+   // Then do so for each hidden layer except the last
+   for (unsigned int k = 0; k < hiddenLayerAmount - 1; k++) {
+      for (Node hiddenNode : hiddenlayers[k]) {
+         for (unsigned int l = 1; l < hiddenLayerSize; l++) {
+            hiddenlayers[k+1][l].value += hiddenNode.value * hiddenNode.weights[l];
+         }
       }
-      network.push_back(layer);
    }
-   weights = network;
-   outputLayer = weights.back();
-   weights.pop_back();
-}
-
-void Network::backpropagate(const double errorRate/*, const vector<float> output*/) {
-   /*
-    * Backpropagate through the network and adjust the weights based on the
-    * given error rate and the learning rate.
-    * Input:
-    *    errorRate, float, depicting the error rate based on which the weights
-    *    are to be adjusted.
-    */
-   vector<double> u;
-   //For-loop over the layers.
-   for(auto lw = weights.rbegin(), ld = deltas.rbegin(), li = inputValues.rbegin(), 
-            ew = weights.rend(); lw != ew; lw++, ld++, li++) {
-      u = learningRate * errorRate + (*ld);
-      
-//      std::cout << "\33[6A\r" << "u: ";
-//      for(float x : u) { printf("%.6f\t", x); }
-//      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
-//      std::cout << "\33[6B\r";
-      
-      *lw = *lw + u;
-      *ld = u;
+   
+   // Then for the last layer
+   for (Node hiddenNode : hiddenlayers[hiddenLayerAmount - 1]) {
+      for (unsigned int m = 0; m < outputLayerSize; m++) {
+         outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
+      }
    }
 }
 
-void clearXLines(const unsigned int x) {
+//void Network::exportNetwork(const std::string fileName) {
+//   /*
+//    * Export the network to a given file.
+//    * Format for exporting is, when given network
+//    * a1 b1
+//    * a2 b2
+//    * a3 b3
+//    * is as follows:
+//    * a1 a2 a3 
+//    * b1 b2 b3 
+//    * 
+//    * Input:
+//    *    fileName, string, name of the file the network will be written to.
+//    */
+//   std::ofstream of(fileName);
+//   for(weightLayer layer : weights) {
+//      for(weightMap weight : layer) {
+//         of << weight << " ";
+//      }
+//      of << "\n";
+//   }
+//}
+
+//void Network::importNetwork(const std::string fileName) {
+//   /*
+//    * Import a network in given file and return it.
+//    * It is returned so the user can also specify if the outputlayer is
+//    * included.
+//    * The network to be imported should be in the format as described
+//    * in the comments of function Network::exportNetwork.
+//    * Input:
+//    *    fileName, string, name of the file the network will be read from.
+//    * Output:
+//    *    a vector<vector<float>> containing the network.
+//    */
+//   std::ifstream inF(fileName);
+//   vector<vector<double>> network;
+//   double f;
+//   std::string line = "";
+//   while (std::getline(inF, line, '\n')) {
+//      std::stringstream ss(line);
+//      vector<double> layer;
+//      while(!ss.fail()) {
+//         ss >> f;
+//         layer.push_back(f);
+//      }
+//      network.push_back(layer);
+//   }
+//   weights = network;
+//   outputLayer = weights.back();
+//   weights.pop_back();
+//}
+
+//void Network::backpropagate(const double errorRate/*, const vector<float> output*/) {
+//   /*
+//    * Backpropagate through the network and adjust the weights based on the
+//    * given error rate and the learning rate.
+//    * Input:
+//    *    errorRate, float, depicting the error rate based on which the weights
+//    *    are to be adjusted.
+//    */
+//   vector<double> u;
+//   //For-loop over the layers.
+//   for(auto lw = weights.rbegin(), ld = deltas.rbegin(), li = inputValues.rbegin(), 
+//            ew = weights.rend(); lw != ew; lw++, ld++, li++) {
+//      u = learningRate * errorRate + (*ld);
+//      
+////      std::cout << "\33[6A\r" << "u: ";
+////      for(float x : u) { printf("%.6f\t", x); }
+////      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
+////      std::cout << "\33[6B\r";
+//      
+//      *lw = *lw + u;
+//      *ld = u;
+//   }
+//}
+
+void clearXLines (const unsigned int x) {
    /*
     * Clears the current line and the x lines above.
     * Input:
     *    x, the amount of lines above the current line to clear.
     */
    std::cout << "\33[2K\r"; // go to start of line with the cursor
-   for(unsigned int i = 0; i < x; i++) {
+   for (unsigned int i = 0; i < x; i++) {
       std::cout << "\33[A\r"; // go 1 line up with the cursor
       std::cout << "\33[2K\r"; // clear the current line
    }
 }
 
-void Network::printOutputAndLabels(const vector<double> output, 
-                                   const vector<double> labels) {
+void Network::printOutputAndLabels (const vector< double > output,
+                                    const vector< double > labels) {
    /*
     * Print both the output and the labels (what the output should be),
     * so a comparison can be made by the user.
@@ -174,19 +240,19 @@ void Network::printOutputAndLabels(const vector<double> output,
     *    output, the output of the network
     *    labels, what the output should be
     */
-   unsigned int lines = 2 + outSize;
+   unsigned int lines = 2 + outputLayerSize;
    //clearXLines(lines);
    std::cout << "\33[" + std::to_string(lines) + "A\r";
    std::cout << "Output\t\tLabel" << std::endl;
-   for(auto o = begin(output), l = begin(labels), e = end(output); 
-            o != e; o++, l++) {
+   for (auto o = begin(output), l = begin(labels), e = end(output);
+        o != e; o++, l++) {
       printf("%.6f\t%.0f\n", *o, *l);
    }
    printf("Accuracy: %.6f en teller: %d\n", accuracy, teller++);
 }
 
-void Network::updateAccuracy(const vector<double> output, 
-                             const vector<double> labels) {
+void Network::updateAccuracy (const vector< double > output,
+                              const vector< double > labels) {
    /*
     * Update the accuracy of the network, based on the output and what the 
     * output should be.
@@ -194,18 +260,26 @@ void Network::updateAccuracy(const vector<double> output,
     *    output, the output of the network
     *    labels, what the output should be
     */
-   float comp = 0.0;
+   double comp = 0.0;
    const unsigned long VECTOR_SIZE = output.size();
-   for(unsigned long i = 0; i < VECTOR_SIZE; i++) {
+   for (unsigned long i = 0; i < VECTOR_SIZE; i++) {
       comp = output[0] + labels[0];
-      if((comp >= 1.5) || (comp < .5)) aantalgoed++;
-      else aantalslecht++;
+      if ((comp >= 1.5) || (comp < .5)) { aantalgoed++; }
+      else { aantalslecht++; }
    }
-
+   
    accuracy = aantalgoed / (float) (aantalgoed + aantalslecht);
 }
 
-void Network::run(const vector<double> input, const vector<double> labels) {
+vector < double> Network::returnOutputValues () {
+   vector < double > outputValues;
+   for (OutputNode node : outputLayer) {
+      outputValues.push_back(node.value);
+   }
+   return outputValues;
+}
+
+void Network::run (const vector< double > input, const vector< double > labels) {
    /*
     * Higher level function to run the input through the network and compare
     * the output to the given labels. It just calls the functions needed to do so.
@@ -213,10 +287,11 @@ void Network::run(const vector<double> input, const vector<double> labels) {
     *    input, vector<float>, the input to run through the network.
     *    labels, vector<float>, the labels to compare the output to.
     */
-   vector<double> output = createOutput(input);
+   createOutput(input);
+   vector < double > output = returnOutputValues();
    double error = VF->crossEntropy(VF->softmax(output), input, labels, true);
    
    updateAccuracy(output, labels);
    printOutputAndLabels(output, labels);
-   backpropagate(error);
+//   backpropagate(error);
 }

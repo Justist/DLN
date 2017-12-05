@@ -8,24 +8,34 @@ using std::cout;
 using std::endl;
 
 class VectorFunctions {
-	private:
-		
-	public:
-		VectorFunctions() {}
-		~VectorFunctions() {}
-	
-		double vectorsum(const vector<double>);
-		vector<double> epower(const vector<double>);
-		vector<double> transpose (double*, const int, const int);
-		vector<double> softmax(const vector<double>);
-		vector<double> sigmoid_d(const vector<double>);
-		double sigmoid_d(const double);
-		vector<double> sigmoid(const vector<double>);
-		vector<double> dot (const vector<double>, const vector<double>, 
-                         const int, const int, const int);
-		double crossEntropy(const vector<double>, const vector<double>, 
-                          const vector<double>, const bool);
-		double meanSquaredError(const vector<double>, const vector<double>);
+private:
+
+public:
+   VectorFunctions () = default;
+   
+   ~VectorFunctions () = default;
+   
+   double vectorsum (vector< double >);
+   
+   vector< double > epower (vector< double >);
+   
+   vector< double > transpose (const double *, int, int);
+   
+   vector< double > softmax (vector< double >);
+   
+   vector< double > sigmoid_d (vector< double >);
+   
+   double sigmoid_d (double);
+   
+   vector< double > sigmoid (vector< double >);
+   
+   vector< double > dot (vector< double >, vector< double >,
+                         int, int, int);
+   
+   double crossEntropy (vector< double >, vector< double >,
+                        vector< double >, bool);
+   
+   double meanSquaredError (vector< double >, vector< double >);
 };
 
 #endif
