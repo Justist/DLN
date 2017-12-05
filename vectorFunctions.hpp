@@ -36,6 +36,8 @@ public:
                         vector< double >, bool);
    
    double meanSquaredError (vector< double >, vector< double >);
+   
+   double sigmoid (const double x);
 };
 
 #endif

@@ -45,7 +45,8 @@ Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
 Network::~Network () = default;
 
 template< typename Iterator >
-void Network::initialiseWeights (Iterator& begin, Iterator& end, const int weightSize) {
+void Network::initialiseWeights (Iterator& begin, Iterator& end,
+                                 const unsigned long weightSize) {
    /*
     * Initialise the weights of a given (part of a) vector of Nodes to weightInit.
     * Input:
@@ -54,7 +55,7 @@ void Network::initialiseWeights (Iterator& begin, Iterator& end, const int weigh
     *    weightSize, the size of the layer above, so the amount of weights the current node should have
     */
    vector< double > defaultWeights(weightSize, weightInit);
-   for (Iterator it = begin; it != end; ++it) {
+   for (Iterator& it = begin; it != end; ++it) {
       (*it).weights = defaultWeights;
    }
 }
@@ -67,7 +68,7 @@ void Network::clearValues (vector< vector< Node>>& nodeLayers) {
     *     nodeLayers, a vector of vectors of Nodes.
     *       Basically the whole network.
     */
-   for (vector< Node > nodeLayer : nodeLayers) {
+   for (vector< Node >& nodeLayer : nodeLayers) {
       clearValues(nodeLayer);
    }
 }
@@ -79,7 +80,7 @@ void Network::clearValues (vector< Node >& nodeLayer) {
     * Input:
     *     nodeLayer, vector of Nodes
     */
-   for (Node node : nodeLayer) {
+   for (Node& node : nodeLayer) {
       node.value = 0.0;
    }
    nodeLayer[0].value = -1.0;
@@ -96,7 +97,7 @@ void Network::createOutput (const vector< double > input) {
     */
    // Clear the network, set all values to 0.0 except for the bias nodes
    clearValues(hiddenlayers);
-   for (OutputNode node : outputLayer) { node.value = 0.0; }
+   for (OutputNode& node : outputLayer) { node.value = 0.0; }
    
    // Then put the input values in the inputLayer
    unsigned long inputSize = input.size();
@@ -119,6 +120,10 @@ void Network::createOutput (const vector< double > input) {
    for (Node inputNode : inputLayer) {
       for (unsigned int j = 1; j < hiddenLayerSize; j++) {
          hiddenlayers[0][j].value += inputNode.value * inputNode.weights[j];
+         if (hiddenlayers[0][j].value != hiddenlayers[0][j].value) {
+            printf("input value %.5f, weights %.5f\n", inputNode.value, inputNode.weights[j]);
+            exit(0);
+         }
       }
    }
    
@@ -135,6 +140,10 @@ void Network::createOutput (const vector< double > input) {
    for (Node hiddenNode : hiddenlayers[hiddenLayerAmount - 1]) {
       for (unsigned int m = 0; m < outputLayerSize; m++) {
          outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
+         if (outputLayer[m].value != outputLayer[m].value) {
+            printf("out value %.5f, weights %.5f\n", hiddenNode.value, hiddenNode.weights[m]);
+            exit(0);
+         }
       }
    }
 }
@@ -192,29 +201,47 @@ void Network::createOutput (const vector< double > input) {
 //   weights.pop_back();
 //}
 
-//void Network::backpropagate(const double errorRate/*, const vector<float> output*/) {
-//   /*
-//    * Backpropagate through the network and adjust the weights based on the
-//    * given error rate and the learning rate.
-//    * Input:
-//    *    errorRate, float, depicting the error rate based on which the weights
-//    *    are to be adjusted.
-//    */
-//   vector<double> u;
-//   //For-loop over the layers.
-//   for(auto lw = weights.rbegin(), ld = deltas.rbegin(), li = inputValues.rbegin(), 
-//            ew = weights.rend(); lw != ew; lw++, ld++, li++) {
-//      u = learningRate * errorRate + (*ld);
-//      
-////      std::cout << "\33[6A\r" << "u: ";
-////      for(float x : u) { printf("%.6f\t", x); }
-////      if(u[0] != u[0]) { printf("\n%f, %f, %f, %f", (*li)[0], (*ld)[0], learningRate, errorRate); exit(0); }
-////      std::cout << "\33[6B\r";
-//      
-//      *lw = *lw + u;
-//      *ld = u;
-//   }
-//}
+void Network::backpropagate (const double errorRate) {
+   /*
+    * Backpropagate through the network and adjust the weights based on the
+    * given error rate and the learning rate.
+    * Input:
+    *    errorRate, float, depicting the error rate based on which the weights
+    *    are to be adjusted.
+    */
+   // Update the delta of the output layer
+   for (OutputNode& on : outputLayer) {
+      on.delta = errorRate * VF->sigmoid_d(on.value);
+   }
+   // Update the weights and deltas of the last hidden layer
+   for (Node node : hiddenlayers[hiddenLayerAmount - 1]) {
+      node.delta = 0.0;
+      for (unsigned int i = 0; i < outputLayerSize; i++) {
+         node.weights[i] += learningRate * outputLayer[i].delta * VF->sigmoid(node.value);
+         node.delta += VF->sigmoid_d(node.value) * node.weights[i] * outputLayer[i].delta;
+      }
+   }
+   // Do the same for all other hidden layers
+   for (int j = hiddenLayerAmount - 2; j >= 0; j--) {
+      for (Node& node : hiddenlayers[j]) {
+         node.delta = 0.0;
+         for (unsigned int i = 0; i < hiddenLayerSize; i++) {
+            node.weights[i] += learningRate * hiddenlayers[j + 1][i].delta *
+                               VF->sigmoid(node.value);
+            node.delta += VF->sigmoid_d(node.value) * node.weights[i] *
+                          hiddenlayers[j + 1][i].delta;
+         }
+      }
+   }
+   // Then do so for the weights of the input layer
+   // No delta is updated, because there are no layers beneath this one
+   for (Node& node : inputLayer) {
+      for (unsigned int i = 0; i < hiddenLayerSize; i++) {
+         node.weights[i] += learningRate * hiddenlayers[0][i].delta *
+                            VF->sigmoid(node.value);
+      }
+   }
+}
 
 void clearXLines (const unsigned int x) {
    /*
@@ -260,7 +287,7 @@ void Network::updateAccuracy (const vector< double > output,
     *    output, the output of the network
     *    labels, what the output should be
     */
-   double comp = 0.0;
+   double comp;
    const unsigned long VECTOR_SIZE = output.size();
    for (unsigned long i = 0; i < VECTOR_SIZE; i++) {
       comp = output[0] + labels[0];
@@ -289,9 +316,9 @@ void Network::run (const vector< double > input, const vector< double > labels) 
     */
    createOutput(input);
    vector < double > output = returnOutputValues();
-   double error = VF->crossEntropy(VF->softmax(output), input, labels, true);
+   double error = VF->crossEntropy(output, input, labels, false);
    
    updateAccuracy(output, labels);
    printOutputAndLabels(output, labels);
-//   backpropagate(error);
+   backpropagate(error);
 }

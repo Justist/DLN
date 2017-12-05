@@ -42,3 +42,5 @@ network*
 
 # Other stuff
 *.txt
+cmake-build-debug/
+.idea/

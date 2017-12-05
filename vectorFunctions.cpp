@@ -76,7 +76,7 @@ vector< double > VectorFunctions::sigmoid_d (const vector< double > m1) {
    const unsigned long VECTOR_SIZE = m1.size();
    vector< double > output(VECTOR_SIZE);
    
-   for (unsigned i = 0; i < VECTOR_SIZE; i++) {
+   for (unsigned int i = 0; i < VECTOR_SIZE; i++) {
       output[i] = m1[i] * (1 - m1[i]);
    }
 //    std::cout << "sigmoid_d input:" << m1[0] << std::endl;
@@ -100,12 +100,23 @@ vector< double > VectorFunctions::sigmoid (const vector< double > m1) {
    */
    const unsigned long VECTOR_SIZE = m1.size();
    vector< double > output(VECTOR_SIZE);
-   
-   for (unsigned i = 0; i != VECTOR_SIZE; ++i) {
+   for (unsigned int i = 0; i != VECTOR_SIZE; ++i) {
       output[i] = 1 / (1 + exp(-m1[i]));
    }
-   
    return output;
+}
+
+double VectorFunctions::sigmoid (const double x) {
+   /*
+    * Calculate the sigmoid of given double x.
+    * Input:
+    *    x, double, number to take the sigmoid of.
+    * Output:
+    *    The sigmoid of x.
+    */
+//   double epower = exp(-x);
+//   if (epower < -1000) { epower = -1000; }
+   return 1 / (1 + exp(-x));
 }
 
 vector< double > VectorFunctions::dot (const vector< double > m1,
@@ -172,7 +183,7 @@ double VectorFunctions::crossEntropy (const vector< double > output,
       exit(1);
    }
    
-   double out = 0.0;
+   double out;
 
 //   FILE * testoutput;
 //   testoutput = fopen("testoutput.txt", "w");

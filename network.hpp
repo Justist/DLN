@@ -36,11 +36,11 @@ class Network {
       
       template< typename Iterator >
       void initialiseWeights (Iterator& begin, Iterator& end,
-                              int weightSize);
+                              unsigned long weightSize);
       
       void createOutput (vector< double > input);
-      
-      //void backpropagate(double errorRate);
+   
+   void backpropagate (double errorRate);
       void run (vector< double > input, vector< double > labels);
       
       //void exportNetwork(std::string fileName);
