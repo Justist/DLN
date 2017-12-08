@@ -74,16 +74,16 @@ vector< double > VectorFunctions::softmax (const vector< double > vec) {
 }
 
 vector< double > VectorFunctions::sigmoid_d (const vector< double > m1) {
-   /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)),
+   /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
        Input: m1, a vector.
-       Output: x(1 - x) for every element of the input matrix m1.
+       Output: x(1.0 - x) for every element of the input matrix m1.
    */
    const unsigned long VECTOR_SIZE = m1.size();
    vector< double > output(VECTOR_SIZE);
    
    for (unsigned int i = 0; i < VECTOR_SIZE; i++) {
-      output[i] = m1[i] * (1 - m1[i]);
+      output[i] = m1[i] * (1.0 - m1[i]);
    }
 //    std::cout << "sigmoid_d input:" << m1[0] << std::endl;
    
@@ -91,18 +91,18 @@ vector< double > VectorFunctions::sigmoid_d (const vector< double > m1) {
 }
 
 double VectorFunctions::sigmoid_d (const double f1) {
-   /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1 - f(x)),
+   /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
        Input: f1, a float.
-       Output: f1(1 - f1).
+       Output: f1(1.0 - f1).
    */
-   return f1 * (1 - f1);
+   return f1 * (1.0 - f1);
 }
 
 vector< double > VectorFunctions::sigmoid (const vector< double > m1) {
-   /*  Returns the value of the sigmoid function f(x) = 1/(1 + e^-x).
+   /*  Returns the value of the sigmoid function f(x) = 1/(1.0 + e^-x).
        Input: m1, a vector.
-       Output: 1/(1 + e^-x) for every element of the input matrix m1.
+       Output: 1/(1.0 + e^-x) for every element of the input matrix m1.
    */
    const unsigned long VECTOR_SIZE = m1.size();
    vector< double > output(VECTOR_SIZE);
@@ -122,7 +122,7 @@ double VectorFunctions::sigmoid (const double x) {
     */
 //   double epower = exp(-x);
 //   if (epower < -1000) { epower = -1000; }
-   return 1 / (1 + exp(-x));
+   return 1.0 / (1.0 + exp(-x));
 }
 
 vector< double > VectorFunctions::dot (const vector< double > m1,
@@ -166,7 +166,7 @@ double safeLog (const double x) {
     *    The log value of x, or, if that'd be NaN, 1.
     */
    double y = log(x);
-   if (y != y) { return 1; }
+   if (y != y) { return 1.0; }
    return y;
 }
 
@@ -198,9 +198,9 @@ double VectorFunctions::crossEntropy (const vector< double > output,
       double firstLog, secondLog;
       for (auto o = output.begin(), l = labels.begin(), e = output.end();
            o != e; o++, l++) {
-         firstLog = (*o) == 0 ? 0 : log(*o);
-         secondLog = (1 - *o) == 0 ? 0 : log(1 - *o);
-         crossent += (*l * firstLog) + (1 - *l) * secondLog;
+         firstLog = (*o) == 0.0 ? 0.0 : log(*o);
+         secondLog = (1.0 - *o) == 0.0 ? 0.0 : log(1.0 - *o);
+         crossent += (*l * firstLog) + (1.0 - *l) * secondLog;
       }
       out = -crossent;
    }

@@ -43,8 +43,13 @@ Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
    vector< double > defaultWeights(hiddenLayerSize, weightInit);
    Node node = {defaultWeights, 0.0, 0.0};
    Node biasNode = {defaultWeights, -1.0, 0.0};
+   int size = hiddenLayerSize;
    for (unsigned int i = 0; i < hiddenLayers; i++) {
-      vector< Node > weightLayer(hiddenLayerSize, node);
+      if(i == hiddenLayers - 1) {
+         // Last layer may have different size of weightvectors.
+         size = outputLayerSize;
+      }
+      vector< Node > weightLayer(size, node);
       weightLayer[0] = biasNode;
       hiddenlayers.push_back(weightLayer);
    }
@@ -327,6 +332,14 @@ void Network::updateAccuracy (const vector< double > output,
 }
 
 vector < double> Network::returnOutputValues () {
+   /*
+    * Convert the outputLayer, consisting of OutputNodes,
+    * to a vector of doubles which are the values of these
+    * OutputNodes.
+    * Output:
+    *    vector of doubles, corresponding to the values of
+    *       the OutputNodes in outputLayer.
+    */
    vector < double > outputValues;
    for (OutputNode node : outputLayer) {
       outputValues.push_back(node.value);
@@ -344,7 +357,7 @@ void Network::run (const vector< double > input, const vector< double > labels) 
     */
    createOutput(input);
    // 1 - output because it for some reason is keen on predicting it wrong.
-   vector< double > output = 1 - VF->sigmoid(returnOutputValues());
+   vector< double > output = /* 1 - */ VF->sigmoid(returnOutputValues());
    double error = VF->crossEntropy(output, input, labels, false);
    
    updateAccuracy(output, labels);
