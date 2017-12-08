@@ -76,20 +76,20 @@ void XOR (vector< double >& m1, vector< double >& m2) {
    } else { m2 = {0.0}; } //{0.0, 1.0};
 }
 
-//void exportNetwork(Network network, const unsigned int outputlength) {
-//   /*
-//    * Creates a filename based on the current datetime and the length
-//    * of the output layer, then exports the network to a file with that name.
-//    * Input:
-//    *    outputlength, the length of the output layer
-//    */
-//   auto t = std::time(nullptr);
-//   auto tm = *std::localtime(&t);
-//   std::ostringstream oss;
-//   oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
-//   network.exportNetwork("network" + oss.str() + 
-//                         "-ol_" + std::to_string(outputlength));
-//}
+void exportNetwork (Network network, const unsigned int outputlength) {
+   /*
+    * Creates a filename based on the current datetime and the length
+    * of the output layer, then exports the network to a file with that name.
+    * Input:
+    *    outputlength, the length of the output layer
+    */
+   auto t = std::time(nullptr);
+   auto tm = *std::localtime(&t);
+   std::ostringstream oss;
+   oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
+   network.exportNetwork("network" + oss.str() +
+                         "-ol_" + std::to_string(outputlength));
+}
 
 int main (int argc __attribute__((unused)),
           char **argv __attribute__((unused))) {
@@ -119,11 +119,12 @@ int main (int argc __attribute__((unused)),
    sigaction(SIGINT, &sigIntHandler, nullptr);
    
    while (!sigintsent) {
-      AplusB(m1, m2);
+      //AplusB(m1, m2);
+      XOR(m1, m2);
       network.run(m1, m2);
    }
-//   if(wantToExport) {
-//      exportNetwork(network, outputlength);
-//   }
+   if (wantToExport) {
+      exportNetwork(network, outputlength);
+   }
    return 0;
 }

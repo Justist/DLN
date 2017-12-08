@@ -42,9 +42,10 @@ class Network {
    
    void backpropagate (double errorRate);
       void run (vector< double > input, vector< double > labels);
-      
-      //void exportNetwork(std::string fileName);
-      //void importNetwork(std::string fileName);
+   
+   void exportNetwork (std::string fileName);
+   
+   void importNetwork (std::string fileName);
       
       void printOutputAndLabels (vector< double > output,
                                  vector< double > labels);

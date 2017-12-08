@@ -25,7 +25,13 @@ vector< double > VectorFunctions::epower (const vector< double > m) {
     *    vector of floats which are all e-powers
     */
    vector< double > output;
+   double y;
    for (double x : m) {
+      y = exp(x);
+      if (y != y) {
+         std::cout << "in epower gaat het fout!" << std::endl;
+         exit(0);
+      }
       output.push_back(std::exp(x));
    }
    return output;
@@ -101,7 +107,7 @@ vector< double > VectorFunctions::sigmoid (const vector< double > m1) {
    const unsigned long VECTOR_SIZE = m1.size();
    vector< double > output(VECTOR_SIZE);
    for (unsigned int i = 0; i != VECTOR_SIZE; ++i) {
-      output[i] = 1 / (1 + exp(-m1[i]));
+      output[i] = 1.0 / (1.0 + exp(-m1[i]));
    }
    return output;
 }
@@ -185,9 +191,6 @@ double VectorFunctions::crossEntropy (const vector< double > output,
    
    double out;
 
-//   FILE * testoutput;
-//   testoutput = fopen("testoutput.txt", "w");
-   
    if (softmax) {
       out = -vectorsum(labels * (input - log(vectorsum(epower(input)))));
    } else {
@@ -198,20 +201,10 @@ double VectorFunctions::crossEntropy (const vector< double > output,
          firstLog = (*o) == 0 ? 0 : log(*o);
          secondLog = (1 - *o) == 0 ? 0 : log(1 - *o);
          crossent += (*l * firstLog) + (1 - *l) * secondLog;
-         //fprintf(testoutput, "crossent = %f\n", crossent);
-         //fprintf(testoutput, "o = %f, l = %f, log(o) = %f, log(1 - o) = %f\n", 
-         //        *o, *l, safeLog(*o), safeLog(1 - *o));
-         //if(crossent != crossent) { printf("o: %f, l: %f", *o, *l); exit(0); }
       }
       out = -crossent;
    }
-//   fclose(testoutput);
    return out;
-//   const unsigned long VECTOR_SIZE = output.size();
-//   for (unsigned i = 0; i != VECTOR_SIZE; ++i){
-//      crossent += labels[i] * log(output[i]);
-//   };
-//   return -crossent;
 }
 
 double VectorFunctions::meanSquaredError (const vector< double > output,

@@ -1,6 +1,19 @@
 #include "network.hpp"
 #include "overloads.cpp"
 
+void checkForNan (const double number, const std::vector< double >& rest) {
+   /*
+    * Debug function.
+    */
+   if (number != number) {
+      for (double x : rest) {
+         std::cout << x << " ";
+      }
+      std::cout << std::endl;
+      exit(1);
+   }
+}
+
 Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
                   unsigned int layerLength, unsigned int seed) {
    /*
@@ -120,10 +133,6 @@ void Network::createOutput (const vector< double > input) {
    for (Node inputNode : inputLayer) {
       for (unsigned int j = 1; j < hiddenLayerSize; j++) {
          hiddenlayers[0][j].value += inputNode.value * inputNode.weights[j];
-         if (hiddenlayers[0][j].value != hiddenlayers[0][j].value) {
-            printf("input value %.5f, weights %.5f\n", inputNode.value, inputNode.weights[j]);
-            exit(0);
-         }
       }
    }
    
@@ -140,36 +149,53 @@ void Network::createOutput (const vector< double > input) {
    for (Node hiddenNode : hiddenlayers[hiddenLayerAmount - 1]) {
       for (unsigned int m = 0; m < outputLayerSize; m++) {
          outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
-         if (outputLayer[m].value != outputLayer[m].value) {
-            printf("out value %.5f, weights %.5f\n", hiddenNode.value, hiddenNode.weights[m]);
-            exit(0);
-         }
       }
    }
 }
 
-//void Network::exportNetwork(const std::string fileName) {
-//   /*
-//    * Export the network to a given file.
-//    * Format for exporting is, when given network
-//    * a1 b1
-//    * a2 b2
-//    * a3 b3
-//    * is as follows:
-//    * a1 a2 a3 
-//    * b1 b2 b3 
-//    * 
-//    * Input:
-//    *    fileName, string, name of the file the network will be written to.
-//    */
-//   std::ofstream of(fileName);
-//   for(weightLayer layer : weights) {
-//      for(weightMap weight : layer) {
-//         of << weight << " ";
-//      }
-//      of << "\n";
-//   }
-//}
+void Network::exportNetwork (const std::string fileName) {
+   /*
+    * Export the network to a given file.
+    * First print "x y z", where:
+    *    x is the size of the output layer
+    *    y is the size of the hidden layers
+    *    z is the amount of hidden layers
+    * Then print the weights between each pair of layers,
+    * starting with the topmost between the last hidden and
+    * the output layer. For each such batch of weights, per
+    * Node the vector of weights is printed on one line.
+    * So for the topmost weights, y rows containing x elements
+    * are printed.
+    * Then the other weights are printed in similar fashion, each
+    * following directly on the other, giving z sets of such.
+    * Then at last the input weights are printed. As these may be
+    * variable in the program, no length has the be given and all
+    * the last rows are considered to be part of it.
+    *
+    * Input:
+    *    fileName, string, name of the file the network will be written to.
+    */
+   std::ofstream of(fileName);
+   of << outputLayerSize << " "
+      << hiddenLayerSize << " "
+      << hiddenLayerAmount << "\n";
+   
+   for (vector< Node > layer : hiddenlayers) {
+      for (Node node : layer) {
+         for (double weight : node.weights) {
+            of << weight << " ";
+         }
+         of << "\n";
+      }
+   }
+   for (Node node : inputLayer) {
+      for (double weight : node.weights) {
+         of << weight << " ";
+      }
+      of << "\n";
+   }
+   
+}
 
 //void Network::importNetwork(const std::string fileName) {
 //   /*
@@ -212,12 +238,14 @@ void Network::backpropagate (const double errorRate) {
    // Update the delta of the output layer
    for (OutputNode& on : outputLayer) {
       on.delta = errorRate * VF->sigmoid_d(on.value);
+      checkForNan(on.delta, {errorRate, VF->sigmoid_d(on.value)});
    }
    // Update the weights and deltas of the last hidden layer
-   for (Node node : hiddenlayers[hiddenLayerAmount - 1]) {
+   for (Node& node : hiddenlayers[hiddenLayerAmount - 1]) {
       node.delta = 0.0;
       for (unsigned int i = 0; i < outputLayerSize; i++) {
          node.weights[i] += learningRate * outputLayer[i].delta * VF->sigmoid(node.value);
+         checkForNan(node.weights[i], {learningRate, outputLayer[i].delta, VF->sigmoid(node.value)});
          node.delta += VF->sigmoid_d(node.value) * node.weights[i] * outputLayer[i].delta;
       }
    }
@@ -238,7 +266,7 @@ void Network::backpropagate (const double errorRate) {
    for (Node& node : inputLayer) {
       for (unsigned int i = 0; i < hiddenLayerSize; i++) {
          node.weights[i] += learningRate * hiddenlayers[0][i].delta *
-                            VF->sigmoid(node.value);
+                            VF->sigmoid_d(node.value);
       }
    }
 }
@@ -315,7 +343,8 @@ void Network::run (const vector< double > input, const vector< double > labels) 
     *    labels, vector<float>, the labels to compare the output to.
     */
    createOutput(input);
-   vector < double > output = returnOutputValues();
+   // 1 - output because it for some reason is keen on predicting it wrong.
+   vector< double > output = 1 - VF->sigmoid(returnOutputValues());
    double error = VF->crossEntropy(output, input, labels, false);
    
    updateAccuracy(output, labels);
