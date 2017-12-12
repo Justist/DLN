@@ -119,8 +119,8 @@ int main (int argc __attribute__((unused)),
    sigaction(SIGINT, &sigIntHandler, nullptr);
    
    while (!sigintsent) {
-      //AplusB(m1, m2);
-      XOR(m1, m2);
+      AplusB(m1, m2);
+      //XOR(m1, m2);
       network.run(m1, m2);
    }
    if (wantToExport) {

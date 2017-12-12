@@ -40,21 +40,21 @@ Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
    VF = new VectorFunctions();
    
    // Fill the hiddenlayers with nodes
-   vector< double > defaultWeights(hiddenLayerSize, weightInit);
-   Node node = {defaultWeights, 0.0, 0.0};
-   Node biasNode = {defaultWeights, -1.0, 0.0};
    int size = hiddenLayerSize;
    for (unsigned int i = 0; i < hiddenLayers; i++) {
       if(i == hiddenLayers - 1) {
          // Last layer may have different size of weightvectors.
          size = outputLayerSize;
       }
-      vector< Node > weightLayer(size, node);
-      weightLayer[0] = biasNode;
-      hiddenlayers.push_back(weightLayer);
+      vector< double > defaultWeights(size, weightInit);
+      Node node = {defaultWeights, 0.0, 1.0};
+      Node biasNode = {defaultWeights, -1.0, 1.0};
+      vector< Node > nodeLayer(hiddenLayerSize, node);
+      nodeLayer[0] = biasNode;
+      hiddenlayers.push_back(nodeLayer);
    }
    // Fill the outputlayer with nodes
-   OutputNode outputNode = {0.0, 0.0};
+   OutputNode outputNode = {0.0, 1.0}; // Value and delta
    for (unsigned int j = 0; j < outputLayerSize; j++) {
       outputLayer.push_back(outputNode);
    }
@@ -118,11 +118,13 @@ void Network::createOutput (const vector< double > input) {
    for (OutputNode& node : outputLayer) { node.value = 0.0; }
    
    // Then put the input values in the inputLayer
-   unsigned long inputSize = input.size();
+   // Count the bias node
+   unsigned long inputSize = input.size() + 1;
    unsigned long inputLayerSize = inputLayer.size();
    
    // If the input is larger than the inputLayer, make the inputLayer larger
    if (inputSize > inputLayerSize) {
+      // Keep in mind the bias node
       inputLayer.resize(inputSize);
       auto begin = inputLayer.begin() + inputLayerSize;
       auto end = inputLayer.end();
@@ -130,12 +132,14 @@ void Network::createOutput (const vector< double > input) {
    }
    
    // Then set the inputLayer to the input.
+   inputLayer[0].value = -1.0;
    for (unsigned int i = 0; i < input.size(); i++) {
-      inputLayer[i].value = input[i];
+      inputLayer[i+1].value = input[i];
    }
    
    // First calculate the first layer of the hidden layers with the input
    for (Node inputNode : inputLayer) {
+      // Don't update the bias node
       for (unsigned int j = 1; j < hiddenLayerSize; j++) {
          hiddenlayers[0][j].value += inputNode.value * inputNode.weights[j];
       }
@@ -156,6 +160,21 @@ void Network::createOutput (const vector< double > input) {
          outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
       }
    }
+   
+//   // Print for testing
+//   std::cout << "input" << std::endl;
+//   for (double in : input) { std::cout << in << " "; }
+//   std::cout << std::endl;
+//   std::cout << "inputLayer" << std::endl;
+//   for (Node inNode : inputLayer) { std::cout << inNode.value << " "; }
+//   std::cout << std::endl;
+//   std::cout << "hidden" << std::endl;
+//   for (Node hidNode : hiddenlayers[0]) { std::cout << hidNode.value << " "; }
+//   std::cout << std::endl;
+//   std::cout << "output" << std::endl;
+//   for (OutputNode out : outputLayer) { std::cout << out.value << " "; }
+//   std::cout << std::endl;
+//   exit(0);
 }
 
 void Network::exportNetwork (const std::string fileName) {
@@ -247,17 +266,17 @@ void Network::backpropagate (const double errorRate) {
    }
    // Update the weights and deltas of the last hidden layer
    for (Node& node : hiddenlayers[hiddenLayerAmount - 1]) {
-      node.delta = 0.0;
+      node.delta = 1.0;
       for (unsigned int i = 0; i < outputLayerSize; i++) {
          node.weights[i] += learningRate * outputLayer[i].delta * VF->sigmoid(node.value);
-         checkForNan(node.weights[i], {learningRate, outputLayer[i].delta, VF->sigmoid(node.value)});
+//         checkForNan(node.weights[i], {learningRate, outputLayer[i].delta, VF->sigmoid(node.value)});
          node.delta += VF->sigmoid_d(node.value) * node.weights[i] * outputLayer[i].delta;
       }
    }
    // Do the same for all other hidden layers
    for (int j = hiddenLayerAmount - 2; j >= 0; j--) {
       for (Node& node : hiddenlayers[j]) {
-         node.delta = 0.0;
+         node.delta = 1.0;
          for (unsigned int i = 0; i < hiddenLayerSize; i++) {
             node.weights[i] += learningRate * hiddenlayers[j + 1][i].delta *
                                VF->sigmoid(node.value);
@@ -357,7 +376,7 @@ void Network::run (const vector< double > input, const vector< double > labels) 
     */
    createOutput(input);
    // 1 - output because it for some reason is keen on predicting it wrong.
-   vector< double > output = /* 1 - */ VF->sigmoid(returnOutputValues());
+   vector< double > output = 1 - VF->sigmoid(returnOutputValues());
    double error = VF->crossEntropy(output, input, labels, false);
    
    updateAccuracy(output, labels);
