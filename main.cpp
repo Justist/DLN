@@ -31,7 +31,7 @@ void SIGINThandler (int s __attribute__((unused))) {
    sigintsent = true;
 }
 
-void AplusB (vector< double >& m1, vector< double >& m2) {
+void AplusB (vector< long double >& m1, vector< long double >& m2) {
    /*
     * Generates input for the network.
     * The 'problem' is whether the sum of two generated numbers 
@@ -54,7 +54,7 @@ void AplusB (vector< double >& m1, vector< double >& m2) {
    } else { m2 = {0.0}; } //{0.0, 1.0};
 }
 
-void XOR (vector< double >& m1, vector< double >& m2) {
+void XOR (vector< long double >& m1, vector< long double >& m2) {
    /*
     * Generates input for the network.
     * The 'problem' is if a xor b is equal to 1. 
@@ -93,11 +93,6 @@ void exportNetwork (Network network, const unsigned int outputlength) {
 
 int main (int argc __attribute__((unused)),
           char **argv __attribute__((unused))) {
-   unsigned int outputlength = 1;
-   Network network(outputlength);
-   vector< double > m1(2), m2(outputlength);
-
-
 //   cout << "Do you want to import a network? y/N" << endl;
 //   std::string answer;
 //   std::cin >> answer;
@@ -117,12 +112,29 @@ int main (int argc __attribute__((unused)),
    sigemptyset(&sigIntHandler.sa_mask);
    sigIntHandler.sa_flags = 0;
    sigaction(SIGINT, &sigIntHandler, nullptr);
+  
+   unsigned int outputlength = 1;
+   Network network(outputlength);
+   vector< long double > m1(2), m2(outputlength);
    
    while (!sigintsent) {
       AplusB(m1, m2);
       //XOR(m1, m2);
       network.run(m1, m2);
    }
+//   for (unsigned int i = 1; i < 6; i++) { //hidden layers
+//      for (unsigned int j = 1; j <= 10; j++) { //layer length
+//         for (float k = 0.0; k <= 1.0; k += 0.1) { //learning rate
+//            Network network(outputlength, i, j, 420, k);
+//            for (unsigned int l = 0; l < 100000; l++) { //iterations
+//               AplusB(m1, m2);
+//               //XOR(m1, m2);
+//               network.run(m1, m2);
+//            }
+//            printf("hl: %d, ll: %d, lr: %f, acc: %f\n", i, j, k, network.accuracy);
+//         }
+//      }
+//   }
    if (wantToExport) {
       exportNetwork(network, outputlength);
    }

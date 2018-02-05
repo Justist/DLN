@@ -15,29 +15,31 @@ public:
    
    ~VectorFunctions () = default;
    
-   double vectorsum (vector< double >);
+   long double vectorsum (vector< long double >);
    
-   vector< double > epower (vector< double >);
+   vector< long double > epower (vector< long double >);
    
-   vector< double > transpose (const double *, int, int);
+   vector< long double > transpose (const long double *, int, int);
    
-   vector< double > softmax (vector< double >);
+   vector< long double > softmax (vector< long double >);
    
-   vector< double > sigmoid_d (vector< double >);
+   vector< long double > sigmoid_d (vector< long double >);
    
-   double sigmoid_d (double);
+   long double sigmoid_d (long double);
    
-   vector< double > sigmoid (vector< double >);
+   vector< long double > sigmoid (vector< long double >);
    
-   vector< double > dot (vector< double >, vector< double >,
+   vector< long double > dot (vector< long double >, vector< long double >,
                          int, int, int);
+                         
+   long double crossentropy_d(long double, long double, bool);
    
-   double crossEntropy (vector< double >, vector< double >,
-                        vector< double >, bool);
+   long double crossEntropy (vector< long double >, vector< long double >,
+                        vector< long double >, bool);
    
-   double meanSquaredError (vector< double >, vector< double >);
+   long double meanSquaredError (vector< long double >, vector< long double >);
    
-   double sigmoid (const double x);
+   long double sigmoid (const long double x);
 };
 
 #endif

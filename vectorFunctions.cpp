@@ -1,7 +1,7 @@
 #include "vectorFunctions.hpp"
 #include "overloads.cpp"
 
-double VectorFunctions::vectorsum (const vector< double > vec) {
+long double VectorFunctions::vectorsum (const vector< long double > vec) {
    /*
     * Return the sum of the elements of a vector vec.
     * Input:
@@ -14,7 +14,7 @@ double VectorFunctions::vectorsum (const vector< double > vec) {
    return sum;
 }
 
-vector< double > VectorFunctions::epower (const vector< double > m) {
+vector< long double > VectorFunctions::epower (const vector< long double > m) {
    /*
     * Returns a vector of float which is the given vector of floats but with
     * each element x being a power of e, such that every element x in the
@@ -24,9 +24,9 @@ vector< double > VectorFunctions::epower (const vector< double > m) {
     * Output:
     *    vector of floats which are all e-powers
     */
-   vector< double > output;
-   double y;
-   for (double x : m) {
+   vector< long double > output;
+   long double y;
+   for (long double x : m) {
       y = exp(x);
       if (y != y) {
          std::cout << "in epower gaat het fout!" << std::endl;
@@ -37,7 +37,7 @@ vector< double > VectorFunctions::epower (const vector< double > m) {
    return output;
 }
 
-vector< double > VectorFunctions::transpose (const double *m, const int C, const int R) {
+vector< long double > VectorFunctions::transpose (const long double *m, const int C, const int R) {
    /*
     *  Returns a transpose matrix of input matrix.
     *  Inputs:
@@ -46,7 +46,7 @@ vector< double > VectorFunctions::transpose (const double *m, const int C, const
     *      R: int, number of rows in the input matrix
     *  Output: vector, transpose matrix mT of input matrix m
     */
-   vector< double > mT(C * R);
+   vector< long double > mT(C * R);
    
    for (int n = 0; n != C * R; n++) {
       int i = n / C;
@@ -57,7 +57,7 @@ vector< double > VectorFunctions::transpose (const double *m, const int C, const
    return mT;
 }
 
-vector< double > VectorFunctions::softmax (const vector< double > vec) {
+vector< long double > VectorFunctions::softmax (const vector< long double > vec) {
    /*
     * Return the softmaxed version of given vector vec.
     * Input:
@@ -65,22 +65,22 @@ vector< double > VectorFunctions::softmax (const vector< double > vec) {
     * Output:
     *    smvec, softmaxed version of vec
     */
-   vector< double > smvec;
-   double maxelem = *std::max_element(std::begin(vec), std::end(vec));
+   vector< long double > smvec;
+   long double maxelem = *std::max_element(std::begin(vec), std::end(vec));
    for (auto v : vec) {
       smvec.push_back(std::exp(v - maxelem));
    }
    return smvec;
 }
 
-vector< double > VectorFunctions::sigmoid_d (const vector< double > m1) {
+vector< long double > VectorFunctions::sigmoid_d (const vector< long double > m1) {
    /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
        Input: m1, a vector.
        Output: x(1.0 - x) for every element of the input matrix m1.
    */
    const unsigned long VECTOR_SIZE = m1.size();
-   vector< double > output(VECTOR_SIZE);
+   vector< long double > output(VECTOR_SIZE);
    
    for (unsigned int i = 0; i < VECTOR_SIZE; i++) {
       output[i] = m1[i] * (1.0 - m1[i]);
@@ -90,7 +90,7 @@ vector< double > VectorFunctions::sigmoid_d (const vector< double > m1) {
    return output;
 }
 
-double VectorFunctions::sigmoid_d (const double f1) {
+long double VectorFunctions::sigmoid_d (const long double f1) {
    /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
        Input: f1, a float.
@@ -99,34 +99,34 @@ double VectorFunctions::sigmoid_d (const double f1) {
    return f1 * (1.0 - f1);
 }
 
-vector< double > VectorFunctions::sigmoid (const vector< double > m1) {
+vector< long double > VectorFunctions::sigmoid (const vector< long double > m1) {
    /*  Returns the value of the sigmoid function f(x) = 1/(1.0 + e^-x).
        Input: m1, a vector.
        Output: 1/(1.0 + e^-x) for every element of the input matrix m1.
    */
    const unsigned long VECTOR_SIZE = m1.size();
-   vector< double > output(VECTOR_SIZE);
+   vector< long double > output(VECTOR_SIZE);
    for (unsigned int i = 0; i != VECTOR_SIZE; ++i) {
       output[i] = 1.0 / (1.0 + exp(-m1[i]));
    }
    return output;
 }
 
-double VectorFunctions::sigmoid (const double x) {
+long double VectorFunctions::sigmoid (const long double x) {
    /*
-    * Calculate the sigmoid of given double x.
+    * Calculate the sigmoid of given long double x.
     * Input:
-    *    x, double, number to take the sigmoid of.
+    *    x, long double, number to take the sigmoid of.
     * Output:
     *    The sigmoid of x.
     */
-//   double epower = exp(-x);
+//   long double epower = exp(-x);
 //   if (epower < -1000) { epower = -1000; }
    return 1.0 / (1.0 + exp(-x));
 }
 
-vector< double > VectorFunctions::dot (const vector< double > m1,
-                                       const vector< double > m2,
+vector< long double > VectorFunctions::dot (const vector< long double > m1,
+                                       const vector< long double > m2,
                                        const int m1_rows,
                                        const int m1_columns,
                                        const int m2_columns) {
@@ -142,7 +142,7 @@ vector< double > VectorFunctions::dot (const vector< double > m1,
     *  Output: vector, m1 * m2, product of two vectors m1 and m2,
     *          a matrix of size m1_rows x m2_columns
     */
-   vector< double > output(m1_rows * m2_columns);
+   vector< long double > output(m1_rows * m2_columns);
    
    for (int row = 0; row < m1_rows; row++) {
       for (int col = 0; col < m2_columns; col++) {
@@ -156,7 +156,7 @@ vector< double > VectorFunctions::dot (const vector< double > m1,
    return output;
 }
 
-double safeLog (const double x) {
+long double safeLog (const long double x) {
    /*
     * Return the log value of x.
     * If this would return NaN, then instead return 1.
@@ -165,14 +165,20 @@ double safeLog (const double x) {
     * Output:
     *    The log value of x, or, if that'd be NaN, 1.
     */
-   double y = log(x);
+   long double y = log(x);
    if (y != y) { return 1.0; }
    return y;
 }
 
-double VectorFunctions::crossEntropy (const vector< double > output,
-                                      const vector< double > input,
-                                      const vector< double > labels,
+long double VectorFunctions::crossentropy_d(const long double output,
+                                       const long double label,
+                                       const bool softmax) {
+   return (label - output) / (output - pow(output, 2.0));
+}
+
+long double VectorFunctions::crossEntropy (const vector< long double > output,
+                                      const vector< long double > input,
+                                      const vector< long double > labels,
                                       const bool softmax) {
    /*  
     * Returns the cross entropy between two vectors.
@@ -189,17 +195,17 @@ double VectorFunctions::crossEntropy (const vector< double > output,
       exit(1);
    }
    
-   double out;
+   long double out;
 
    if (softmax) {
       out = -vectorsum(labels * (input - log(vectorsum(epower(input)))));
    } else {
-      double crossent = 0.0;
-      double firstLog, secondLog;
+      long double crossent = 0.0;
+      long double firstLog, secondLog;
       for (auto o = output.begin(), l = labels.begin(), e = output.end();
            o != e; o++, l++) {
-         firstLog = (*o) == 0.0 ? 0.0 : log(*o);
-         secondLog = (1.0 - *o) == 0.0 ? 0.0 : log(1.0 - *o);
+         firstLog = /*(*o) == 0.0 ? 0.0 :*/ log(*o);
+         secondLog = /*(1.0 - *o) == 0.0 ? 0.0 :*/ log(1.0 - *o);
          crossent += (*l * firstLog) + (1.0 - *l) * secondLog;
       }
       out = -crossent;
@@ -207,8 +213,8 @@ double VectorFunctions::crossEntropy (const vector< double > output,
    return out;
 }
 
-double VectorFunctions::meanSquaredError (const vector< double > output,
-                                          const vector< double > labels) {
+long double VectorFunctions::meanSquaredError (const vector< long double > output,
+                                          const vector< long double > labels) {
    /*
     * Returns the mean square error between two vectors.
     * 
@@ -219,6 +225,6 @@ double VectorFunctions::meanSquaredError (const vector< double > output,
       std::cerr << "Output length: " << output.size() << endl;
       exit(1);
    }
-   vector< double > minus = output - labels;
+   vector< long double > minus = output - labels;
    return vectorsum(minus * minus) / output.size();
 }
