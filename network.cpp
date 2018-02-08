@@ -206,6 +206,13 @@ void Network::exportNetwork (const std::string fileName) {
    of << outputLayerSize << " "
       << hiddenLayerSize << " "
       << hiddenLayerAmount << "\n";
+      
+   for (Node node : inputLayer) {
+      for (long double weight : node.weights) {
+         of << weight << " ";
+      }
+      of << "\n";
+   }
    
    for (vector< Node > layer : hiddenlayers) {
       for (Node node : layer) {
@@ -214,12 +221,6 @@ void Network::exportNetwork (const std::string fileName) {
          }
          of << "\n";
       }
-   }
-   for (Node node : inputLayer) {
-      for (long double weight : node.weights) {
-         of << weight << " ";
-      }
-      of << "\n";
    }
    
 }
@@ -255,7 +256,7 @@ void Network::exportNetwork (const std::string fileName) {
 //}
 
 void Network::backpropagate (const long double errorRate,
-                             const vector< long double > output,
+                             const vector< long double > outputs,
                              const vector< long double > labels,
                              const bool softmax) {
    /*
@@ -265,11 +266,13 @@ void Network::backpropagate (const long double errorRate,
     *    errorRate, float, depicting the error rate based on which the weights
     *    are to be adjusted.
     */
-   // Update the delta of the output layer
+   /*// Update the delta of the output layer
    for (unsigned int i = 0; i < outputLayer.size(); i++) {
       outputLayer[i].delta = errorRate * 
-                             VF->crossentropy_d(VF->sigmoid(output[i]), 
+                             VF->crossentropy_d(output[i], 
                                                 labels[i],
+                                                hiddenlayers[hiddenLayerAmount - 1],
+                                                i,
                                                 softmax);
    }
    // Update the weights and deltas of the last hidden layer
@@ -298,6 +301,28 @@ void Network::backpropagate (const long double errorRate,
       for (unsigned int i = 0; i < hiddenLayerSize; i++) {
          node.weights[i] += learningRate * hiddenlayers[0][i].delta *
                             VF->sigmoid_d(node.value);
+      }
+   }*/
+   
+   // As per "Notes on Backpropagation" by Peter Sadowski
+   // First update the weights to the outputLayer
+   for (unsigned int i = 0; i < outputLayerSize; i++) {
+      const long double o = outputs[i];
+      const long double l = labels[i];
+      for (Node& n : hiddenlayers[hiddenLayerAmount - 1]) {
+         n.weights[i] += learningRate * VF->crossentropy_d(o, l, 
+                                                           n.value, softmax);
+      }
+   }
+   
+   // Then the weights between the hidden layers
+   // TODO
+   
+   // And lastly the weights from the inputLayer
+   for (unsigned int j = 0; j < hiddenLayerSize; j++) {
+      for (Node& n : inputLayer) {
+         n.weights[j] += learningRate * VF->crossentropy_d(outputs, labels, 
+                                                           hiddenlayers[0][j], n);
       }
    }
 }
@@ -382,6 +407,7 @@ void Network::run (const vector< long double > input, const vector< long double 
     *    labels, vector<float>, the labels to compare the output to.
     */
    createOutput(input);
+   exportNetwork("testweights");
    vector< long double > output = VF->sigmoid(returnOutputValues());
 //   for (auto x : output) { std::cerr << x << " ";}
 //   std::cerr << std::endl;

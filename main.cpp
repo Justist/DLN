@@ -48,7 +48,7 @@ void AplusB (vector< long double >& m1, vector< long double >& m2) {
    a = RandomNumber(-1000, 1000);
    b = RandomNumber(-1000, 1000);
    
-   m1 = {a, b};
+   m1 = {a/1000, b/1000}; // Just for testing
    if ((a + b) > 0) {
       m2 = {1.0}; //{1.0, 0.0};
    } else { m2 = {0.0}; } //{0.0, 1.0};

@@ -8,7 +8,7 @@ using std::vector;
 
 class Network {
    private:
-      vector< vector< Node>> hiddenlayers;
+      vector< vector< Node > > hiddenlayers;
       vector< Node > inputLayer;
       vector< OutputNode > outputLayer;
       unsigned int hiddenLayerSize;
@@ -25,8 +25,8 @@ class Network {
       unsigned int teller = 0;
    
    public:
-      explicit Network (unsigned int outputlength, unsigned int hiddenLayers = 2,
-                        unsigned int layerLength = 2, unsigned int seed = 420,
+      explicit Network (unsigned int outputlength, unsigned int hiddenLayers = 1,
+                        unsigned int layerLength = 4, unsigned int seed = 420,
                         float alpha = 0.5);
       
       ~Network ();

@@ -30,12 +30,17 @@ public:
    vector< long double > sigmoid (vector< long double >);
    
    vector< long double > dot (vector< long double >, vector< long double >,
-                         int, int, int);
+                              int, int, int);
                          
-   long double crossentropy_d(long double, long double, bool);
+   long double crossentropy_d(long double, long double, 
+                              /*vector< Node>, unsigned int, */
+                              long double, bool);
+                              
+   long double crossentropy_d(vector< long double >, vector< long double >,
+                              Node, Node);
    
    long double crossEntropy (vector< long double >, vector< long double >,
-                        vector< long double >, bool);
+                             vector< long double >, bool);
    
    long double meanSquaredError (vector< long double >, vector< long double >);
    

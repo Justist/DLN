@@ -37,7 +37,9 @@ vector< long double > VectorFunctions::epower (const vector< long double > m) {
    return output;
 }
 
-vector< long double > VectorFunctions::transpose (const long double *m, const int C, const int R) {
+vector< long double > VectorFunctions::transpose (const long double *m, 
+                                                  const int C, 
+                                                  const int R) {
    /*
     *  Returns a transpose matrix of input matrix.
     *  Inputs:
@@ -73,41 +75,41 @@ vector< long double > VectorFunctions::softmax (const vector< long double > vec)
    return smvec;
 }
 
-vector< long double > VectorFunctions::sigmoid_d (const vector< long double > m1) {
+vector< long double > VectorFunctions::sigmoid_d (const vector< long double > m) {
    /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
        Input: m1, a vector.
        Output: x(1.0 - x) for every element of the input matrix m1.
    */
-   const unsigned long VECTOR_SIZE = m1.size();
+   const unsigned long VECTOR_SIZE = m.size();
    vector< long double > output(VECTOR_SIZE);
    
    for (unsigned int i = 0; i < VECTOR_SIZE; i++) {
-      output[i] = m1[i] * (1.0 - m1[i]);
+      output[i] = sigmoid_d(m[i]);
    }
 //    std::cout << "sigmoid_d input:" << m1[0] << std::endl;
    
    return output;
 }
 
-long double VectorFunctions::sigmoid_d (const long double f1) {
+long double VectorFunctions::sigmoid_d (const long double f) {
    /*  Returns the value of the sigmoid function derivative f'(x) = f(x)(1.0 - f(x)),
        where f(x) is sigmoid function.
-       Input: f1, a float.
-       Output: f1(1.0 - f1).
+       Input: f, a float.
+       Output: f1(1.0 - f).
    */
-   return f1 * (1.0 - f1);
+   return f * (1.0 - f);
 }
 
-vector< long double > VectorFunctions::sigmoid (const vector< long double > m1) {
+vector< long double > VectorFunctions::sigmoid (const vector< long double > m) {
    /*  Returns the value of the sigmoid function f(x) = 1/(1.0 + e^-x).
        Input: m1, a vector.
        Output: 1/(1.0 + e^-x) for every element of the input matrix m1.
    */
-   const unsigned long VECTOR_SIZE = m1.size();
+   const unsigned long VECTOR_SIZE = m.size();
    vector< long double > output(VECTOR_SIZE);
    for (unsigned int i = 0; i != VECTOR_SIZE; ++i) {
-      output[i] = 1.0 / (1.0 + exp(-m1[i]));
+      output[i] = sigmoid(m[i]);
    }
    return output;
 }
@@ -126,10 +128,10 @@ long double VectorFunctions::sigmoid (const long double x) {
 }
 
 vector< long double > VectorFunctions::dot (const vector< long double > m1,
-                                       const vector< long double > m2,
-                                       const int m1_rows,
-                                       const int m1_columns,
-                                       const int m2_columns) {
+                                            const vector< long double > m2,
+                                            const int m1_rows,
+                                            const int m1_columns,
+                                            const int m2_columns) {
    /*  Returns the product of two matrices: m1 x m2.
     *  Inputs:
     *      m1: vector, left matrix of size m1_rows x m1_columns
@@ -171,15 +173,40 @@ long double safeLog (const long double x) {
 }
 
 long double VectorFunctions::crossentropy_d(const long double output,
-                                       const long double label,
-                                       const bool softmax) {
-   return (label - output) / (output - pow(output, 2.0));
+                                            const long double label,
+                                            /*const vector< Node > nodeLayer,
+                                            const unsigned int nodeNumber,*/
+                                            const long double nodeValue,
+                                            const bool softmax) {
+   /*long double weightsum = 0.0;
+   for (Node n : nodeLayer) {
+      weightsum += n.weights[nodeNumber];
+   }
+   return (output - label) / (output - pow(output, 2.0)) * weightsum;*/
+   
+   // As per "Notes on Backpropagation" by Peter Sadowski
+   return (output - label) * sigmoid(nodeValue);
+}
+
+// For the weights between the inputLayer and first hiddenlayer
+// May differ with (and between) multiple hidden layers
+long double VectorFunctions::crossentropy_d(const vector< long double > outputs,
+                                            const vector< long double > labels,
+                                            const Node targetNode,
+                                            const Node originNode) {
+   long double sum = 0.0;
+   long double targetSigmoid = sigmoid(targetNode.value);
+   for (unsigned int i = 0; i < outputs.size(); i++) {
+      sum += (outputs[i] - labels[i]) * targetNode.weights[i] * 
+             sigmoid_d(targetSigmoid) * sigmoid(originNode.value);
+   }
+   return sum;
 }
 
 long double VectorFunctions::crossEntropy (const vector< long double > output,
-                                      const vector< long double > input,
-                                      const vector< long double > labels,
-                                      const bool softmax) {
+                                           const vector< long double > input,
+                                           const vector< long double > labels,
+                                           const bool softmax) {
    /*  
     * Returns the cross entropy between two vectors.
     * Inputs:
@@ -214,7 +241,7 @@ long double VectorFunctions::crossEntropy (const vector< long double > output,
 }
 
 long double VectorFunctions::meanSquaredError (const vector< long double > output,
-                                          const vector< long double > labels) {
+                                               const vector< long double > labels) {
    /*
     * Returns the mean square error between two vectors.
     * 
