@@ -44,7 +44,7 @@ void AplusB (vector< long double >& m1, vector< long double >& m2) {
    srand(static_cast<unsigned int>
          (std::chrono::high_resolution_clock::now().
              time_since_epoch().count()));
-   float a, b;
+   long double a, b;
    a = RandomNumber(-1000, 1000);
    b = RandomNumber(-1000, 1000);
    
@@ -66,14 +66,15 @@ void XOR (vector< long double >& m1, vector< long double >& m2) {
    srand(static_cast<unsigned int>
          (std::chrono::high_resolution_clock::now().
              time_since_epoch().count()));
-   float a, b;
+   double a, b;
    a = rand() % 2;
    b = rand() % 2;
    
+   if ((a + b) == 1) { m2 = {1.0}; } 
+   else { m2 = {0.0}; }
+   if (a == 0.0) { a = -1.0; }
+   if (b == 0.0) { b = -1.0; }
    m1 = {a, b};
-   if ((a + b) == 1) {
-      m2 = {1.0}; //{1.0, 0.0};
-   } else { m2 = {0.0}; } //{0.0, 1.0};
 }
 
 void exportNetwork (Network network, const unsigned int outputlength) {
@@ -118,8 +119,8 @@ int main (int argc __attribute__((unused)),
    vector< long double > m1(2), m2(outputlength);
    
    while (!sigintsent) {
-      AplusB(m1, m2);
-      //XOR(m1, m2);
+      //AplusB(m1, m2);
+      XOR(m1, m2);
       network.run(m1, m2);
    }
 //   for (unsigned int i = 1; i < 6; i++) { //hidden layers

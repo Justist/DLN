@@ -136,7 +136,7 @@ void Network::createOutput (const vector< long double > input) {
    }
    
    // Then set the inputLayer to the input.
-   inputLayer[0].value = -1.0;
+   inputLayer[0].value = -1.0; //bias
    for (unsigned int i = 0; i < input.size(); i++) {
       inputLayer[i+1].value = input[i];
    }
@@ -153,7 +153,8 @@ void Network::createOutput (const vector< long double > input) {
    for (unsigned int k = 0; k < hiddenLayerAmount - 1; k++) {
       for (Node hiddenNode : hiddenlayers[k]) {
          for (unsigned int l = 1; l < hiddenLayerSize; l++) {
-            hiddenlayers[k+1][l].value += hiddenNode.value * hiddenNode.weights[l];
+            hiddenlayers[k+1][l].value += VF->sigmoid(hiddenNode.value) *
+                                          hiddenNode.weights[l];
          }
       }
    }
@@ -161,7 +162,8 @@ void Network::createOutput (const vector< long double > input) {
    // Then for the last layer
    for (Node hiddenNode : hiddenlayers[hiddenLayerAmount - 1]) {
       for (unsigned int m = 0; m < outputLayerSize; m++) {
-         outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
+         outputLayer[m].value += VF->sigmoid(hiddenNode.value) * 
+                                 hiddenNode.weights[m];
       }
    }
 }
@@ -243,8 +245,7 @@ void Network::exportNetwork (const std::string fileName) {
 //   weights.pop_back();
 //}
 
-void Network::backpropagate (const long double errorRate,
-                             const vector< long double > outputs,
+void Network::backpropagate (const vector< long double > outputs,
                              const vector< long double > labels,
                              const bool softmax) {
    /*
@@ -254,65 +255,68 @@ void Network::backpropagate (const long double errorRate,
     *    errorRate, float, depicting the error rate based on which the weights
     *    are to be adjusted.
     */
-   /*// Update the delta of the output layer
+   // Update the delta of the output layer
    for (unsigned int i = 0; i < outputLayer.size(); i++) {
-      outputLayer[i].delta = errorRate * 
-                             VF->crossentropy_d(output[i], 
+      outputLayer[i].delta = VF->sigmoid_d(outputLayer[i].value) * 
+                             (labels[i] - outputs[i]);
+                           /*VF->crossentropy_d(output[i], 
                                                 labels[i],
                                                 hiddenlayers[hiddenLayerAmount - 1],
                                                 i,
-                                                softmax);
+                                                softmax);*/
    }
    // Update the weights and deltas of the last hidden layer
-   for (Node& node : hiddenlayers[hiddenLayerAmount - 1]) {
-      node.delta = 1.0;
+   for (Node& hn : hiddenlayers[hiddenLayerAmount - 1]) {
+      hn.delta = 0.0;
       for (unsigned int i = 0; i < outputLayerSize; i++) {
-         node.weights[i] += learningRate * outputLayer[i].delta * VF->sigmoid(node.value);
-         node.delta += VF->sigmoid_d(node.value) * node.weights[i] * outputLayer[i].delta;
+         hn.delta += hn.weights[i] * outputLayer[i].delta;
+         hn.weights[i] += learningRate * outputLayer[i].delta * VF->sigmoid(hn.value);
       }
+      hn.delta *= VF->sigmoid_d(hn.value);
    }
    // Do the same for all other hidden layers
    for (int j = hiddenLayerAmount - 2; j >= 0; j--) {
-      for (Node& node : hiddenlayers[j]) {
-         node.delta = 1.0;
+      for (Node& hn : hiddenlayers[j]) {
+         hn.delta = 0.0;
          for (unsigned int i = 0; i < hiddenLayerSize; i++) {
-            node.weights[i] += learningRate * hiddenlayers[j + 1][i].delta *
-                               VF->sigmoid(node.value);
-            node.delta += VF->sigmoid_d(node.value) * node.weights[i] *
+            hn.delta += hn.weights[i] *
                           hiddenlayers[j + 1][i].delta;
+            hn.weights[i] += learningRate * hiddenlayers[j + 1][i].delta *
+                               VF->sigmoid(hn.value);
          }
+         hn.delta *= VF->sigmoid_d(hn.value);
       }
    }
    // Then do so for the weights of the input layer
    // No delta is updated, because there are no layers beneath this one
-   for (Node& node : inputLayer) {
+   for (Node& in : inputLayer) {
       for (unsigned int i = 0; i < hiddenLayerSize; i++) {
-         node.weights[i] += learningRate * hiddenlayers[0][i].delta *
-                            VF->sigmoid_d(node.value);
-      }
-   }*/
-   
-   // As per "Notes on Backpropagation" by Peter Sadowski
-   // First update the weights to the outputLayer
-   for (unsigned int i = 0; i < outputLayerSize; i++) {
-      const long double o = outputs[i];
-      const long double l = labels[i];
-      for (Node& n : hiddenlayers[hiddenLayerAmount - 1]) {
-         n.weights[i] += learningRate * VF->crossentropy_d(o, l, 
-                                                           n.value, softmax);
+         in.weights[i] += learningRate * hiddenlayers[0][i].delta *
+                          in.value;
       }
    }
    
-   // Then the weights between the hidden layers
-   // TODO
-   
-   // And lastly the weights from the inputLayer
-   for (unsigned int j = 0; j < hiddenLayerSize; j++) {
-      for (Node& n : inputLayer) {
-         n.weights[j] += learningRate * VF->crossentropy_d(outputs, labels, 
-                                                           hiddenlayers[0][j], n);
-      }
-   }
+//   // As per "Notes on Backpropagation" by Peter Sadowski
+//   // First update the weights to the outputLayer
+//   for (unsigned int i = 0; i < outputLayerSize; i++) {
+//      const long double o = outputs[i];
+//      const long double l = labels[i];
+//      for (Node& n : hiddenlayers[hiddenLayerAmount - 1]) {
+//         n.weights[i] += learningRate * VF->crossentropy_d(o, l, 
+//                                                           n.value, softmax);
+//      }
+//   }
+//   
+//   // Then the weights between the hidden layers
+//   // TODO
+//   
+//   // And lastly the weights from the inputLayer
+//   for (unsigned int j = 0; j < hiddenLayerSize; j++) {
+//      for (Node& n : inputLayer) {
+//         n.weights[j] += learningRate * VF->crossentropy_d(outputs, labels, 
+//                                                           hiddenlayers[0][j], n);
+//      }
+//   }
 }
 
 void clearXLines (const unsigned int x) {
@@ -329,7 +333,8 @@ void clearXLines (const unsigned int x) {
 }
 
 void Network::printOutputAndLabels (const vector< long double > output,
-                                    const vector< long double > labels) {
+                                    const vector< long double > labels,
+                                    double error) {
    /*
     * Print both the output and the labels (what the output should be),
     * so a comparison can be made by the user.
@@ -339,7 +344,7 @@ void Network::printOutputAndLabels (const vector< long double > output,
     *    output, the output of the network
     *    labels, what the output should be
     */
-   unsigned int lines = outputLayerSize;
+   unsigned int lines = outputLayerSize + 2;
    //clearXLines(lines);
    std::cout << "\33[" + std::to_string(lines) + "A\r";
    std::cout << "Output\t\tLabel" << std::endl;
@@ -347,7 +352,7 @@ void Network::printOutputAndLabels (const vector< long double > output,
         o != e; o++, l++) {
       printf("%.6f\t%.0f\n", *o, *l);
    }
-   printf("Accuracy: %.6f en teller: %d\n", accuracy, teller++);
+   printf("Accuracy: %.6f, error: %.6f en teller: %d\n", accuracy, error, teller++);
 }
 
 void Network::updateAccuracy (const vector< long double > output,
@@ -401,9 +406,9 @@ void Network::run (const vector< long double > input, const vector< long double 
 //   std::cerr << std::endl;
 //   exit(0);
    const bool softmax = false;
-   long double error = VF->crossEntropy(output, input, labels, softmax);
+   double error = VF->crossEntropy(output, input, labels, softmax);
    
    updateAccuracy(output, labels);
-   printOutputAndLabels(output, labels);
-   backpropagate(error, output, labels, softmax);
+   printOutputAndLabels(output, labels, error);
+   backpropagate(output, labels, softmax);
 }

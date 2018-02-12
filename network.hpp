@@ -41,8 +41,7 @@ class Network {
       
       void createOutput (vector< long double > input);
    
-      void backpropagate (long double errorRate,
-                          vector< long double >,
+      void backpropagate (vector< long double >,
                           vector< long double >,
                           bool);
       void run (vector< long double > input, vector< long double > labels);
@@ -52,7 +51,8 @@ class Network {
       void importNetwork (std::string fileName);
       
       void printOutputAndLabels (vector< long double > output,
-                                   vector< long double > labels);
+                                 vector< long double > labels,
+                                 double error);
       
       void updateAccuracy (vector< long double > output,
                            vector< long double > labels);
