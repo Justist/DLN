@@ -124,7 +124,10 @@ long double VectorFunctions::sigmoid (const long double x) {
     */
 //   long double epower = exp(-x);
 //   if (epower < -1000) { epower = -1000; }
-   return 1.0 / (1.0 + exp(-x));
+   long double y = 1.0 / (1.0 + exp(-x));
+   if (y == 1.0) { y = 0.999999; } // Very cheesy
+   if (y == 0.0) { y = 0.000001; }
+   return y;
 }
 
 vector< long double > VectorFunctions::dot (const vector< long double > m1,

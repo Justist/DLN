@@ -26,6 +26,7 @@ Network::Network (unsigned int outputLength, unsigned int hiddenLayers,
     *    layerLength: The length of each of the hidden layers.
     *    seed: Random seed for the random number generation.
     */
+   // Raise an error when one of these float exceptions occur.
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
    
    outputLayerSize = outputLength;
@@ -163,21 +164,6 @@ void Network::createOutput (const vector< long double > input) {
          outputLayer[m].value += hiddenNode.value * hiddenNode.weights[m];
       }
    }
-   
-//   // Print for testing
-//   std::cout << "input" << std::endl;
-//   for (long double in : input) { std::cout << in << " "; }
-//   std::cout << std::endl;
-//   std::cout << "inputLayer" << std::endl;
-//   for (Node inNode : inputLayer) { std::cout << inNode.value << " "; }
-//   std::cout << std::endl;
-//   std::cout << "hidden" << std::endl;
-//   for (Node hidNode : hiddenlayers[0]) { std::cout << hidNode.value << " "; }
-//   std::cout << std::endl;
-//   std::cout << "output" << std::endl;
-//   for (OutputNode out : outputLayer) { std::cout << out.value << " "; }
-//   std::cout << std::endl;
-//   exit(0);
 }
 
 void Network::exportNetwork (const std::string fileName) {
@@ -198,6 +184,8 @@ void Network::exportNetwork (const std::string fileName) {
     * Then at last the input weights are printed. As these may be
     * variable in the program, no length has the be given and all
     * the last rows are considered to be part of it.
+    *
+    * TODO: Rewrite so it actually says what it does.
     *
     * Input:
     *    fileName, string, name of the file the network will be written to.
