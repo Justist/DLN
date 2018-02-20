@@ -14,6 +14,9 @@ $(EXE): $(OBJECTS)
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
 	
+simple: simpleNetwork.cpp
+	g++ $(CFLAGS) -o simple simpleNetwork.cpp
+	
 run:
 	./$(EXE)
 
