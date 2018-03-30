@@ -5,10 +5,12 @@
 #include <cfenv>
 #include <chrono>
 #include <cmath>
+//#include <conio.h>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <cfenv>
 #include <fstream>
 #include <iomanip>
 #include <iostream>

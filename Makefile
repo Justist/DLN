@@ -1,5 +1,5 @@
 CC = g++
-DEBUG = -ggdb
+DEBUG = -ggdb -D_XOPEN_SOURCE
 STD = -std=c++11
 ERROR = -Wall -Wextra
 CFLAGS = $(ERROR) $(STD) $(DEBUG)
