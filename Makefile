@@ -1,5 +1,5 @@
 CC = g++
-DEBUG = -ggdb
+DEBUG = -ggdb -D_XOPEN_SOURCE
 STD = -std=c++11
 ERROR = -Wall -Wextra
 CFLAGS = $(ERROR) $(STD) $(DEBUG)
@@ -13,6 +13,9 @@ $(EXE): $(OBJECTS)
 
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
+	
+simple: simpleNetwork.cpp
+	g++ $(CFLAGS) -o simple simpleNetwork.cpp
 	
 run:
 	./$(EXE)

@@ -32,7 +32,7 @@
 *.app
 
 # Exported networks
-network*
+network20*
 
 # LaTeX
 *.aux
@@ -44,3 +44,6 @@ network*
 *.txt
 cmake-build-debug/
 .idea/
+*~
+dln
+testweights

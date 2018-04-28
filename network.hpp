@@ -8,16 +8,16 @@ using std::vector;
 
 class Network {
    private:
-      vector< vector< Node>> hiddenlayers;
+      vector< vector< Node > > hiddenlayers;
       vector< Node > inputLayer;
       vector< OutputNode > outputLayer;
       unsigned int hiddenLayerSize;
       unsigned int hiddenLayerAmount;
       unsigned int outputLayerSize;
       unsigned int networkSeed;
-      double weightInit = 0.5;
-      float learningRate = 0.5;
-      float accuracy = 0.0;
+      unsigned int iterations;
+      long double weightInit = 0.5;
+      float learningRate;
       unsigned int aantalgoed = 0;
       unsigned int aantalslecht = 0;
       VectorFunctions *VF;
@@ -26,7 +26,8 @@ class Network {
    
    public:
       explicit Network (unsigned int outputlength, unsigned int hiddenLayers = 1,
-                        unsigned int layerLength = 2, unsigned int seed = 420);
+                        unsigned int layerLength = 4, unsigned int seed = 420,
+                        float alpha = 0.5);
       
       ~Network ();
       
@@ -38,22 +39,29 @@ class Network {
       void initialiseWeights (Iterator& begin, Iterator& end,
                               unsigned long weightSize);
       
-      void createOutput (vector< double > input);
+      void createOutput (vector< long double > input);
    
-   void backpropagate (double errorRate);
-      void run (vector< double > input, vector< double > labels);
+      void backpropagate (vector< long double >,
+                          vector< long double >,
+                          bool);
+      void run (vector< long double > input, vector< long double > labels);
    
-   void exportNetwork (std::string fileName);
+      void exportNetwork (std::string fileName);
    
-   void importNetwork (std::string fileName);
+      void importNetwork (std::string fileName);
       
-      void printOutputAndLabels (vector< double > output,
-                                 vector< double > labels);
+      void printOutputAndLabels (vector< long double > output,
+                                 vector< long double > labels,
+                                 double error);
       
-      void updateAccuracy (vector< double > output,
-                           vector< double > labels);
+      void updateAccuracy (vector< long double > output,
+                           vector< long double > labels);
    
-   vector< double > returnOutputValues ();
+      vector< long double > returnOutputValues ();
+      
+      
+      
+      float accuracy = 0.0;
 };
 
 #endif

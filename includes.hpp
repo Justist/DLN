@@ -2,27 +2,32 @@
 #define INCLUDES_H
 
 #include <algorithm>
+#include <cfenv>
 #include <chrono>
 #include <cmath>
+//#include <conio.h>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <cfenv>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
+ 
+//#pragma STDC FENV_ACCESS ON
 
 struct Node {
-   std::vector< double > weights;
-   double value;
-   double delta;
+   std::vector< long double > weights;
+   long double value;
+   long double delta;
 };
 
 struct OutputNode {
-   double value;
-   double delta;
+   long double value;
+   long double delta;
 };
 
 #endif
