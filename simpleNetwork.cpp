@@ -228,7 +228,7 @@ unordered_set<string> generateSchemes(string scheme) {
     * this should work.
     */
    unordered_set<string> schemes = {};
-   unordered_set<string> newSchemes = {};
+   unordered_set<string> newSchemes = {scheme};
    //printf("scheme: %s\n", scheme.c_str());
    for(int i = scheme.length() - 1; i >= 0; i--) {
       scheme[i]++;
@@ -301,7 +301,7 @@ int main (const int argc, const char **argv) {
    
    // + 1 for the bias node
    const int inputs = 2;
-   const int hiddenNodes = 2;
+   const int hiddenNodes = 4;
    const int outputs = 1;
    unsigned long int epochs;
    double alpha;
@@ -329,9 +329,18 @@ int main (const int argc, const char **argv) {
    bool seedRun = true;
 
    if(seedRun) {
-      for (unsigned int s = 100; s <= 1000; s += 10) {
-         printf("Seed: %d\n", s);
+      const int barWidth = 70;
+      float progress = 0.0;
+      unsigned int amountProg = 0;
+      const int startseed = 100, endseed = 1000, stepseed = 10;
+      const int steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
+      for (unsigned int s = startseed; s <= endseed; s += stepseed) {
+         amountProg = barWidth * progress;
+         cout << "[" << string(amountProg, '#') << string(barWidth - amountProg, ' ') << "] "
+              << int(progress * 100.0) << "%\r";
+         cout.flush();
          runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
+         progress += 1.0 / steps;
       }
    } else {
       runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, seed, alpha, toFile);
