@@ -1,14 +1,16 @@
-#include <cstdlib>
-#include <cstdio>
 #include <cfenv>
 #include <chrono>
 #include <cmath>
 #include <csignal>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <unordered_set>
 #include <vector>
 
@@ -289,6 +291,17 @@ void runSchemes(unordered_set<string> schemes,
    }
 }
 
+float progress = 0.0;
+void updateStatusBar(const float extraProg) {
+   progress += extraProg;
+   const int barWidth = 70;
+   const float amountProg = barWidth * progress;
+   cout << "[" << string(amountProg, '#') 
+        << string(barWidth - amountProg, ' ') << "] "
+        << int(progress * 100.0) << "%\r";
+   cout.flush();
+}
+
 int main (const int argc, const char **argv) {
 
    // Raise an error when one of these float exceptions occur.
@@ -329,39 +342,23 @@ int main (const int argc, const char **argv) {
    bool seedRun = true;
 
    if(seedRun) {
-      const int barWidth = 70;
       float progress = 0.0;
-      unsigned int amountProg = 0;
+      updateStatusBar(progress);
       const int startseed = 100, endseed = 1000, stepseed = 10;
       const int steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
+      
+      vector< future< void > > threads(steps);
+      
       for (unsigned int s = startseed; s <= endseed; s += stepseed) {
-         amountProg = barWidth * progress;
-         cout << "[" << string(amountProg, '#') << string(barWidth - amountProg, ' ') << "] "
-              << int(progress * 100.0) << "%\r";
-         cout.flush();
-         //runSchemes({initialScheme}, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
-         runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
-         progress += 1.0 / steps;
+         threads[(s/10 - 10)] = async(launch::async, [schemes, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile]{ 
+            //runSchemes({initialScheme}, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
+            runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
+            updateStatusBar(1.0 / steps);
+         });
       }
    } else {
       runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, seed, alpha, toFile);
    }
    /*run(makeNetwork(inputs, hiddenNodes, outputs, alpha), epochs, hiddenNodes, seed, alpha, toFile);*/
-
-   /*for (unsigned int i = 0; i < n.inputs.size(); i++) {
-      for (unsigned int h = 1; h < n.hiddenLayer.size(); h++) { //0 is bias
-         printf("%.6f ", n.weightsFromInputs[i][h]);
-      }
-   }
-   printf("| ");
-   for (unsigned int h = 0; h < n.hiddenLayer.size(); h++) {
-      printf("%.6f ", n.weightsToOutput[h][0]); //only 1 output
-   }
-   printf("\n");
-   exit(0);*/
-
-   /*FILE * of;
-   string filename = "outputsimple.xoroutput";
-   of = fopen(filename.c_str(), "a");*/
    return 0;
 }

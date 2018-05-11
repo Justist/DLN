@@ -16,7 +16,7 @@ $(EXE): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $< -o $@
 	
 simple: simpleNetwork.cpp
-	g++ $(CFLAGS) -o $(SEXE) simpleNetwork.cpp
+	g++ $(CFLAGS) -pthread -o $(SEXE) simpleNetwork.cpp
 	
 run:
 	./$(EXE)
