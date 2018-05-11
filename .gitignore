@@ -44,6 +44,8 @@ network20*
 *.txt
 cmake-build-debug/
 .idea/
+schemetest/
 *~
 dln
-testweights
+testweight*
+schemeerrors*

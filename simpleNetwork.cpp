@@ -227,8 +227,8 @@ unordered_set<string> generateSchemes(string scheme) {
     * but when limited to 26 different possible weights
     * this should work.
     */
-   unordered_set<string> schemes = {};
-   unordered_set<string> newSchemes = {scheme};
+   unordered_set<string> schemes = {scheme}; //to include the first scheme as well
+   unordered_set<string> newSchemes = {};
    //printf("scheme: %s\n", scheme.c_str());
    for(int i = scheme.length() - 1; i >= 0; i--) {
       scheme[i]++;
@@ -339,6 +339,7 @@ int main (const int argc, const char **argv) {
          cout << "[" << string(amountProg, '#') << string(barWidth - amountProg, ' ') << "] "
               << int(progress * 100.0) << "%\r";
          cout.flush();
+         //runSchemes({initialScheme}, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
          runSchemes(schemes, inputs, hiddenNodes, outputs, epochs, s, alpha, toFile);
          progress += 1.0 / steps;
       }

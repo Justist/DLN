@@ -5,6 +5,7 @@ ERROR = -Wall -Wextra
 CFLAGS = $(ERROR) $(STD) $(DEBUG)
 LFLAGS = $(ERROR)
 EXE = dln
+SEXE = simple
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 
@@ -15,10 +16,10 @@ $(EXE): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $< -o $@
 	
 simple: simpleNetwork.cpp
-	g++ $(CFLAGS) -o simple simpleNetwork.cpp
+	g++ $(CFLAGS) -o $(SEXE) simpleNetwork.cpp
 	
 run:
 	./$(EXE)
 
 clean:
-	@rm $(OBJECTS) $(EXE) 2>/dev/null || true
+	@rm $(OBJECTS) $(EXE) $(SEXE) 2>/dev/null || true
