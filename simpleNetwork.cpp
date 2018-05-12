@@ -314,7 +314,7 @@ int main (const int argc, const char **argv) {
    
    // + 1 for the bias node
    const int inputs = 2;
-   const int hiddenNodes = 4;
+   const int hiddenNodes = 1;
    const int outputs = 1;
    unsigned long int epochs;
    double alpha;
