@@ -2,7 +2,8 @@ CC = g++
 DEBUG = -ggdb -D_XOPEN_SOURCE
 STD = -std=c++11
 ERROR = -Wall -Wextra
-CFLAGS = $(ERROR) $(STD) $(DEBUG)
+OPT = -O3
+CFLAGS = $(ERROR) $(STD) $(DEBUG) $(OPT)
 LFLAGS = $(ERROR)
 EXE = dln
 SEXE = simple
