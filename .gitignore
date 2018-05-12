@@ -47,5 +47,6 @@ cmake-build-debug/
 schemetest/
 *~
 dln
+simple
 testweight*
-schemeerrors*
+*schemeerrors*

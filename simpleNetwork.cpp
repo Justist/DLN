@@ -41,7 +41,7 @@ vecdo initialiseWeightsByScheme(string);
 void initialiseWeights(vecvecdo&, vecvecdo&, int, int, int, vecdo);
 void XOR(vecdo&, double&);
 void XORTest(Network, bool, string, string, bool, int);
-void writeWeights(Network, FILE *, int);
+void writeWeights(Network, int);
 void trainTheNetwork(Network&);
 void testTheNetwork(Network&);
 void SIGINThandler (int);
@@ -93,7 +93,7 @@ void initialiseWeights(vecvecdo& wFI,
    if (!scheme.empty()) { useScheme = true; }
    for (int i = 0; i < inputs; i++) {
       for (int h = 1; h < hiddens; h++) {
-         wFI[i][h] = useScheme ? scheme[i*hiddens + h] : -1 + 2 * ((double) rand() /RAND_MAX);
+         wFI[i][h] = useScheme ? scheme[i*hiddens + (h - 1)] : -1 + 2 * ((double) rand() /RAND_MAX);
       }
    }
    for (int h = 0; h < hiddens; h++) {
@@ -112,8 +112,13 @@ void XOR(vecdo& inputs, double& output) {
    inputs = {-1.0, (double) a, (double) b};
 }
 
-void XORTest(Network n, const bool toFile = false, string filename = "", const string writeMode = "w",
-             const bool seedTest = false, const int seed = -1) {
+void XORTest(Network n, 
+             const bool toFile = false, 
+             string filename = "", 
+             const string writeMode = "w",
+             const bool seedTest = false, 
+             const int seed = -1,
+             const int penalty = 0) {
    FILE * of;
    if (filename == "") {
       filename = "i" + to_string(n.inputs.size( )) +
@@ -137,6 +142,7 @@ void XORTest(Network n, const bool toFile = false, string filename = "", const s
          }
       }
    }
+   error += penalty; //if some code fails due to low values of weights, a penalty incurs
    if (toFile) {
       if (seedTest) {
          fprintf(of, "seed: %d, error: %.6f\n", seed, error);
@@ -148,7 +154,8 @@ void XORTest(Network n, const bool toFile = false, string filename = "", const s
    fclose(of);
 }
 
-void writeWeights(Network n, FILE * of, int epoch) {
+void writeWeights(Network n, int epoch) {
+   FILE *of = fopen("testweights.output", "w");
    fprintf(of, "%d: ", epoch);
    for (unsigned int i = 0; i < n.inputs.size(); i++) {
       for (unsigned int h = 1; h < n.hiddenLayer.size(); h++) { //0 is bias
@@ -160,7 +167,35 @@ void writeWeights(Network n, FILE * of, int epoch) {
       fprintf(of, "%.6f ", n.weightsToOutput[h][0]); //only 1 output
    }
    fprintf(of, "\n");
+   fclose(of);
 }
+
+/*int repairNetwork(Network& n) {
+   / *
+    * Hacky way to ensure the weights don't surpass the
+    * limits. A penalty is incurred everytime this function
+    * makes changes.
+    * /
+   int penalty = 0;
+   const double barrier = exp(-16);
+   for(vecdo v1 : n.weightsFromInputs) {
+      for(double d1 : v1) {
+         if(d1 > 0.0 && d1 < barrier) 
+            { d1 = barrier; penalty++; }
+         if(d1 < 0.0 && d1 > -barrier) 
+            { d1 = -barrier; penalty++; }
+      }
+   }
+   for(vecdo v2 : n.weightsToOutput) {
+      for(double d2 : v2) {
+         if(d2 > 0.0 && d2 < barrier) 
+            { d2 = barrier; penalty++; }
+         if(d2 < 0.0 && d2 > -barrier) 
+            { d2 = -barrier; penalty++; }
+      }
+   }
+   return penalty;
+}*/
 
 void trainTheNetwork(Network& n) {
    unsigned int hiddenSize = n.hiddenLayer.size();
@@ -253,6 +288,7 @@ void run(Network n,
    vecdo inputVector;
    double expectedOutput;
    unsigned long int e = 0;
+   int penalty = 0;
    srand(seed);
    //printf("The program will run with %d hidden nodes, alpha %f, and seed %d\n", hiddenNodes, alpha, seed);
 
@@ -260,15 +296,16 @@ void run(Network n,
       XOR(inputVector, expectedOutput);
       n.inputs = inputVector;
       n.expectedOutput = expectedOutput;
+      //penalty += repairNetwork(n);
+      //writeWeights(n, e);
       trainTheNetwork(n);
-      //writeWeights(n, of, e);
       e++;
    }
 
    //cout << "The program will now proceed to testing." << endl;
 
    //For the seedtest
-   XORTest(n, toFile, (fileName == "") ? "simple.xoroutput" : fileName, "a", true, seed);
+   XORTest(n, toFile, (fileName == "") ? "simple.xoroutput" : fileName, "a", true, seed, penalty);
 }
 
 void runSchemes(unordered_set<string> schemes,
