@@ -45,8 +45,8 @@ network20*
 cmake-build-debug/
 .idea/
 schemetest/
+results/
 *~
 dln
 simple
 testweight*
-*schemeerrors*
