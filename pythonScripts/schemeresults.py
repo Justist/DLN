@@ -1,14 +1,18 @@
 import os
 import re
 
-directoryname = "../schemetest"
-directory = os.fsencode(directoryname)	
+os.chdir("..")
+directoryname = "schemetest"
+directory = os.fsencode(directoryname)
+resultsdir = "results"
+if not os.path.exists(resultsdir):
+	os.makedirs(resultsdir)
 nodes = ""
 for file in os.listdir(directory):
 	filename = os.fsdecode(file)
 	scheme = re.search("w(.*)e[0-9]+", filename).group(1)
 	nodes = re.search("a0.5(.*).xoroutput", filename).group(1)
-	with open("../results/" + nodes + ".schemeerrors", "a") as sea:
+	with open(resultsdir + nodes + ".schemeerrors", "a") as sea:
 	   with open(directoryname + "/" + filename, "r") as fo:
 		   sum = 0.0
 		   for line in fo:
@@ -17,10 +21,10 @@ for file in os.listdir(directory):
 		   sea.write(scheme + "," + str(sum) + "\n")
 	
 #can be shorter possibly, but it works	   
-sea = open("../results/" + nodes + ".schemeerrors", "r")
+sea = open(resultsdir + nodes + ".schemeerrors", "r")
 lines = sorted(set(sea.readlines()))
 sea.close()
-with open("../results/" + nodes + ".schemeerrors", "w") as sea:
+with open(resultsdir + nodes + ".schemeerrors", "w") as sea:
    for line in lines:
       sea.write(line)
    

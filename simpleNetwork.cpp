@@ -406,6 +406,7 @@ void runSchemes(const unordered_set<string> schemes,
     */
    string fileName;
    const string folder = "schemetest/";
+   system(("mkdir " + folder).c_str());
    for(string scheme : schemes) {
       fileName = folder +
                  "w" + scheme + 
