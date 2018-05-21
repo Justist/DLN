@@ -410,7 +410,8 @@ void runSchemes(const unordered_set<string> schemes,
     */
    string fileName;
    const string folder = "schemetest/";
-   for (string scheme : schemes) {
+   system(("mkdir " + folder).c_str());
+   for(string scheme : schemes) {
       fileName = folder +
                  "w" + scheme +
                  "e" + to_string(epochs) +
@@ -462,7 +463,7 @@ int main (const int argc, const char **argv) {
    
    // + 1 for the bias node
    const int inputs = 2;
-   const int hiddenNodes = 1;
+   const int hiddenNodes = 4;
    const int outputs = 1;
    uint64_t epochs;
    double alpha;

@@ -2,25 +2,19 @@ CC = g++
 DEBUG = -ggdb -D_XOPEN_SOURCE
 STD = -std=c++11
 ERROR = -Wall -Wextra
+THR = -pthread
 OPT = -O3
-CFLAGS = $(ERROR) $(STD) $(DEBUG) $(OPT)
+CFLAGS = $(ERROR) $(STD) $(THR) $(DEBUG) $(OPT)
 LFLAGS = $(ERROR)
-EXE = dln
-SEXE = simple
-SOURCES = $(wildcard *.cpp)
-OBJECTS = $(SOURCES:.cpp=.o)
+EXE = simple
 
-$(EXE): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(EXE)
+all: simple
 
-%.o: %.cpp
-	$(CC) -c $(CFLAGS) $< -o $@
-	
 simple: simpleNetwork.cpp
-	g++ $(CFLAGS) -pthread -o $(SEXE) simpleNetwork.cpp
+	g++ $(CFLAGS) -o $(EXE) simpleNetwork.cpp
 	
 run:
 	./$(EXE)
 
 clean:
-	@rm $(OBJECTS) $(EXE) $(SEXE) 2>/dev/null || true
+	@rm $(EXE) 2>/dev/null || true
