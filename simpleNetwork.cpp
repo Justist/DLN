@@ -117,7 +117,7 @@ void initialiseWeights(vecvecdo& wFI,
          for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
             wHL[l][hp][hn] = 
                useScheme ?
-                  scheme[l*(hp + 1)*hiddenNodes + (hn - 1)] :
+                  scheme[l*hiddenNodes + hp + (hn - 1)] :
                   randomWeight(seed);
          }
       }
@@ -294,7 +294,7 @@ void trainTheNetwork(Network& n) {
          n.alpha * sigmoid(n.hiddenLayers[hiddenLayers - 1][h]) * deltaOutput;
    }
    
-   for (int16_t l = hiddenLayers - 2; l >= 0; l++) {
+   for (int16_t l = hiddenLayers - 2; l >= 0; l--) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
             deltas[l][hp] += 
@@ -335,7 +335,7 @@ Network makeNetwork(const unsigned int inputs,
     */
    const unsigned int hiddenPlusBias = hiddenNodes + 1;
    vecvecdo wFI(inputs + 1, vecdo(hiddenPlusBias));
-   vector< vecvecdo > wHL(hiddenLayers - 1, 
+   vector< vecvecdo > wHL(hiddenLayers, 
                           vecvecdo(hiddenPlusBias, 
                                    vecdo(hiddenPlusBias)));
    vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
@@ -505,8 +505,8 @@ int main (const int argc, const char **argv) {
    
    // + 1 for the bias node
    const int inputs = 2;
-   const int hiddenLayers = 5;
-   const int hiddenNodes = 4;
+   const int hiddenLayers = 3;
+   const int hiddenNodes = 2;
    const int outputs = 1;
    uint64_t epochs;
    double alpha;
@@ -519,7 +519,7 @@ int main (const int argc, const char **argv) {
             (std::chrono::high_resolution_clock::now().
             time_since_epoch().count());*/
    } else {
-      epochs = 20000;
+      epochs = 2;//0000;
       alpha = 0.5;
       seed = 1230;
    }
@@ -547,8 +547,15 @@ int main (const int argc, const char **argv) {
       
       for (unsigned int s = startseed; s <= endseed; s += stepseed) {
          threads[(s/10 - 10)] = async(launch::async,
-                                      [schemes, inputs, hiddenNodes,
-                                       outputs, epochs, s, alpha, toFile] {
+                                      [schemes, 
+                                       inputs, 
+                                       hiddenLayers, 
+                                       hiddenNodes,
+                                       outputs, 
+                                       epochs, 
+                                       s, 
+                                       alpha, 
+                                       toFile] {
             //runSchemes({initialScheme}, inputs, hiddenNodes, outputs,
                          // epochs, s, alpha, toFile);
             runSchemes(schemes, inputs, hiddenLayers, hiddenNodes, outputs,
