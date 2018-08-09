@@ -2,7 +2,7 @@ import os
 import re
 
 os.chdir("..")
-directoryname = "schemetest"
+directoryname = "reverseschemetest"
 directory = os.fsencode(directoryname)
 resultsdir = "results"
 if not os.path.exists(resultsdir):
@@ -19,12 +19,12 @@ for file in os.listdir(directory):
 			   ls = line.split()
 			   sum += float(ls[3])
 		   sea.write(scheme + "," + str(sum) + "\n")
-	
-#can be shorter possibly, but it works	   
+
+#can be shorter possibly, but it works
 sea = open(resultsdir + nodes + ".schemeerrors", "r")
 lines = sorted(set(sea.readlines()))
 sea.close()
 with open(resultsdir + nodes + ".schemeerrors", "w") as sea:
    for line in lines:
       sea.write(line)
-   
+

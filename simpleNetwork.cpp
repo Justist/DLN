@@ -111,18 +111,18 @@ void initialiseWeights(vecvecdo& wFI,
                randomWeight(seed);
       }
    }
-   
+
    for (uint16_t l = 0; l < hiddenLayers; l++) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
-            wHL[l][hp][hn] = 
+            wHL[l][hp][hn] =
                useScheme ?
                   scheme[l*hiddenNodes + hp + (hn - 1)] :
                   randomWeight(seed);
          }
       }
    }
-   
+
    for (uint16_t h = 0; h < hiddenNodes; h++) {
       for (uint16_t o = 0; o < outputs; o++) {
          wTO[h][o] =
@@ -160,7 +160,7 @@ void XORTest(Network n,
              const int seed = -1) {
    /*
     * Given the trained network, calculate the error by
-    * doing one forward propagation and comparing the 
+    * doing one forward propagation and comparing the
     * output with the expected output for each possible
     * input.
     * The error is then either printed to a file or to
@@ -227,7 +227,7 @@ void XORTest(Network n,
 inline void testTheNetwork(Network& n) {
    /*
     * Basically a forward propagation through the network.
-    * n.calculatedOutput contains the result of the 
+    * n.calculatedOutput contains the result of the
     * propagation.
     */
    const unsigned int hiddenLayers = n.hiddenLayers.size();
@@ -241,7 +241,7 @@ inline void testTheNetwork(Network& n) {
             n.weightsFromInputs[i][h] * n.inputs[i];
       }
    }
-   
+
    //hp is hidden previous
    //hn is hidden next
    //for the previous and next hidden layer
@@ -255,7 +255,7 @@ inline void testTheNetwork(Network& n) {
          }
       }
    }
-   
+
    // only 1 output
    n.calculatedOutput = -n.weightsToOutput[0][0];
    for (uint16_t h = 1; h < hiddenNodes; h++) {
@@ -274,12 +274,12 @@ void trainTheNetwork(Network& n) {
     * For the backward propagation some optimisation may
     * be possible, but it works for now.
     */
-   const unsigned int hiddenLayers = n.hiddenLayers.size();
-   const unsigned int hiddenNodes = n.hiddenLayers[0].size();
-   
+   const uint8_t hiddenLayers = n.hiddenLayers.size();
+   const uint8_t hiddenNodes = n.hiddenLayers[0].size();
+
    // Forward
    testTheNetwork(n);
-   
+
    // Backward
    const double deltaOutput =
       sigmoid_d(n.calculatedOutput) *
@@ -288,19 +288,19 @@ void trainTheNetwork(Network& n) {
 
    for (uint16_t h = 0; h < hiddenNodes; h++) {
       deltas[hiddenLayers - 1][h] += n.weightsToOutput[h][0] * deltaOutput;
-      deltas[hiddenLayers - 1][h] *= 
+      deltas[hiddenLayers - 1][h] *=
          sigmoid_d(n.hiddenLayers[hiddenLayers - 1][h]);
       n.weightsToOutput[h][0] +=
          n.alpha * sigmoid(n.hiddenLayers[hiddenLayers - 1][h]) * deltaOutput;
    }
-   
+
    for (int16_t l = hiddenLayers - 2; l >= 0; l--) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
-            deltas[l][hp] += 
+            deltas[l][hp] +=
                n.weightsHiddenLayers[l][hp][hn] * deltas[l + 1][hn];
          }
-         deltas[l][hp] *= 
+         deltas[l][hp] *=
             sigmoid_d(n.hiddenLayers[l][hp]);
          for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
             n.weightsHiddenLayers[l][hp][hn] +=
@@ -308,7 +308,7 @@ void trainTheNetwork(Network& n) {
          }
       }
    }
-   
+
    for (uint16_t h = 0; h < hiddenNodes; h++) {
       for (uint16_t i = 0; i < n.inputs.size(); i++) {
          n.weightsFromInputs[i][h] +=
@@ -335,15 +335,15 @@ Network makeNetwork(const unsigned int inputs,
     */
    const unsigned int hiddenPlusBias = hiddenNodes + 1;
    vecvecdo wFI(inputs + 1, vecdo(hiddenPlusBias));
-   vector< vecvecdo > wHL(hiddenLayers, 
-                          vecvecdo(hiddenPlusBias, 
+   vector< vecvecdo > wHL(hiddenLayers,
+                          vecvecdo(hiddenPlusBias,
                                    vecdo(hiddenPlusBias)));
    vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
    vecdo schemeVector = {};
    if (scheme.length() > 0) {
       schemeVector = initialiseWeightsByScheme(scheme, seed);
    }
-   
+
    initialiseWeights(wFI, //first layer of weights
                      wHL, //layers of hidden weights
                      wTO, //last layer of weights
@@ -375,7 +375,7 @@ unordered_set<string> generateSchemes(string scheme) {
    /*
     * First generate all the needed schemes.
     * This may get hard for larger collections of weights
-    * due to ASCII limitations, but when limited to about 
+    * due to ASCII limitations, but when limited to about
     * 50 different possible weights this should work.
     * Each element in the scheme string may not be larger
     * than its index + 'A', so that there will be no
@@ -425,7 +425,7 @@ void run(Network n,
    //For the seedtest
    XORTest(n, //network
            toFile, //whether to write to a file
-           (fileName == "") ? "simple.xoroutput" : 
+           (fileName == "") ? "simple.xoroutput" :
                               fileName, //filename
            "a", //writing mode for the file
            true, //seedtest
@@ -448,8 +448,8 @@ void runSchemes(const unordered_set<string> schemes,
     * to be written to.
     */
    string fileName;
-   const string folder = "schemetest/";
-   __attribute__((unused)) const uint8_t unused = 
+   const string folder = "hiddenlayertest/";
+   __attribute__((unused)) const uint8_t unused =
       system(("mkdir " + folder).c_str());
    for(string scheme : schemes) {
       fileName = folder +
@@ -483,10 +483,10 @@ void updateStatusBar(const float percent) {
     * but that might be platform specific.
     */
    progress += percent;
-   
+
    const int barWidth = 70;
    const float amountProg = barWidth * progress;
-   
+
    cout << "[" << string(amountProg, '#')
         << string(barWidth - amountProg, ' ') << "] "
         << int(progress * 100.0) << "%\r";
@@ -497,20 +497,20 @@ int main (const int argc, const char **argv) {
 
    // Raise an error when one of these float exceptions occur.
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
-   
+
    if (!(argc == 4 || (argc == 2 && !strcmp(argv[1], "schemes")))) {
       printf("Usage: %s <epochs> <alpha> <seed>\n", argv[0]);
       return 1;
    }
-   
+
    // + 1 for the bias node
-   const int inputs = 2;
-   const int hiddenLayers = 3;
-   const int hiddenNodes = 2;
-   const int outputs = 1;
+   const uint8_t inputs = 2;
+   const uint8_t hiddenLayers = 3;
+   const uint8_t hiddenNodes = 3;
+   const uint8_t outputs = 1;
    uint64_t epochs;
    double alpha;
-   unsigned int seed;
+   uint16_t seed;
    if (argc == 4) {
       epochs = atoi(argv[1]);
       alpha = atof(argv[2]);
@@ -519,13 +519,13 @@ int main (const int argc, const char **argv) {
             (std::chrono::high_resolution_clock::now().
             time_since_epoch().count());*/
    } else {
-      epochs = 2;//0000;
+      epochs = 20000;
       alpha = 0.5;
       seed = 1230;
    }
 
-   const unsigned int hiddenPlusBias = hiddenNodes + 1;
-   const unsigned int amountWeights =
+   const uint8_t hiddenPlusBias = hiddenNodes + 1;
+   const uint16_t amountWeights =
       ((inputs + 1) * hiddenNodes) +
       (hiddenPlusBias * (hiddenLayers - 1)) +
       (hiddenPlusBias * outputs);
@@ -540,21 +540,21 @@ int main (const int argc, const char **argv) {
    if (seedRun) {
       float progress = 0.0;
       updateStatusBar(progress);
-      const int startseed = 100, endseed = 1000, stepseed = 10;
-      const int steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
-      
+      const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
+      const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
+
       vector< future< void > > threads(steps);
-      
-      for (unsigned int s = startseed; s <= endseed; s += stepseed) {
+
+      for (uint16_t s = startseed; s <= endseed; s += stepseed) {
          threads[(s/10 - 10)] = async(launch::async,
-                                      [schemes, 
-                                       inputs, 
-                                       hiddenLayers, 
+                                      [schemes,
+                                       inputs,
+                                       hiddenLayers,
                                        hiddenNodes,
-                                       outputs, 
-                                       epochs, 
-                                       s, 
-                                       alpha, 
+                                       outputs,
+                                       epochs,
+                                       s,
+                                       alpha,
                                        toFile] {
             //runSchemes({initialScheme}, inputs, hiddenNodes, outputs,
                          // epochs, s, alpha, toFile);
@@ -564,14 +564,14 @@ int main (const int argc, const char **argv) {
          });
       }
    } else {
-      runSchemes(schemes, 
-                 inputs, 
-                 hiddenLayers, 
-                 hiddenNodes, 
-                 outputs, 
-                 epochs, 
-                 seed, 
-                 alpha, 
+      runSchemes(schemes,
+                 inputs,
+                 hiddenLayers,
+                 hiddenNodes,
+                 outputs,
+                 epochs,
+                 seed,
+                 alpha,
                  toFile);
    }
    /*run(makeNetwork(inputs, hiddenNodes, outputs, alpha), epochs,
