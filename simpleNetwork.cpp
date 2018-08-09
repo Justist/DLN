@@ -45,7 +45,7 @@ void trainTheNetwork(Network&);
 void testTheNetwork(Network&);
 
 template <typename T>
-std::string to_string_prec(const T a_value, const int n = 3) {
+std::string to_string_prec(const T a_value, const uint8_t n = 3) {
    std::ostringstream out;
    out << std::setprecision(n) << a_value;
    return out.str();
@@ -89,11 +89,11 @@ vecdo initialiseWeightsByScheme(const string scheme,
 void initialiseWeights(vecvecdo& wFI,
                        vector< vecvecdo >& wHL,
                        vecvecdo& wTO,
-                       const unsigned int inputs,
-                       const unsigned int hiddenLayers,
-                       const unsigned int hiddenNodes,
-                       const unsigned int outputs,
-                       const unsigned int seed,
+                       const uint16_t inputs,
+                       const uint16_t hiddenLayers,
+                       const uint16_t hiddenNodes,
+                       const uint16_t outputs,
+                       const uint16_t seed,
                        const vecdo scheme = {}) {
    /*
     * Initialise the weights of the given weightLayers.
@@ -230,8 +230,8 @@ inline void testTheNetwork(Network& n) {
     * n.calculatedOutput contains the result of the
     * propagation.
     */
-   const unsigned int hiddenLayers = n.hiddenLayers.size();
-   const unsigned int hiddenNodes = n.hiddenLayers[0].size();
+   const uint16_t hiddenLayers = n.hiddenLayers.size();
+   const uint16_t hiddenNodes = n.hiddenLayers[0].size();
 
    for (uint16_t h = 1; h < hiddenNodes; h++) {
       //bias has value -1
@@ -251,7 +251,7 @@ inline void testTheNetwork(Network& n) {
          n.hiddenLayers[l + 1][hn] = -n.weightsHiddenLayers[l + 1][0][hn];
          for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
             n.hiddenLayers[l + 1][hn] +=
-               n.weightsHiddenLayers[l][hp][hn] * n.hiddenLayers[l][hp];
+               n.weightsHiddenLayers[l][hp][hn] * sigmoid(n.hiddenLayers[l][hp]);
          }
       }
    }
@@ -274,8 +274,8 @@ void trainTheNetwork(Network& n) {
     * For the backward propagation some optimisation may
     * be possible, but it works for now.
     */
-   const uint8_t hiddenLayers = n.hiddenLayers.size();
-   const uint8_t hiddenNodes = n.hiddenLayers[0].size();
+   const uint16_t hiddenLayers = n.hiddenLayers.size();
+   const uint16_t hiddenNodes = n.hiddenLayers[0].size();
 
    // Forward
    testTheNetwork(n);
@@ -317,12 +317,12 @@ void trainTheNetwork(Network& n) {
    }
 }
 
-Network makeNetwork(const unsigned int inputs,
-                    const unsigned int hiddenLayers,
-                    const unsigned int hiddenNodes,
-                    const unsigned int outputs,
+Network makeNetwork(const uint16_t inputs,
+                    const uint16_t hiddenLayers,
+                    const uint16_t hiddenNodes,
+                    const uint16_t outputs,
                     const double alpha,
-                    const unsigned int seed,
+                    const uint16_t seed,
                     const string scheme = "") {
    /*
     * Construct a network using the parameters.
@@ -333,7 +333,7 @@ Network makeNetwork(const unsigned int inputs,
     * The '+ 1' after inputs and hiddenNodes is to account
     * for the bias nodes, which are added to the network.
     */
-   const unsigned int hiddenPlusBias = hiddenNodes + 1;
+   const uint16_t hiddenPlusBias = hiddenNodes + 1;
    vecvecdo wFI(inputs + 1, vecdo(hiddenPlusBias));
    vector< vecvecdo > wHL(hiddenLayers,
                           vecvecdo(hiddenPlusBias,
@@ -402,7 +402,7 @@ unordered_set<string> generateSchemes(string scheme) {
 
 void run(Network n,
          const uint64_t maxEpochs,
-         const unsigned int seed,
+         const uint16_t seed,
          const bool toFile,
          const string fileName = "") {
    /*
@@ -433,12 +433,12 @@ void run(Network n,
 }
 
 void runSchemes(const unordered_set<string> schemes,
-                const unsigned int inputs,
-                const unsigned int hiddenLayers,
-                const unsigned int hiddenNodes,
-                const unsigned int outputs,
+                const uint16_t inputs,
+                const uint16_t hiddenLayers,
+                const uint16_t hiddenNodes,
+                const uint16_t outputs,
                 const uint64_t epochs,
-                const unsigned int seed,
+                const uint16_t seed,
                 const double alpha,
                 const bool toFile) {
    /*
@@ -449,7 +449,7 @@ void runSchemes(const unordered_set<string> schemes,
     */
    string fileName;
    const string folder = "hiddenlayertest/";
-   __attribute__((unused)) const uint8_t unused =
+   __attribute__((unused)) const uint16_t unused =
       system(("mkdir " + folder).c_str());
    for(string scheme : schemes) {
       fileName = folder +
@@ -504,10 +504,10 @@ int main (const int argc, const char **argv) {
    }
 
    // + 1 for the bias node
-   const uint8_t inputs = 2;
-   const uint8_t hiddenLayers = 3;
-   const uint8_t hiddenNodes = 3;
-   const uint8_t outputs = 1;
+   const uint16_t inputs = 2;
+   const uint16_t hiddenLayers = 3;
+   const uint16_t hiddenNodes = 3;
+   const uint16_t outputs = 1;
    uint64_t epochs;
    double alpha;
    uint16_t seed;
@@ -524,7 +524,7 @@ int main (const int argc, const char **argv) {
       seed = 1230;
    }
 
-   const uint8_t hiddenPlusBias = hiddenNodes + 1;
+   const uint16_t hiddenPlusBias = hiddenNodes + 1;
    const uint16_t amountWeights =
       ((inputs + 1) * hiddenNodes) +
       (hiddenPlusBias * (hiddenLayers - 1)) +
@@ -540,7 +540,7 @@ int main (const int argc, const char **argv) {
    if (seedRun) {
       float progress = 0.0;
       updateStatusBar(progress);
-      const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
+      const uint16_t startseed = 100, endseed = 100/*0*/, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
       vector< future< void > > threads(steps);
