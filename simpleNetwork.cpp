@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cfenv>
 #include <chrono>
 #include <cmath>
@@ -64,6 +65,24 @@ inline double randomWeight(unsigned int seed) {
    return -1 + 2 * (static_cast<double>(rand_r(&seed)) /RAND_MAX);
 }
 
+inline double trueRandomWeight(unsigned int seed, vecdo pastWeights) {
+   const double margin = 0.1; //change if needed
+   double randomNumber = -1.0;
+   bool stop = false;
+   while (!stop) {
+      stop = true;
+      randomNumber = randomWeight(seed);
+      for (double weight : pastWeights) {
+         if (randomNumber == weight + margin || randomNumber == weight - margin) {
+            stop = false;
+            break;
+         }
+      }
+   }
+   assert(randomNumber != -1.0);
+   return randomNumber;
+}
+
 vecdo initialiseWeightsByScheme(const string scheme,
                                 const unsigned int seed) {
    /*
@@ -80,7 +99,7 @@ vecdo initialiseWeightsByScheme(const string scheme,
       if (current == scheme[i]) {
          weights[i] = weights[i-1];
       } else {
-         weights[i] = randomWeight(seed);
+         weights[i] = trueRandomWeight(seed, weights);
       }
    }
    return weights;
