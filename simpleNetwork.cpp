@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cfenv>
 #include <chrono>
@@ -390,6 +391,18 @@ Network makeNetwork(const unsigned int inputs,
            0.0};
 }
 
+string uniquifyScheme(string scheme) {
+   const unsigned int length = scheme.length();
+   for (char j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
+      for (unsigned int i = 0; i < length; i--) {
+         if(scheme.find(j) == string::npos) {
+            replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), j);
+         }
+      }
+   }
+   return scheme;
+}
+
 unordered_set<string> generateSchemes(string scheme) {
    /*
     * First generate all the needed schemes.
@@ -405,12 +418,12 @@ unordered_set<string> generateSchemes(string scheme) {
    unordered_set<string> newSchemes;
    for (int i = scheme.length() - 1; i >= 0; i--) {
       scheme[i]++;
-      if (scheme[i] > ('A' + i) ||
+      if (scheme[i] > ('A' + i)/* ||
          (i > 0 && scheme[i] >
-                   (scheme[i-1] + 1))) {
+                   (scheme[i-1] + 1))*/) {
          return schemes;
       }
-      schemes.insert(scheme);
+      schemes.insert(uniquifyScheme(scheme));
       newSchemes = generateSchemes(scheme);
       schemes.reserve(schemes.size() +
                       distance(newSchemes.begin(), newSchemes.end()));
