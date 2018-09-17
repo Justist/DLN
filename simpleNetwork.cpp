@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cassert>
 #include <cfenv>
 #include <chrono>
 #include <cmath>
@@ -64,6 +66,28 @@ inline double randomWeight(unsigned int seed) {
    return -1 + 2 * (static_cast<double>(rand_r(&seed)) /RAND_MAX);
 }
 
+inline double trueRandomWeight(unsigned int seed, vecdo pastWeights) {
+   /*
+    * Ensure the generated weights are 'truly' different.
+    * This is ensured by having all weights differ by at least 'margin'.
+    */
+   const double margin = 0.01; //change if needed
+   double randomNumber = -1.0;
+   bool stop = false;
+   while (!stop) {
+      stop = true;
+      randomNumber = randomWeight(seed);
+      for (double weight : pastWeights) {
+         if (randomNumber == weight + margin || randomNumber == weight - margin) {
+            stop = false;
+            break;
+         }
+      }
+   }
+   assert(randomNumber != -1.0);
+   return randomNumber;
+}
+
 vecdo initialiseWeightsByScheme(const string scheme,
                                 const unsigned int seed) {
    /*
@@ -80,7 +104,7 @@ vecdo initialiseWeightsByScheme(const string scheme,
       if (current == scheme[i]) {
          weights[i] = weights[i-1];
       } else {
-         weights[i] = randomWeight(seed);
+         weights[i] = trueRandomWeight(seed, weights);
       }
    }
    return weights;
@@ -371,6 +395,32 @@ Network makeNetwork(const uint16_t inputs,
            0.0};
 }
 
+string uniquifyScheme(string scheme) {
+   /*
+    * Ensure the generated scheme is unique. This means that every equivalent scheme
+    * should result in the same string. This is enforced by 'lowering' all
+    * characters in the string to the lowest possible character, based on ASCII values.
+    * Example: ACCCA == ABBBA, so all C's can be replaced by B's.
+    * Same applies to DDEEDE, which changes to AABBAB
+    */
+   const unsigned int length = scheme.length();
+   while(true) {
+      for (char j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
+         for (unsigned int i = 0; i < length; i--) {
+            if(scheme.find(j) == string::npos) {
+               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), j);
+            }
+         }
+      }
+      // Recursive call to ensure all characters will be lowered as much as possible.
+      newScheme = uniquifyScheme(scheme);
+      // If nothing can be lowered anymore, return
+      if (newScheme == scheme) { return scheme; }
+      // Else try again. This can add some overhead, but not much.
+      else { scheme = newScheme; }
+   }
+}
+
 unordered_set<string> generateSchemes(string scheme) {
    /*
     * First generate all the needed schemes.
@@ -386,12 +436,12 @@ unordered_set<string> generateSchemes(string scheme) {
    unordered_set<string> newSchemes;
    for (int i = scheme.length() - 1; i >= 0; i--) {
       scheme[i]++;
-      if (scheme[i] > ('A' + i) ||
+      if (scheme[i] > ('A' + i)/* ||
          (i > 0 && scheme[i] >
-                   (scheme[i-1] + 1))) {
+                   (scheme[i-1] + 1))*/) {
          return schemes;
       }
-      schemes.insert(scheme);
+      schemes.insert(uniquifyScheme(scheme));
       newSchemes = generateSchemes(scheme);
       schemes.reserve(schemes.size() +
                       distance(newSchemes.begin(), newSchemes.end()));
@@ -505,8 +555,8 @@ int main (const int argc, const char **argv) {
 
    // + 1 for the bias node
    const uint16_t inputs = 2;
-   const uint16_t hiddenLayers = 3;
-   const uint16_t hiddenNodes = 3;
+   const uint16_t hiddenLayers = 2;
+   const uint16_t hiddenNodes = 2;
    const uint16_t outputs = 1;
    uint64_t epochs;
    double alpha;
@@ -531,6 +581,9 @@ int main (const int argc, const char **argv) {
       (hiddenPlusBias * outputs);
    const string initialScheme(amountWeights, 'A');
    const unordered_set<string> schemes = generateSchemes(initialScheme);
+   
+   printf("Schemes count: %ld\n", schemes.size());
+   return 1;
 
    // Do we write the results to a file?
    const bool toFile = true;
