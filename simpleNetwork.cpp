@@ -404,6 +404,7 @@ string uniquifyScheme(string scheme) {
     * Same applies to DDEEDE, which changes to AABBAB
     */
    const unsigned int length = scheme.length();
+   string newScheme = "";
    while(true) {
       for (char j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
          for (unsigned int i = 0; i < length; i--) {
