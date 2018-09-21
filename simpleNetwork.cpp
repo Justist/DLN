@@ -33,18 +33,19 @@ struct Network {
    double expectedOutput;
    double alpha;
    double calculatedOutput;
+   string scheme;
 };
 
 // Function declarations so order doesn't matter.
-double sigmoid(double);
-double sigmoid_d(double);
-vecdo initialiseWeightsByScheme(string);
-void initialiseWeights(vecvecdo&, vecvecdo&, int, int, int, vecdo);
-void XOR(vecdo&, double&);
-void XORTest(Network, bool, string, string, bool, int);
-void writeWeights(Network, int);
-void trainTheNetwork(Network&);
-void testTheNetwork(Network&);
+//double sigmoid(double);
+//double sigmoid_d(double);
+//vecdo initialiseWeightsByScheme(string);
+//void initialiseWeights(vecvecdo&, vecvecdo&, int, int, int, vecdo);
+//void XOR(vecdo&, double&);
+//void XORTest(Network, bool, string, string, bool, int);
+//void writeWeights(Network, int);
+//void trainTheNetwork(Network&);
+//void testTheNetwork(Network&);
 
 template <typename T>
 std::string to_string_prec(const T a_value, const uint8_t n = 3) {
@@ -118,7 +119,7 @@ void initialiseWeights(vecvecdo& wFI,
                        const uint16_t hiddenNodes,
                        const uint16_t outputs,
                        const uint16_t seed,
-                       const vecdo scheme = {}) {
+                       const vecdo schemeWeights = {}) {
    /*
     * Initialise the weights of the given weightLayers.
     * If a scheme is given, fill the layers using that
@@ -126,12 +127,12 @@ void initialiseWeights(vecvecdo& wFI,
     * The layers are returned by reference.
     */
    bool useScheme = false;
-   if (!scheme.empty()) { useScheme = true; }
+   if (!schemeWeights.empty()) { useScheme = true; }
    for (uint16_t i = 0; i < inputs; i++) {
       for (uint16_t h = 1; h < hiddenNodes; h++) {
          wFI[i][h] =
             useScheme ?
-               scheme[i*hiddenNodes + (h - 1)] :
+               schemeWeights[i*hiddenNodes + (h - 1)] :
                randomWeight(seed);
       }
    }
@@ -141,7 +142,7 @@ void initialiseWeights(vecvecdo& wFI,
          for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
             wHL[l][hp][hn] =
                useScheme ?
-                  scheme[l*hiddenNodes + hp + (hn - 1)] :
+                  schemeWeights[l*hiddenNodes + hp + (hn - 1)] :
                   randomWeight(seed);
          }
       }
@@ -151,81 +152,78 @@ void initialiseWeights(vecvecdo& wFI,
       for (uint16_t o = 0; o < outputs; o++) {
          wTO[h][o] =
             useScheme ?
-               scheme[o*hiddenNodes +
-                      h +
-                      (hiddenNodes - 1)*inputs] :
+               schemeWeights[o*hiddenNodes +
+                             h +
+                             (hiddenNodes - 1)*inputs] :
                randomWeight(seed);
       }
    }
 }
 
-inline void XOR(vecdo& inputs, double& output) {
-   /*
-    * Create input and expected output for the XOR
-    * problem. Two numbers are generated, either 0 or 1,
-    * and if they are equal then the expected output is 0,
-    * otherwise 1.
-    * If the numbers are 0, they are changed to -1 so the
-    * network can use these numbers.
-    */
-   int a = (rand ( ) % 2 == 0);
-   int b = (rand ( ) % 2 == 0);
-   output = (a + b) % 2;
-   if (a == 0) { a = -1; }
-   if (b == 0) { b = -1; }
-   inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
+inline vecdo flatten(vecvecdo const& toFlatten) {
+   vecdo flat;
+   for (vecdo sub : toFlatten) {
+      flat.insert(end(flat), begin(sub), end(sub));
+   }
+   return flat;
 }
 
-void XORTest(Network n,
-             const bool toFile = false,
-             string filename = "",
-             const string writeMode = "w",
-             const bool seedTest = false,
-             const int seed = -1) {
+inline vecdo flatten(vector< vecvecdo > const& toFlatten) {
+   vecdo flat;
+   for (auto& sub : toFlatten) {
+      vecdo flatSub = flatten(sub);
+      flat.insert(end(flat), begin(flatSub), end(flatSub));
+   }
+   return flat;
+}
+
+inline void pullScheme(Network& n) {
    /*
-    * Given the trained network, calculate the error by
-    * doing one forward propagation and comparing the
-    * output with the expected output for each possible
-    * input.
-    * The error is then either printed to a file or to
-    * the terminal.
+    * "Pull" the weights of the network together according to the scheme of the network.
+    * This means that the weights which have been assigned the same letter will get a
+    * small nudge to come closer to each other.
+    * The nudge is half the distance to the average of their weights.
     */
-   if (filename == "") {
-      filename = "i" + to_string(n.inputs.size( )) +
-                 "l" + to_string(n.hiddenLayers.size()) +
-                 "h" + to_string(n.hiddenLayers[0].size( )) +
-                 "a" + to_string(n.alpha) +
-                 ".xoroutput";
-   }
-   FILE * of = fopen(filename.c_str(), writeMode.c_str());
-   double error = 0.0;
-   for (int8_t i = -1; i <= 1; i += 2) {
-      for (int8_t j = -1; j <= 1; j += 2) {
-         n.inputs = {-1.0, static_cast<float>(i), static_cast<float>(j)};
-         n.expectedOutput = (i != j);
-         testTheNetwork(n);
-         error += abs(n.expectedOutput -
-                      sigmoid(n.calculatedOutput));
-         if (!seedTest) {
-            if (toFile) {
-               fprintf(of,
-                       "x: %d, y: %d, gives %.6f\n",
-                       i, j, sigmoid(n.calculatedOutput));
-            } else {
-               printf("x: %d, y: %d, gives %.6f\n",
-                      i, j, sigmoid(n.calculatedOutput)); 
-            }
-         }
-      }
-   }
-   if (toFile) {
-      if (seedTest) {
-         fprintf(of, "seed: %d, error: %.6f\n", seed, error);
-      } else {
-         fprintf(of, "error: %.6f\n", error);
-      }
-   } else { printf("error: %.6f\n", error); }
-   fclose(of);
+    string scheme = n.scheme;
+    unsigned int schemeLength = scheme.length();
+    vecdo weightSums(schemeLength, 0.0);
+    auto wFIFlat = flatten(n.weightsFromInputs);
+    auto wHLFlat = flatten(n.weightsHiddenLayers);
+    auto wTOFlat = flatten(n.weightsToOutput);
+    vecdo allWeightsFlat = flatten({wFIFlat, wHLFlat, wTOFlat});
+    vector<unsigned int> letterCount(schemeLength, 0);
+    unsigned int index = 0;
+    
+    assert(schemeLength == allWeightsFlat.size());
+    
+    for (unsigned int i = 0; i < schemeLength; i++) {
+       index = scheme[i] - 'A';
+       weightSums[index] += allWeightsFlat[i];
+       letterCount[index]++;
+    }
+    
+    // Take the averages of the weightSums
+    vecdo weightAverages(schemeLength, 0.0);
+    for (unsigned int j = 0; j < schemeLength; j++) {
+       weightAverages[j] = weightSums[j] / letterCount[j];
+    }
+    
+    // Then use these to nudge the weights
+    for (unsigned int k = 0; k < schemeLength; k++) {
+      index = scheme[k] - 'A';
+      allWeightsFlat[k] -= (allWeightsFlat[k] - weightAverages[index]) / 2.0;
+    }
+    
+    // Then update the weights according to the flat weight vector
+    initialiseWeights(n.weightsFromInputs,
+                      n.weightsHiddenLayers,
+                      n.weightsToOutput,
+                      n.weightsFromInputs.size() + 1, //amount of input nodes
+                      n.weightsHiddenLayers.size(), //amount of hidden layers
+                      n.weightsHiddenLayers[0].size() + 1, //amount hidden nodes
+                      n.weightsToOutput[0].size(), //amount of output nodes
+                      0, //seed
+                      allWeightsFlat); //scheme weights
 }
 
 //void writeWeights(Network n, const int epoch) {
@@ -289,6 +287,7 @@ inline void testTheNetwork(Network& n) {
    }
 }
 
+
 void trainTheNetwork(Network& n) {
    /*
     * Both forward and backward propagation through the
@@ -339,6 +338,77 @@ void trainTheNetwork(Network& n) {
             n.alpha * n.inputs[i] * deltas[0][h];
       }
    }
+}
+
+inline void XOR(vecdo& inputs, double& output) {
+   /*
+    * Create input and expected output for the XOR
+    * problem. Two numbers are generated, either 0 or 1,
+    * and if they are equal then the expected output is 0,
+    * otherwise 1.
+    * If the numbers are 0, they are changed to -1 so the
+    * network can use these numbers.
+    */
+   int a = (rand ( ) % 2 == 0);
+   int b = (rand ( ) % 2 == 0);
+   output = (a + b) % 2;
+   if (a == 0) { a = -1; }
+   if (b == 0) { b = -1; }
+   inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
+}
+
+void XORTest(Network n,
+             const bool toFile = false,
+             string filename = "",
+             const string writeMode = "w",
+             const bool seedTest = false,
+             const int seed = -1,
+             const string addition = "") {
+   /*
+    * Given the trained network, calculate the error by
+    * doing one forward propagation and comparing the
+    * output with the expected output for each possible
+    * input.
+    * The error is then either printed to a file or to
+    * the terminal.
+    */
+   if (filename == "") {
+      filename = "i" + to_string(n.inputs.size( )) +
+                 "l" + to_string(n.hiddenLayers.size()) +
+                 "h" + to_string(n.hiddenLayers[0].size( )) +
+                 "a" + to_string(n.alpha) +
+                 ".xoroutput";
+   }
+   filename.insert(filename.find(".xoroutput"), addition);
+   FILE * of = fopen(filename.c_str(), writeMode.c_str());
+   double error = 0.0;
+   for (int8_t i = -1; i <= 1; i += 2) {
+      for (int8_t j = -1; j <= 1; j += 2) {
+         n.inputs = {-1.0, static_cast<float>(i), static_cast<float>(j)};
+         n.expectedOutput = (i != j);
+         testTheNetwork(n);
+         error += abs(n.expectedOutput -
+                      sigmoid(n.calculatedOutput));
+         if (!seedTest) {
+            if (toFile) {
+               fprintf(of,
+                       "x: %d, y: %d, gives %.6f\n",
+                       i, j, sigmoid(n.calculatedOutput));
+            } else {
+               printf("x: %d, y: %d, gives %.6f\n",
+                      i, j, sigmoid(n.calculatedOutput)); 
+            }
+         }
+      }
+   }
+   if (toFile) {
+      if (seedTest) {
+         fprintf(of, "seed: %d, error: %.6f\n", seed, error);
+      } else {
+         fprintf(of, "error: %.6f\n", error);
+      }
+   } else { printf("error: %.6f\n", error); }
+   fclose(of);
 }
 
 Network makeNetwork(const uint16_t inputs,
@@ -392,7 +462,9 @@ Network makeNetwork(const uint16_t inputs,
            // The learning rate alpha
            alpha,
            // The calculated output, or just whatever the network produces
-           0.0};
+           0.0,
+           // The scheme according to which the weights have been distributed
+           scheme};
 }
 
 string uniquifyScheme(string scheme) {
@@ -470,6 +542,18 @@ void run(Network n,
       n.expectedOutput = expectedOutput;
       trainTheNetwork(n);
       currentEpoch++;
+      if (currentEpoch % (maxEpochs / 20) == 0) {
+         pullScheme(n);
+         XORTest(n, //network
+                 toFile, //whether to write to a file
+                 (fileName == "") ? "simple.xoroutput" :
+                                    fileName, //filename
+                 "a", //writing mode for the file
+                 true, //seedtest
+                 seed, //seed
+                 "e" + to_string(currentEpoch) //amount of epochs
+                 );
+      }
    }
 
    //For the seedtest
@@ -582,8 +666,8 @@ int main (const int argc, const char **argv) {
    const string initialScheme(amountWeights, 'A');
    const unordered_set<string> schemes = generateSchemes(initialScheme);
    
-   printf("Schemes count: %ld\n", schemes.size());
-   return 1;
+//   printf("Schemes count: %ld\n", schemes.size());
+//   return 1;
 
    // Do we write the results to a file?
    const bool toFile = true;
