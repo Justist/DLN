@@ -404,21 +404,20 @@ string uniquifyScheme(string scheme) {
     * Same applies to DDEEDE, which changes to AABBAB
     */
    const unsigned int length = scheme.length();
-   string newScheme = "";
+   string oldScheme = scheme;
+   char jchar = '0';
    while(true) {
-      for (char j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
+      for (unsigned int j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
+         jchar = static_cast<char>(j);
          for (unsigned int i = 0; i < length; i--) {
-            if(scheme.find(j) == string::npos) {
-               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), j);
+            if(scheme.find(jchar) == string::npos) {
+               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), jchar);
             }
          }
       }
-      // Recursive call to ensure all characters will be lowered as much as possible.
-      newScheme = uniquifyScheme(scheme);
       // If nothing can be lowered anymore, return
-      if (newScheme == scheme) { return scheme; }
+      if (oldScheme == scheme) { return scheme; }
       // Else try again. This can add some overhead, but not much.
-      else { scheme = newScheme; }
    }
 }
 
