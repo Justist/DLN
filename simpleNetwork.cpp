@@ -12,6 +12,7 @@
 #include <future>
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <thread>
 #include <unordered_set>
@@ -22,8 +23,9 @@ using namespace std;
 typedef vector< double > vecdo;
 typedef vector< vecdo > vecvecdo;
 
-// Global variable to enable multithreading
+// Global variables to enable multithreading
 unordered_set<string> globalSchemes;
+mutex mtx;
 
 struct Network {
    vecdo inputs;
@@ -534,7 +536,9 @@ unordered_set<string> generateSchemes(string scheme) {
       threads[i] = async(launch::async, [loopScheme] {
          string permScheme = loopScheme;
          while(next_permutation(permScheme.begin(), permScheme.end())) {
+            mtx.lock();
             globalSchemes.insert(permScheme);
+            mtx.unlock();
          }
       });
       i++;
