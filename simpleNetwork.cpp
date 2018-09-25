@@ -22,6 +22,9 @@ using namespace std;
 typedef vector< double > vecdo;
 typedef vector< vecdo > vecvecdo;
 
+// Global variable to enable multithreading
+unordered_set<string> globalSchemes;
+
 struct Network {
    vecdo inputs;
    vecvecdo weightsFromInputs;
@@ -493,7 +496,7 @@ string uniquifyScheme(string scheme) {
    }
 }
 
-unordered_set<string> generateSchemes(string scheme) {
+unordered_set<string> generateInitialSchemes(string scheme) {
    /*
     * First generate all the needed schemes.
     * This may get hard for larger collections of weights
@@ -503,23 +506,40 @@ unordered_set<string> generateSchemes(string scheme) {
     * than its index + 'A', so that there will be no
     * duplicate schemes.
     */
-    //Filled to include the first scheme as well
    unordered_set<string> schemes = {scheme};
    unordered_set<string> newSchemes;
-   for (int i = scheme.length() - 1; i >= 0; i--) {
+   const uint16_t schemeLength = scheme.length();
+   for (int i = schemeLength - 1; i >= 0; i--) {
       scheme[i]++;
-      if (scheme[i] > ('A' + i)/* ||
+      if (scheme[i] > ('A' + i) ||
          (i > 0 && scheme[i] >
-                   (scheme[i-1] + 1))*/) {
+                   (scheme[i-1] + 1))) {
          return schemes;
       }
-      schemes.insert(uniquifyScheme(scheme));
-      newSchemes = generateSchemes(scheme);
+      schemes.insert(scheme);
+      newSchemes = generateInitialSchemes(scheme);
       schemes.reserve(schemes.size() +
                       distance(newSchemes.begin(), newSchemes.end()));
       schemes.insert(newSchemes.begin(), newSchemes.end());
    }
    return schemes;
+}
+
+unordered_set<string> generateSchemes(string scheme) {
+   unordered_set<string> initialSchemes = generateInitialSchemes(scheme);
+   uint32_t initSchemesSize = initialSchemes.size();
+   vector< future< void > > threads(initSchemesSize);
+   uint32_t i = 0;
+   for (string loopScheme : initialSchemes) {
+      threads[i] = async(launch::async, [loopScheme] {
+         string permScheme = loopScheme;
+         while(next_permutation(permScheme.begin(), permScheme.end())) {
+            globalSchemes.insert(permScheme);
+         }
+      });
+      i++;
+   }
+   return globalSchemes;
 }
 
 void run(Network n,
@@ -677,7 +697,7 @@ int main (const int argc, const char **argv) {
    if (seedRun) {
       float progress = 0.0;
       updateStatusBar(progress);
-      const uint16_t startseed = 100, endseed = 100/*0*/, stepseed = 10;
+      const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
       vector< future< void > > threads(steps);
