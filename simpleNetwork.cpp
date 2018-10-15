@@ -134,7 +134,7 @@ void initialiseWeights(vecvecdo& wFI,
    bool useScheme = false;
    if (!schemeWeights.empty()) { useScheme = true; }
    for (uint16_t i = 0; i < inputs; i++) {
-      for (uint16_t h = 1; h < hiddenNodes; h++) {
+      for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
          wFI[i][h] =
             useScheme ?
                schemeWeights[i*hiddenNodes + (h - 1)] :
@@ -144,10 +144,10 @@ void initialiseWeights(vecvecdo& wFI,
 
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
-         for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
+         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             wHL[l][hp][hn] =
                useScheme ?
-                  schemeWeights[l*hiddenNodes + hp + (hn - 1)] :
+                  schemeWeights[l*hiddenNodes + hp + hn] :
                   randomWeight(seed);
          }
       }
@@ -198,7 +198,6 @@ inline void pullScheme(Network& n) {
     vecdo allWeightsFlat = flatten({wFIFlat, wHLFlat, wTOFlat});
     vector<unsigned int> letterCount(schemeLength, 0);
     unsigned int index = 0;
-
     // Due to unused weights, this doesnt hold
     //assert(schemeLength == allWeightsFlat.size());
     //if(schemeLength != allWeightsFlat.size()) {
@@ -226,18 +225,35 @@ inline void pullScheme(Network& n) {
     // Then use these to nudge the weights
     for (unsigned int k = 0; k < schemeLength; k++) {
       index = scheme[k] - 'A';
-      allWeightsFlat[k] -= (allWeightsFlat[k] - weightAverages[index]) / 2.0;
+//      for (double w : wFIFlat) {
+//         printf("%f ", w);
+//      }
+//      cout << endl;
+//      for (double w : wHLFlat) {
+//         printf("%f ", w);
+//      }
+//      cout << endl;
+//      for (double w : wTOFlat) {
+//         printf("%f ", w);
+//      }
+//      cout << endl;
+//      cout << n.scheme << endl;
+//      throw;
+      
+      allWeightsFlat[k] = sigmoid(allWeightsFlat[k] -
+                                    (allWeightsFlat[k] - 
+                                     weightAverages[index]) / 2.0);
     }
     
     // Then update the weights according to the flat weight vector
     initialiseWeights(n.weightsFromInputs,
                       n.weightsHiddenLayers,
                       n.weightsToOutput,
-                      n.weightsFromInputs.size() + 1, //amount of input nodes
+                      n.weightsFromInputs.size(), //amount of input nodes
                       n.weightsHiddenLayers.size(), //amount of hidden layers
-                      n.weightsHiddenLayers[0].size() + 1, //amount hidden nodes
+                      n.weightsHiddenLayers[0].size(), //amount hidden nodes
                       n.weightsToOutput[0].size(), //amount of output nodes
-                      0, //seed
+                      0, //seed (not relevant in this case)
                       allWeightsFlat); //scheme weights
 }
 
@@ -270,7 +286,7 @@ inline void testTheNetwork(Network& n) {
    const uint16_t hiddenLayers = n.hiddenLayers.size();
    const uint16_t hiddenNodes = n.hiddenLayers[0].size();
 
-   for (uint16_t h = 1; h < hiddenNodes; h++) {
+   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       //bias has value -1
       n.hiddenLayers[0][h] = -n.weightsFromInputs[0][h];
       for (uint16_t i = 1; i < n.inputs.size(); i++) {
@@ -283,7 +299,7 @@ inline void testTheNetwork(Network& n) {
    //hn is hidden next
    //for the previous and next hidden layer
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
-      for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
+      for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
          //bias has value -1
          n.hiddenLayers[l + 1][hn] = -n.weightsHiddenLayers[l + 1][0][hn];
          for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
@@ -334,20 +350,20 @@ void trainTheNetwork(Network& n) {
 
    for (int16_t l = hiddenLayers - 2; l >= 0; l--) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
-         for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
+         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             deltas[l][hp] +=
                n.weightsHiddenLayers[l][hp][hn] * deltas[l + 1][hn];
          }
          deltas[l][hp] *=
             sigmoid_d(n.hiddenLayers[l][hp]);
-         for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
+         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             n.weightsHiddenLayers[l][hp][hn] +=
                n.alpha * sigmoid(n.hiddenLayers[l][hp]) * deltas[l + 1][hn];
          }
       }
    }
 
-   for (uint16_t h = 0; h < hiddenNodes; h++) {
+   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       for (uint16_t i = 0; i < n.inputs.size(); i++) {
          n.weightsFromInputs[i][h] +=
             n.alpha * n.inputs[i] * deltas[0][h];
@@ -443,10 +459,10 @@ Network makeNetwork(const uint16_t inputs,
     * for the bias nodes, which are added to the network.
     */
    const uint16_t hiddenPlusBias = hiddenNodes + 1;
-   vecvecdo wFI(inputs + 1, vecdo(hiddenPlusBias));
+   vecvecdo wFI(inputs + 1, vecdo(hiddenNodes));
    vector< vecvecdo > wHL(hiddenLayers,
                           vecvecdo(hiddenPlusBias,
-                                   vecdo(hiddenPlusBias)));
+                                   vecdo(hiddenNodes)));
    vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
    vecdo schemeVector = {};
    if (scheme.length() > 0) {
@@ -482,31 +498,31 @@ Network makeNetwork(const uint16_t inputs,
            scheme};
 }
 
-string uniquifyScheme(string scheme) {
-   /*
-    * Ensure the generated scheme is unique. This means that every equivalent scheme
-    * should result in the same string. This is enforced by 'lowering' all
-    * characters in the string to the lowest possible character, based on ASCII values.
-    * Example: ACCCA == ABBBA, so all C's can be replaced by B's.
-    * Same applies to DDEEDE, which changes to AABBAB
-    */
-   const unsigned int length = scheme.length();
-   string oldScheme = scheme;
-   char jchar = '0';
-   while(true) {
-      for (unsigned int j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
-         jchar = static_cast<char>(j);
-         for (unsigned int i = 0; i < length; i--) {
-            if(scheme.find(jchar) == string::npos) {
-               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), jchar);
-            }
-         }
-      }
-      // If nothing can be lowered anymore, return
-      if (oldScheme == scheme) { return scheme; }
-      // Else try again. This can add some overhead, but not much.
-   }
-}
+//string uniquifyScheme(string scheme) {
+//   /*
+//    * Ensure the generated scheme is unique. This means that every equivalent scheme
+//    * should result in the same string. This is enforced by 'lowering' all
+//    * characters in the string to the lowest possible character, based on ASCII values.
+//    * Example: ACCCA == ABBBA, so all C's can be replaced by B's.
+//    * Same applies to DDEEDE, which changes to AABBAB
+//    */
+//   const unsigned int length = scheme.length();
+//   string oldScheme = scheme;
+//   char jchar = '0';
+//   while(true) {
+//      for (unsigned int j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
+//         jchar = static_cast<char>(j);
+//         for (unsigned int i = 0; i < length; i--) {
+//            if(scheme.find(jchar) == string::npos) {
+//               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), jchar);
+//            }
+//         }
+//      }
+//      // If nothing can be lowered anymore, return
+//      if (oldScheme == scheme) { return scheme; }
+//      // Else try again. This can add some overhead, but not much.
+//   }
+//}
 
 unordered_set<string> generateInitialSchemes(string scheme) {
    /*
@@ -537,24 +553,25 @@ unordered_set<string> generateInitialSchemes(string scheme) {
    return schemes;
 }
 
-unordered_set<string> generateSchemes(string scheme) {
-   unordered_set<string> initialSchemes = generateInitialSchemes(scheme);
-   uint32_t initSchemesSize = initialSchemes.size();
-   vector< future< void > > threads(initSchemesSize);
-   uint32_t i = 0;
-   for (string loopScheme : initialSchemes) {
-      threads[i] = async(launch::async, [loopScheme] {
-         string permScheme = loopScheme;
-         while(next_permutation(permScheme.begin(), permScheme.end())) {
-            mtx.lock();
-            globalSchemes.insert(permScheme);
-            mtx.unlock();
-         }
-      });
-      i++;
-   }
-   return globalSchemes;
-}
+// Slightly too much options
+//unordered_set<string> generateSchemes(string scheme) {
+//   unordered_set<string> initialSchemes = generateInitialSchemes(scheme);
+//   uint32_t initSchemesSize = initialSchemes.size();
+//   vector< future< void > > threads(initSchemesSize);
+//   uint32_t i = 0;
+//   for (string loopScheme : initialSchemes) {
+//      threads[i] = async(launch::async, [loopScheme] {
+//         string permScheme = loopScheme;
+//         while(next_permutation(permScheme.begin(), permScheme.end())) {
+//            mtx.lock();
+//            globalSchemes.insert(permScheme);
+//            mtx.unlock();
+//         }
+//      });
+//      i++;
+//   }
+//   return globalSchemes;
+//}
 
 void run(Network n,
          const uint64_t maxEpochs,
