@@ -41,17 +41,6 @@ struct Network {
    string scheme;
 };
 
-// Function declarations so order doesn't matter.
-//double sigmoid(double);
-//double sigmoid_d(double);
-//vecdo initialiseWeightsByScheme(string);
-//void initialiseWeights(vecvecdo&, vecvecdo&, int, int, int, vecdo);
-//void XOR(vecdo&, double&);
-//void XORTest(Network, bool, string, string, bool, int);
-//void writeWeights(Network, int);
-//void trainTheNetwork(Network&);
-//void testTheNetwork(Network&);
-
 template <typename T>
 std::string to_string_prec(const T a_value, const uint8_t n = 3) {
    std::ostringstream out;
@@ -198,15 +187,6 @@ inline void pullScheme(Network& n) {
     vecdo allWeightsFlat = flatten({wFIFlat, wHLFlat, wTOFlat});
     vector<unsigned int> letterCount(schemeLength, 0);
     unsigned int index = 0;
-    // Due to unused weights, this doesnt hold
-    //assert(schemeLength == allWeightsFlat.size());
-    //if(schemeLength != allWeightsFlat.size()) {
-    //     printf("schemeLength: %d, numWeights: %d\n", 
-    //            schemeLength, allWeightsFlat.size());
-    //     printf("first: %d, second: %d, third:%d\n",
-    //            wFIFlat.size(), wHLFlat.size(), wTOFlat.size());
-    //     throw "Scheme length unequal to weights size!";
-    //}
     
     for (unsigned int i = 0; i < schemeLength; i++) {
        index = scheme[i] - 'A';
@@ -256,26 +236,6 @@ inline void pullScheme(Network& n) {
                       allWeightsFlat); //scheme weights
 }
 
-//void writeWeights(Network n, const int epoch) {
-//   /*
-//    * Write the weights of the network to a file.
-//    * Just a testing function.
-//    */
-//   FILE *of = fopen("testweights.output", "w");
-//   fprintf(of, "%d: ", epoch);
-//   for (uint16_t i = 0; i < n.inputs.size(); i++) {
-//      for (uint16_t h = 1; h < n.hiddenLayer.size(); h++) { //0 is bias
-//         fprintf(of, "%.6f ", n.weightsFromInputs[i][h]);
-//      }
-//   }
-//   fprintf(of, "| ");
-//   for (uint16_t h = 0; h < n.hiddenLayer.size(); h++) {
-//      fprintf(of, "%.6f ", n.weightsToOutput[h][0]); //only 1 output
-//   }
-//   fprintf(of, "\n");
-//   fclose(of);
-//}
-
 inline void testTheNetwork(Network& n) {
    /*
     * Basically a forward propagation through the network.
@@ -287,9 +247,9 @@ inline void testTheNetwork(Network& n) {
 
    for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       //bias has value -1
-      n.hiddenLayers[0][h] = -n.weightsFromInputs[0][h];
+      n.hiddenLayers[0][h + 1] = -n.weightsFromInputs[0][h];
       for (uint16_t i = 1; i < n.inputs.size(); i++) {
-         n.hiddenLayers[0][h] +=
+         n.hiddenLayers[0][h + 1] +=
             n.weightsFromInputs[i][h] * n.inputs[i];
       }
    }
@@ -300,9 +260,9 @@ inline void testTheNetwork(Network& n) {
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
          //bias has value -1
-         n.hiddenLayers[l + 1][hn] = -n.weightsHiddenLayers[l + 1][0][hn];
+         n.hiddenLayers[l + 1][hn + 1] = -n.weightsHiddenLayers[l + 1][0][hn];
          for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
-            n.hiddenLayers[l + 1][hn] +=
+            n.hiddenLayers[l + 1][hn + 1] +=
                n.weightsHiddenLayers[l][hp][hn] * sigmoid(n.hiddenLayers[l][hp]);
          }
       }
@@ -351,21 +311,29 @@ void trainTheNetwork(Network& n) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             deltas[l][hp] +=
-               n.weightsHiddenLayers[l][hp][hn] * deltas[l + 1][hn];
+               n.weightsHiddenLayers[l][hp][hn] * deltas[l + 1][hn + 1];
          }
          deltas[l][hp] *=
             sigmoid_d(n.hiddenLayers[l][hp]);
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             n.weightsHiddenLayers[l][hp][hn] +=
-               n.alpha * sigmoid(n.hiddenLayers[l][hp]) * deltas[l + 1][hn];
+               n.alpha * sigmoid(n.hiddenLayers[l][hp]) * deltas[l + 1][hn + 1];
          }
       }
    }
 
    for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       for (uint16_t i = 0; i < n.inputs.size(); i++) {
-         n.weightsFromInputs[i][h] +=
-            n.alpha * n.inputs[i] * deltas[0][h];
+         // Totally not cheating around small numbers
+         double weight = n.weightsFromInputs[i][h];
+         double addition = n.alpha * n.inputs[i] * deltas[0][h + 1];
+         if (weight > 0 && weight < pow(10, -100)) {
+            n.weightsFromInputs[i][h] = addition;
+         } else if (weight < 0 && weight > pow(-10, -100)) {
+            n.weightsFromInputs[i][h] = addition;
+         } else {
+            n.weightsFromInputs[i][h] += addition;
+         }
       }
    }
 }
@@ -497,32 +465,6 @@ Network makeNetwork(const uint16_t inputs,
            scheme};
 }
 
-//string uniquifyScheme(string scheme) {
-//   /*
-//    * Ensure the generated scheme is unique. This means that every equivalent scheme
-//    * should result in the same string. This is enforced by 'lowering' all
-//    * characters in the string to the lowest possible character, based on ASCII values.
-//    * Example: ACCCA == ABBBA, so all C's can be replaced by B's.
-//    * Same applies to DDEEDE, which changes to AABBAB
-//    */
-//   const unsigned int length = scheme.length();
-//   string oldScheme = scheme;
-//   char jchar = '0';
-//   while(true) {
-//      for (unsigned int j = 'A' + length - 2; j > 'A'; j--) { //go backwards over all possible characters
-//         jchar = static_cast<char>(j);
-//         for (unsigned int i = 0; i < length; i--) {
-//            if(scheme.find(jchar) == string::npos) {
-//               replace(scheme.begin(), scheme.end(), static_cast<char>(j + 1), jchar);
-//            }
-//         }
-//      }
-//      // If nothing can be lowered anymore, return
-//      if (oldScheme == scheme) { return scheme; }
-//      // Else try again. This can add some overhead, but not much.
-//   }
-//}
-
 unordered_set<string> generateInitialSchemes(string scheme) {
    /*
     * First generate all the needed schemes.
@@ -551,26 +493,6 @@ unordered_set<string> generateInitialSchemes(string scheme) {
    }
    return schemes;
 }
-
-// Slightly too much options
-//unordered_set<string> generateSchemes(string scheme) {
-//   unordered_set<string> initialSchemes = generateInitialSchemes(scheme);
-//   uint32_t initSchemesSize = initialSchemes.size();
-//   vector< future< void > > threads(initSchemesSize);
-//   uint32_t i = 0;
-//   for (string loopScheme : initialSchemes) {
-//      threads[i] = async(launch::async, [loopScheme] {
-//         string permScheme = loopScheme;
-//         while(next_permutation(permScheme.begin(), permScheme.end())) {
-//            mtx.lock();
-//            globalSchemes.insert(permScheme);
-//            mtx.unlock();
-//         }
-//      });
-//      i++;
-//   }
-//   return globalSchemes;
-//}
 
 void run(Network n,
          const uint64_t maxEpochs,
@@ -699,9 +621,6 @@ int main (const int argc, const char **argv) {
       epochs = atoi(argv[1]);
       alpha = atof(argv[2]);
       seed = atoi(argv[3]);
-            /*static_cast<unsigned int>
-            (std::chrono::high_resolution_clock::now().
-            time_since_epoch().count());*/
    } else {
       epochs = 20000;
       alpha = 0.5;
@@ -714,12 +633,8 @@ int main (const int argc, const char **argv) {
       (hiddenPlusBias * hiddenNodes * (hiddenLayers - 1)) +
       (hiddenPlusBias * outputs);
    const string initialScheme(amountWeights, 'A');
-   const unordered_set<string> schemes = generateInitialSchemes(initialScheme); 
-      //generateSchemes(initialScheme);
+   const unordered_set<string> schemes = generateInitialSchemes(initialScheme);
    
-//   printf("Schemes count: %ld\n", schemes.size());
-//   return 1;
-
    // Do we write the results to a file?
    const bool toFile = true;
    // Do we run the program for multiple seeds?
@@ -744,8 +659,6 @@ int main (const int argc, const char **argv) {
                                        s,
                                        alpha,
                                        toFile] {
-            //runSchemes({initialScheme}, inputs, hiddenNodes, outputs,
-                         // epochs, s, alpha, toFile);
             runSchemes(schemes, inputs, hiddenLayers, hiddenNodes, outputs,
                        epochs, s, alpha, toFile);
             updateStatusBar(1.0 / (float) steps);
@@ -762,7 +675,5 @@ int main (const int argc, const char **argv) {
                  alpha,
                  toFile);
    }
-   /*run(makeNetwork(inputs, hiddenNodes, outputs, alpha), epochs,
-         hiddenNodes, seed, alpha, toFile);*/
    return 0;
 }
