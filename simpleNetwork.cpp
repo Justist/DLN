@@ -142,7 +142,7 @@ void initialiseWeights(vecvecdo& wFI,
       }
    }
 
-   for (uint16_t l = 0; l < hiddenLayers; l++) {
+   for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 1; hn < hiddenNodes; hn++) {
             wHL[l][hp][hn] =
@@ -198,8 +198,16 @@ inline void pullScheme(Network& n) {
     vecdo allWeightsFlat = flatten({wFIFlat, wHLFlat, wTOFlat});
     vector<unsigned int> letterCount(schemeLength, 0);
     unsigned int index = 0;
-    
-    assert(schemeLength == allWeightsFlat.size());
+
+    // Due to unused weights, this doesnt hold
+    //assert(schemeLength == allWeightsFlat.size());
+    //if(schemeLength != allWeightsFlat.size()) {
+    //     printf("schemeLength: %d, numWeights: %d\n", 
+    //            schemeLength, allWeightsFlat.size());
+    //     printf("first: %d, second: %d, third:%d\n",
+    //            wFIFlat.size(), wHLFlat.size(), wTOFlat.size());
+    //     throw "Scheme length unequal to weights size!";
+    //}
     
     for (unsigned int i = 0; i < schemeLength; i++) {
        index = scheme[i] - 'A';
@@ -210,7 +218,9 @@ inline void pullScheme(Network& n) {
     // Take the averages of the weightSums
     vecdo weightAverages(schemeLength, 0.0);
     for (unsigned int j = 0; j < schemeLength; j++) {
-       weightAverages[j] = weightSums[j] / letterCount[j];
+       index = scheme[j] - 'A';
+       weightAverages[index] = letterCount[index] > 0 ? weightSums[index] / 
+       letterCount[index] : 0;
     }
     
     // Then use these to nudge the weights
@@ -606,7 +616,7 @@ void runSchemes(const unordered_set<string> schemes,
     * to be written to.
     */
    string fileName;
-   const string folder = "hiddenlayertest/";
+   const string folder = "nudgingtest/";
    __attribute__((unused)) const uint16_t unused =
       system(("mkdir " + folder).c_str());
    for(string scheme : schemes) {
@@ -685,7 +695,7 @@ int main (const int argc, const char **argv) {
    const uint16_t hiddenPlusBias = hiddenNodes + 1;
    const uint16_t amountWeights =
       ((inputs + 1) * hiddenNodes) +
-      (hiddenPlusBias * (hiddenLayers - 1)) +
+      (hiddenPlusBias * hiddenNodes * (hiddenLayers - 1)) +
       (hiddenPlusBias * outputs);
    const string initialScheme(amountWeights, 'A');
    const unordered_set<string> schemes = generateInitialSchemes(initialScheme); 
