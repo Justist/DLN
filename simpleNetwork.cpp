@@ -240,9 +240,8 @@ inline void pullScheme(Network& n) {
 //      cout << n.scheme << endl;
 //      throw;
       
-      allWeightsFlat[k] = sigmoid(allWeightsFlat[k] -
-                                    (allWeightsFlat[k] - 
-                                     weightAverages[index]) / 2.0);
+      allWeightsFlat[k] -= (allWeightsFlat[k] - 
+                            weightAverages[index]) / 2.0;
     }
     
     // Then update the weights according to the flat weight vector
