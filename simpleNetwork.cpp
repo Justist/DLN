@@ -688,7 +688,8 @@ int main (const int argc, const char **argv) {
       (hiddenPlusBias * (hiddenLayers - 1)) +
       (hiddenPlusBias * outputs);
    const string initialScheme(amountWeights, 'A');
-   const unordered_set<string> schemes = generateSchemes(initialScheme);
+   const unordered_set<string> schemes = generateInitialSchemes(initialScheme); 
+      //generateSchemes(initialScheme);
    
 //   printf("Schemes count: %ld\n", schemes.size());
 //   return 1;
