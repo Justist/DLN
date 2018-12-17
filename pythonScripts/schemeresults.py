@@ -2,9 +2,9 @@ import os
 import re
 
 os.chdir("..")
-directoryname = "reverseschemetest"
+directoryname = "nudgingtest2hidden3/"
 directory = os.fsencode(directoryname)
-resultsdir = "results"
+resultsdir = "nudgingresults2hidden3/"
 if not os.path.exists(resultsdir):
 	os.makedirs(resultsdir)
 nodes = ""

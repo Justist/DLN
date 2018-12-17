@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <regex>
 #include <sstream>
 #include <thread>
 #include <unordered_set>
@@ -465,7 +466,7 @@ Network makeNetwork(const uint16_t inputs,
            scheme};
 }
 
-unordered_set<string> generateInitialSchemes(string scheme) {
+unordered_set<string> generateInitialSchemes(string scheme, uint8_t multitask = 0) {
    /*
     * First generate all the needed schemes.
     * This may get hard for larger collections of weights
@@ -478,7 +479,7 @@ unordered_set<string> generateInitialSchemes(string scheme) {
    unordered_set<string> schemes = {scheme};
    unordered_set<string> newSchemes;
    const uint16_t schemeLength = scheme.length();
-   for (int i = schemeLength - 1; i >= 0; i--) {
+   for (int i = schemeLength - 1; i >= multitask; i--) {
       scheme[i]++;
       if (scheme[i] > ('A' + i) ||
          (i > 0 && scheme[i] >
@@ -494,11 +495,30 @@ unordered_set<string> generateInitialSchemes(string scheme) {
    return schemes;
 }
 
+unordered_set<string> multiTaskSchemes(uint16_t length) {
+   /*
+    * Generate the schemes using threads, so it will take less time.
+    */
+   unordered_set<string> allSchemes = {};
+   char startLetter = 'A';
+   string startScheme;
+   vector< future< void > > threads(length);
+   for(uint16_t i = 0; i < length; i++) {
+      startScheme = startLetter * length;
+      threads[i] = async(launch::async,
+                         [allSchemes,
+                          startScheme]
+                         {
+         generateInitialSchemes(startScheme, 1); 
+      });
+   }
+}
+
 void run(Network n,
          const uint64_t maxEpochs,
          const uint16_t seed,
          const bool toFile,
-         const string fileName = "") {
+         string fileName = "") {
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -515,6 +535,11 @@ void run(Network n,
       trainTheNetwork(n);
       currentEpoch++;
       if (currentEpoch % (maxEpochs / 20) == 0) {
+         if (fileName != "") {
+            fileName = regex_replace(fileName,
+                                     regex("e" + to_string(maxEpochs)),
+                                     "e" + to_string(currentEpoch));
+         }
          pullScheme(n);
          XORTest(n, //network
                  toFile, //whether to write to a file
@@ -554,7 +579,7 @@ void runSchemes(const unordered_set<string> schemes,
     * to be written to.
     */
    string fileName;
-   const string folder = "nudgingtest/";
+   const string folder = "nudgingtest2hidden3/";
    __attribute__((unused)) const uint16_t unused =
       system(("mkdir " + folder).c_str());
    for(string scheme : schemes) {
