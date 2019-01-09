@@ -7,18 +7,18 @@ OPT = -O3
 CFLAGS = $(STD) $(THR) $(OPT)
 TESTFLAGS = $(ERROR) $(STD) $(THR) $(DEBUG)
 LFLAGS = $(ERROR)
-EXE = simple
+EXE = dln
+SOURCES = $(wildcard *.cpp)
+OBJECTS = $(SOURCES:.cpp=.o)
 
-all: simple
+$(EXE): $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) -o $(EXE)
 
-simple: simpleNetwork.cpp
-	g++ $(CFLAGS) -o $(EXE) simpleNetwork.cpp
-
-simpletest: simpleNetwork.cpp
-	g++ $(TESTFLAGS) -o $(EXE) simpleNetwork.cpp
+%.o: %.cpp
+	$(CC) -c $(CFLAGS) $< -o $@
 
 run:
 	./$(EXE)
 
 clean:
-	@rm $(EXE) 2>/dev/null || true
+	@rm $(OBJECTS) $(EXE) 2>/dev/null || true

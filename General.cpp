@@ -1,7 +1,7 @@
 #include "Includes.hpp"
 
 namespace General {
-
+   
    template <typename T>
    std::string to_string_prec(const T a_value, const uint8_t n = 3) {
       /*
@@ -12,14 +12,14 @@ namespace General {
       out << std::setprecision(n) << a_value;
       return out.str();
    }
-
+   
    inline double sigmoid(const double x) {
       /*
        * Returns the y-value the default sigmoid has at coordinate x.
        */
       return 1.0 / (1.0 + exp(-x));
    }
-
+   
    inline double sigmoid_d(const double x) {
       /*
        * Returns the y-value the derivative of the default sigmoid
@@ -42,7 +42,7 @@ namespace General {
       }
       return flat;
    }
-
+   
    inline vecdo flatten(std::vector< vecvecdo > const& toFlatten) {
       /*
        * This function flattens a vector of vectors of vectors of doubles.
