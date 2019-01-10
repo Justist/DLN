@@ -1,3 +1,6 @@
+#ifndef GENERAL_CPP
+#define GENERAL_CPP
+
 #include "Includes.hpp"
 
 namespace General {
@@ -58,4 +61,32 @@ namespace General {
       return flat;
    }
    
+   inline double randomWeight(unsigned int seed) {
+      return -1 + 2 * (static_cast<double>(rand_r(&seed)) / RAND_MAX);
+   }
+   
+   inline double trueRandomWeight(unsigned int seed, vecdo pastWeights) {
+      /*
+       * Ensure the generated weights are 'truly' different.
+       * This is ensured by having all weights differ by at least 'margin'.
+       */
+      const double margin = 0.01; //change if needed
+      double randomNumber = -1.0;
+      bool stop = false;
+      while (!stop) {
+         stop = true;
+         randomNumber = randomWeight(seed);
+         for (double weight : pastWeights) {
+            if (randomNumber == weight + margin || 
+                randomNumber == weight - margin) {
+               stop = false;
+               break;
+            }
+         }
+      }
+      assert(randomNumber != -1.0);
+      return randomNumber;
+   }
 }
+
+#endif

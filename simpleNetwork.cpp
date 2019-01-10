@@ -2,47 +2,13 @@
 
 #include "General.cpp"
 #include "Network.hpp"
-
-using namespace std;
+#include "Tests.hpp"
 
 /*// Global variables to enable multithreading
-unordered_set<string> globalSchemes;
+unordered_set<std::string> globalSchemes;
 mutex mtx;*/
 
-template <typename T>
-std::string to_string_prec(const T a_value, const uint8_t n = 3) {
-   std::ostringstream out;
-   out << std::setprecision(n) << a_value;
-   return out.str();
-}
-
-inline double randomWeight(unsigned int seed) {
-   return -1 + 2 * (static_cast<double>(rand_r(&seed)) /RAND_MAX);
-}
-
-inline double trueRandomWeight(unsigned int seed, vecdo pastWeights) {
-   /*
-    * Ensure the generated weights are 'truly' different.
-    * This is ensured by having all weights differ by at least 'margin'.
-    */
-   const double margin = 0.01; //change if needed
-   double randomNumber = -1.0;
-   bool stop = false;
-   while (!stop) {
-      stop = true;
-      randomNumber = randomWeight(seed);
-      for (double weight : pastWeights) {
-         if (randomNumber == weight + margin || randomNumber == weight - margin) {
-            stop = false;
-            break;
-         }
-      }
-   }
-   assert(randomNumber != -1.0);
-   return randomNumber;
-}
-
-vecdo initialiseWeightsByScheme(const string& scheme,
+vecdo initialiseWeightsByScheme(const std::string& scheme,
                                 const unsigned int seed) {
    /*
     * Function takes a scheme in format "aaabbbcccddd" etc,
@@ -53,78 +19,15 @@ vecdo initialiseWeightsByScheme(const string& scheme,
     */
    char current = scheme[0];
    vecdo weights(scheme.length(), -1.0);
-   weights[0] = randomWeight(seed);
+   weights[0] = General::randomWeight(seed);
    for (unsigned int i = 1; i < scheme.length(); i++) {
       if (current == scheme[i]) {
          weights[i] = weights[i-1];
       } else {
-         weights[i] = trueRandomWeight(seed, weights);
+         weights[i] = General::trueRandomWeight(seed, weights);
       }
    }
    return weights;
-}
-
-void initialiseWeights(Network& n,
-                       const uint16_t seed,
-                       const vecdo& schemeWeights = {}) {
-   /*
-    * Initialise the weights of the given weightLayers.
-    * If a scheme is given, fill the layers using that
-    * scheme, else fill it with random values.
-    * The layers are returned by reference.
-    */
-    
-   const auto inputNodes   = static_cast<const uint16_t>(n.amInputNodes() + 1);
-   const auto hiddenNodes  = static_cast<const uint16_t>(n.amHiddenNodes() + 1);
-   const auto hiddenLayers = static_cast<const uint16_t>(n.amHiddenLayers());
-   const auto outputNodes  = static_cast<const uint16_t>(n.amOutputNodes());
-   
-   bool useScheme = false;
-   if (!schemeWeights.empty()) { useScheme = true; }
-   for (uint16_t i = 0; i < inputNodes; i++) {
-      for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
-         n.weightsFromInputs(i, h, useScheme ?
-                                   schemeWeights[i*hiddenNodes + (h - 1)] :
-                                   randomWeight(seed));
-      }
-   }
-
-   for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
-      for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
-         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
-            n.weightsHiddenLayers(l, hp, hn, useScheme ?
-                                             schemeWeights[l*hiddenNodes + hp + hn] :
-                                             randomWeight(seed));
-         }
-      }
-   }
-
-   for (uint16_t h = 0; h < hiddenNodes; h++) {
-      for (uint16_t o = 0; o < outputNodes; o++) {
-         n.weightsToOutput(h, o, useScheme ?
-                                 schemeWeights[o*hiddenNodes +
-                                               h +
-                                               (hiddenNodes - 1)*inputNodes] :
-                                 randomWeight(seed));
-      }
-   }
-}
-
-inline vecdo flatten(vecvecdo const& toFlatten) {
-   vecdo flat;
-   for (vecdo sub : toFlatten) {
-      flat.insert(end(flat), begin(sub), end(sub));
-   }
-   return flat;
-}
-
-inline vecdo flatten(vector< vecvecdo > const& toFlatten) {
-   vecdo flat;
-   for (auto& sub : toFlatten) {
-      vecdo flatSub = flatten(sub);
-      flat.insert(end(flat), begin(flatSub), end(flatSub));
-   }
-   return flat;
 }
 
 inline void pullScheme(Network& n) {
@@ -134,14 +37,14 @@ inline void pullScheme(Network& n) {
     * small nudge to come closer to each other.
     * The nudge is half the distance to the average of their weights.
     */
-    string scheme = n.scheme();
+    std::string scheme = n.scheme();
     auto schemeLength = static_cast<unsigned int>(scheme.length());
     vecdo weightSums(schemeLength, 0.0);
-    auto wFIFlat = flatten(n.weightsFromInputs());
-    auto wHLFlat = flatten(n.weightsHiddenLayers());
-    auto wTOFlat = flatten(n.weightsToOutput());
-    vecdo allWeightsFlat = flatten({wFIFlat, wHLFlat, wTOFlat});
-    vector<unsigned int> letterCount(schemeLength, 0);
+    auto wFIFlat = General::flatten(n.weightsFromInputs());
+    auto wHLFlat = General::flatten(n.weightsHiddenLayers());
+    auto wTOFlat = General::flatten(n.weightsToOutput());
+    vecdo allWeightsFlat = General::flatten({wFIFlat, wHLFlat, wTOFlat});
+    std::vector<unsigned int> letterCount(schemeLength, 0);
     unsigned int index = 0;
     
     for (unsigned int i = 0; i < schemeLength; i++) {
@@ -181,211 +84,8 @@ inline void pullScheme(Network& n) {
     }
     
     // Then update the weights according to the flat weight vector
-    initialiseWeights(n, //the network
-                      0, //seed (not relevant in this case)
+    n.initialiseWeights(0, //seed (not relevant in this case)
                       allWeightsFlat); //scheme weights
-}
-
-inline void testTheNetwork(Network& n) {
-   /*
-    * Basically a forward propagation through the network.
-    * n.calculatedOutput contains the result of the
-    * propagation.
-    */
-   const auto hiddenLayers = static_cast<const uint16_t>(n.hiddenLayers().size());
-   const auto hiddenNodes = static_cast<const uint16_t>(n.hiddenLayers()[0].size());
-
-   double previous = 0.0;
-   
-   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
-      //bias has value -1
-      n.hiddenLayers(0, h + 1, -n.weightsFromInputs(0, h));
-      for (uint16_t i = 1; i < n.inputs().size(); i++) {
-         previous = n.hiddenLayers(0, h + 1);
-         n.hiddenLayers(0, h + 1, previous + 
-                                  n.weightsFromInputs(i, h) * 
-                                  n.inputs(i));
-      }
-   }
-
-   //hp is hidden previous
-   //hn is hidden next
-   //for the previous and next hidden layer
-   for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
-      for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
-         //bias has value -1
-         n.hiddenLayers(l + 1,hn + 1, -n.weightsHiddenLayers(l + 1, 0, hn));
-         for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
-            previous = n.hiddenLayers(l + 1, hn + 1);
-            n.hiddenLayers(l + 1, hn + 1, previous + 
-                                          n.weightsHiddenLayers(l, hp, hn) * 
-                                          General::sigmoid(n.hiddenLayers(l, hp)));
-         }
-      }
-   }
-
-   // only 1 output
-   n.calculatedOutput(-n.weightsToOutput(0,0));
-   for (uint16_t h = 1; h < hiddenNodes; h++) {
-      // TODO check if previous should be used here!
-      previous = n.calculatedOutput();
-      n.calculatedOutput(n.weightsToOutput(h, 0) *
-                         General::sigmoid(n.hiddenLayers(hiddenLayers - 1, h)));
-   }
-}
-
-
-void trainTheNetwork(Network& n) {
-   /*
-    * Both forward and backward propagation through the
-    * network. First the forward propagation is done in
-    * testTheNetwork(), as testing it is done by forward
-    * propagation.
-    * For the backward propagation some optimisation may
-    * be possible, but it works for now.
-    */
-   const auto hiddenLayers =
-        static_cast<const uint16_t>(n.hiddenLayers().size());
-   const auto hiddenNodes =
-        static_cast<const uint16_t>(n.hiddenLayers(0).size());
-   
-   double previous;
-
-   // Forward
-   testTheNetwork(n);
-
-   // Backward
-   const double deltaOutput =
-      General::sigmoid_d(n.calculatedOutput()) *
-      (n.expectedOutput() - General::sigmoid(n.calculatedOutput()));
-   vecvecdo deltas(hiddenLayers, vecdo(hiddenNodes, 0.0));
-
-   for (uint16_t h = 0; h < hiddenNodes; h++) {
-      deltas[hiddenLayers - 1][h] += n.weightsToOutput(h,0) * deltaOutput;
-      deltas[hiddenLayers - 1][h] *=
-           General::sigmoid_d(n.hiddenLayers(
-                static_cast<const uint16_t>(hiddenLayers - 1),
-                h));
-      previous = n.weightsToOutput(h, 0);
-      n.weightsToOutput(h, 0, previous +
-                              n.alpha() *
-                                   General::sigmoid(n.hiddenLayers(
-                                        static_cast<const uint16_t>(hiddenLayers - 1),
-                                        h)) *
-                              deltaOutput);
-   }
-
-   for (auto l = static_cast<int16_t>(hiddenLayers - 2); l >= 0; l--) {
-      for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
-         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
-            deltas[l][hp] +=
-                 n.weightsHiddenLayers(
-                      static_cast<const uint16_t>(l),
-                      hp,
-                      hn) * deltas[l + 1][hn + 1];
-         }
-         deltas[l][hp] *=
-              General::sigmoid_d(n.hiddenLayers(static_cast<const uint16_t>(l), hp));
-         for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
-            previous = n.weightsHiddenLayers(static_cast<const uint16_t>(l), hp, hn);
-            n.weightsHiddenLayers(static_cast<const uint16_t>(l),
-                                  hp,
-                                  hn,
-                                  previous +
-                                     n.alpha() *
-                                     General::sigmoid(n.hiddenLayers(l,
-                                                                     hp)) *
-                                    deltas[l + 1][hn + 1]);
-         }
-      }
-   }
-
-   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
-      for (uint16_t i = 0; i < n.inputs().size(); i++) {
-         // Totally not cheating around small numbers
-         double weight = n.weightsFromInputs(i, h);
-         double addition = n.alpha() * n.inputs(i) * deltas[0][h + 1];
-         if (weight > 0 && weight < pow(10, -100)) {
-            n.weightsFromInputs(i, h, addition);
-         } else if (weight < 0 && weight > pow(-10, -100)) {
-            n.weightsFromInputs(i, h, addition);
-         } else {
-            previous = n.weightsFromInputs(i, h);
-            n.weightsFromInputs(i, h, previous + addition);
-         }
-      }
-   }
-}
-
-inline void XOR(vecdo& inputs, double& output) {
-   /*
-    * Create input and expected output for the XOR
-    * problem. Two numbers are generated, either 0 or 1,
-    * and if they are equal then the expected output is 0,
-    * otherwise 1.
-    * If the numbers are 0, they are changed to -1 so the
-    * network can use these numbers.
-    */
-   int a = rand() % 2 == 0;
-   int b = rand() % 2 == 0;
-   output = (a + b) % 2;
-   if (a == 0) { a = -1; }
-   if (b == 0) { b = -1; }
-   inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
-}
-
-void XORTest(Network n,
-             const bool toFile = false,
-             string filename = "",
-             const string& writeMode = "w",
-             const bool seedTest = false,
-             const int seed = -1,
-             const string& addition = "") {
-   /*
-    * Given the trained network, calculate the error by
-    * doing one forward propagation and comparing the
-    * output with the expected output for each possible
-    * input.
-    * The error is then either printed to a file or to
-    * the terminal.
-    */
-   if (filename.empty()) {
-      filename = "i" + to_string(n.inputs().size( )) +
-                 "l" + to_string(n.hiddenLayers().size()) +
-                 "h" + to_string(n.hiddenLayers(0).size( )) +
-                 "a" + to_string(n.alpha()) +
-                 ".xoroutput";
-   }
-   filename.insert(filename.find(".xoroutput"), addition);
-   FILE * of = fopen(filename.c_str(), writeMode.c_str());
-   double error = 0.0;
-   for (int8_t i = -1; i <= 1; i += 2) {
-      for (int8_t j = -1; j <= 1; j += 2) {
-         n.inputs({-1.0, static_cast<float>(i), static_cast<float>(j)});
-         n.expectedOutput(i != j);
-         testTheNetwork(n);
-         error += abs(n.expectedOutput() -
-                      General::sigmoid(n.calculatedOutput()));
-         if (!seedTest) {
-            if (toFile) {
-               fprintf(of,
-                       "x: %d, y: %d, gives %.6f\n",
-                       i, j, General::sigmoid(n.calculatedOutput()));
-            } else {
-               printf("x: %d, y: %d, gives %.6f\n",
-                      i, j, General::sigmoid(n.calculatedOutput()));
-            }
-         }
-      }
-   }
-   if (toFile) {
-      if (seedTest) {
-         fprintf(of, "seed: %d, error: %.6f\n", seed, error);
-      } else {
-         fprintf(of, "error: %.6f\n", error);
-      }
-   } else { printf("error: %.6f\n", error); }
-   fclose(of);
 }
 
 Network makeNetwork(const uint16_t inputs,
@@ -394,7 +94,7 @@ Network makeNetwork(const uint16_t inputs,
                     const uint16_t outputs,
                     const double alpha,
                     const uint16_t seed,
-                    const string& scheme = "") {
+                    const std::string& scheme = "") {
    /*
     * Construct a network using the parameters.
     * This is basically only calling the functions
@@ -406,7 +106,7 @@ Network makeNetwork(const uint16_t inputs,
     */
    const auto hiddenPlusBias = static_cast<const uint16_t>(hiddenNodes + 1);
    vecvecdo wFI(inputs + 1, vecdo(hiddenNodes));
-   vector< vecvecdo > wHL(hiddenLayers,
+   std::vector< vecvecdo > wHL(hiddenLayers,
                           vecvecdo(hiddenPlusBias,
                                    vecdo(hiddenNodes)));
    vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
@@ -423,34 +123,18 @@ Network makeNetwork(const uint16_t inputs,
                        wHL,
                        wTO,
                        0.0,
-                       0.0,
+                       alpha,
                        0.0,
                        scheme);
    
-   initialiseWeights(tempNetwork,
-                     seed, //seed
-                     schemeVector); //scheme weights
+   tempNetwork.initialiseWeights(seed, //seed
+                                 schemeVector); //scheme weights
 
-   return {vecdo(inputs + 1, 0), //inputs
-           // Weights from the input layer to the first hidden layer
-           wFI,
-           // The nodes in the hidden layers
-           vecvecdo(hiddenLayers, vecdo(hiddenNodes + 1, 0)),
-           // The weights between each consequent pair of hidden layers
-           wHL,
-           // Weights from the last hidden layer to the output layer
-           wTO,
-           // The expected output
-           0.0,
-           // The learning rate alpha
-           alpha,
-           // The calculated output, or just whatever the network produces
-           0.0,
-           // The scheme according to which the weights have been distributed
-           scheme};
+   return tempNetwork;
 }
 
-unordered_set<string> generateInitialSchemes(string scheme, uint8_t multitask = 0) {
+std::unordered_set<std::string> generateInitialSchemes(std::string scheme, 
+                                                       uint8_t multitask = 0) {
    /*
     * First generate all the needed schemes.
     * This may get hard for larger collections of weights
@@ -460,8 +144,8 @@ unordered_set<string> generateInitialSchemes(string scheme, uint8_t multitask = 
     * than its index + 'A', so that there will be no
     * duplicate schemes.
     */
-   unordered_set<string> schemes = {scheme};
-   unordered_set<string> newSchemes;
+   std::unordered_set<std::string> schemes = {scheme};
+   std::unordered_set<std::string> newSchemes;
    const auto schemeLength = static_cast<const uint16_t>(scheme.length());
    for (int i = schemeLength - 1; i >= multitask; i--) {
       scheme[i]++;
@@ -479,14 +163,14 @@ unordered_set<string> generateInitialSchemes(string scheme, uint8_t multitask = 
    return schemes;
 }
 
-/*unordered_set<string> multiTaskSchemes(uint16_t length) {
+/*unordered_set<std::string> multiTaskSchemes(uint16_t length) {
    *//*
     * Generate the schemes using threads, so it will take less time.
     *//*
-   unordered_set<string> allSchemes = {};
+   unordered_set<std::string> allSchemes = {};
    char startLetter = 'A';
-   string startScheme;
-   vector< future< void > > threads(length);
+   std::string startScheme;
+   std::vector< future< void > > threads(length);
    for(uint16_t i = 0; i < length; i++) {
       startScheme = startLetter * length;
       threads[i] = async(launch::async,
@@ -503,7 +187,7 @@ void run(Network n,
          const uint64_t maxEpochs,
          const uint16_t seed,
          const bool toFile,
-         string fileName = "") {
+         std::string fileName = "") {
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -512,43 +196,45 @@ void run(Network n,
    vecdo inputVector;
    double expectedOutput;
    uint64_t currentEpoch = 0;
+   
+   Tests tests;
 
    while (currentEpoch < maxEpochs) {
-      XOR(inputVector, expectedOutput);
+      tests.XOR(inputVector, expectedOutput);
       n.inputs(inputVector);
       n.expectedOutput(expectedOutput);
-      trainTheNetwork(n);
+      n.train();
       currentEpoch++;
       if (currentEpoch % (maxEpochs / 20) == 0) {
          if (!fileName.empty()) {
             fileName = regex_replace(fileName,
-                                     regex("e" + to_string(maxEpochs)),
-                                     "e" + to_string(currentEpoch));
+                                     std::regex("e" + std::to_string(maxEpochs)),
+                                     "e" + std::to_string(currentEpoch));
          }
          pullScheme(n);
-         XORTest(n, //network
-                 toFile, //whether to write to a file
-                 fileName.empty() ? "simple.xoroutput" :
-                                    fileName, //filename
-                 "a", //writing mode for the file
-                 true, //seedtest
-                 seed, //seed
-                 "e" + to_string(currentEpoch) //amount of epochs
-                 );
+         tests.XORTest(n, //network
+                       toFile, //whether to write to a file
+                       fileName.empty() ? "simple.xoroutput" :
+                                          fileName, //filename
+                       "a", //writing mode for the file
+                       true, //seedtest
+                       seed, //seed
+                       "e" + std::to_string(currentEpoch) //amount of epochs
+                       );
       }
    }
 
    //For the seedtest
-   XORTest(n, //network
-           toFile, //whether to write to a file
-           fileName.empty() ? "simple.xoroutput" :
-           fileName, //filename
-           "a", //writing mode for the file
-           true, //seedtest
-           seed); //seed
+   tests.XORTest(n, //network
+                 toFile, //whether to write to a file
+                 fileName.empty() ? "simple.xoroutput" :
+                 fileName, //filename
+                 "a", //writing mode for the file
+                 true, //seedtest
+                 seed); //seed
 }
 
-void runSchemes(const unordered_set<string> schemes,
+void runSchemes(const std::unordered_set<std::string> schemes,
                 const uint16_t inputs,
                 const uint16_t hiddenLayers,
                 const uint16_t hiddenNodes,
@@ -563,19 +249,19 @@ void runSchemes(const unordered_set<string> schemes,
     * It also creates the name of the file for the results
     * to be written to.
     */
-   string fileName;
-   const string folder = "nudgingtest2hidden3/";
+   std::string fileName;
+   const std::string folder = "nudgingtest2hidden3/";
    __attribute__((unused)) const auto unused =
                static_cast<const uint16_t>(system(("mkdir " + folder).c_str()));
-   for(const string& scheme : schemes) {
+   for(const std::string& scheme : schemes) {
       fileName = folder +
-                 "w" + scheme +
-                 "e" + to_string(epochs) +
-                 "a" + to_string_prec(alpha, 2) +
-                 "i" + to_string(inputs) +
-                 "l" + to_string(hiddenLayers) +
-                 "h" + to_string(hiddenNodes) +
-                 "o" + to_string(outputs) +
+                 "w" + scheme                            +
+                 "e" + std::to_string(epochs)            +
+                 "a" + General::to_string_prec(alpha, 2) +
+                 "i" + std::to_string(inputs)            +
+                 "l" + std::to_string(hiddenLayers)      +
+                 "h" + std::to_string(hiddenNodes)       +
+                 "o" + std::to_string(outputs)           +
                  ".xoroutput";
       run(
          makeNetwork(inputs,
@@ -603,10 +289,10 @@ void updateStatusBar (const double percent) {
    const int barWidth = 70;
    const auto amountProg = static_cast<const unsigned long>(barWidth * progress);
 
-   cout << "[" << string(amountProg, '#')
-        << string(barWidth - amountProg, ' ') << "] "
-        << int(progress * 100.0) << "%\r";
-   cout.flush();
+   std::cout << "[" << std::string(amountProg, '#')
+             << std::string(barWidth - amountProg, ' ') << "] "
+             << int(progress * 100.0) << "%\r";
+   std::cout.flush();
 }
 
 int main (const int argc, const char **argv) {
@@ -642,8 +328,9 @@ int main (const int argc, const char **argv) {
       ((inputs + 1) * hiddenNodes) +
       (hiddenPlusBias * hiddenNodes * (hiddenLayers - 1)) +
       (hiddenPlusBias * outputs);
-   const string initialScheme(amountWeights, 'A');
-   const unordered_set<string> schemes = generateInitialSchemes(initialScheme);
+   const std::string initialScheme(amountWeights, 'A');
+   const std::unordered_set<std::string> schemes = 
+      generateInitialSchemes(initialScheme);
    
    // Do we write the results to a file?
    const bool toFile = true;
@@ -656,10 +343,10 @@ int main (const int argc, const char **argv) {
       const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
-      vector< future< void > > threads(steps);
+      std::vector< std::future< void > > threads(steps);
 
       for (uint16_t s = startseed; s <= endseed; s += stepseed) {
-         threads[(s/10 - 10)] = async(launch::async,
+         threads[(s/10 - 10)] = async(std::launch::async,
                                       [schemes,
                                        inputs,
                                        hiddenLayers,

@@ -3,6 +3,8 @@
 
 #include "Includes.hpp"
 
+#include "General.cpp"
+
 class Network {
 
 private:
@@ -59,6 +61,16 @@ public:
            double alpha,
            double cO,
            std::string scheme);
+           
+   void initialiseWeights(const uint16_t seed,
+                          const vecdo& schemeWeights = {});
+   // Forward propagation for the network
+   void forward();
+   // Backward propagation for the network
+   // Also called training
+   void train();
+           
+   /* Information callers */
 
    const uint16_t amInputNodes()   const
                   { return static_cast<const uint16_t>(_inputs.size()); }
