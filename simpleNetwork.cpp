@@ -88,51 +88,6 @@ inline void pullScheme(Network& n) {
                       allWeightsFlat); //scheme weights
 }
 
-Network makeNetwork(const uint16_t inputs,
-                    const uint16_t hiddenLayers,
-                    const uint16_t hiddenNodes,
-                    const uint16_t outputs,
-                    const double alpha,
-                    const uint16_t seed,
-                    const std::string& scheme = "") {
-   /*
-    * Construct a network using the parameters.
-    * This is basically only calling the functions
-    * which set the weights.
-    * If a scheme is used, first schemeVector is filled
-    * so that the scheme is reflected in the weights.
-    * The '+ 1' after inputs and hiddenNodes is to account
-    * for the bias nodes, which are added to the network.
-    */
-   const auto hiddenPlusBias = static_cast<const uint16_t>(hiddenNodes + 1);
-   vecvecdo wFI(inputs + 1, vecdo(hiddenNodes));
-   std::vector< vecvecdo > wHL(hiddenLayers,
-                          vecvecdo(hiddenPlusBias,
-                                   vecdo(hiddenNodes)));
-   vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
-   vecdo schemeVector = {};
-   if (scheme.length() > 0) {
-      schemeVector = initialiseWeightsByScheme(scheme, seed);
-   }
-   
-   // Here we construct a temporary network and feed it to this function
-   Network tempNetwork(vecdo(inputs),
-                       wFI,
-                       vecvecdo(hiddenPlusBias,
-                                vecdo(hiddenNodes)),
-                       wHL,
-                       wTO,
-                       0.0,
-                       alpha,
-                       0.0,
-                       scheme);
-   
-   tempNetwork.initialiseWeights(seed, //seed
-                                 schemeVector); //scheme weights
-
-   return tempNetwork;
-}
-
 std::unordered_set<std::string> generateInitialSchemes(std::string scheme, 
                                                        uint8_t multitask = 0) {
    /*
@@ -263,16 +218,14 @@ void runSchemes(const std::unordered_set<std::string> schemes,
                  "h" + std::to_string(hiddenNodes)       +
                  "o" + std::to_string(outputs)           +
                  ".xoroutput";
-      run(
-         makeNetwork(inputs,
-                     hiddenLayers,
-                     hiddenNodes,
-                     outputs,
-                     alpha,
-                     seed,
-                     scheme),
-         epochs, seed, toFile, fileName
-      );
+      Network network = new Network(inputs,
+                                    hiddenLayers,
+                                    hiddenNodes,
+                                    outputs,
+                                    alpha,
+                                    seed,
+                                    scheme);
+      run(network, epochs, seed, toFile, fileName);
    }
 }
 
