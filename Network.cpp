@@ -7,7 +7,8 @@ Network::Network(const vecdo inputs,
                  const vecvecdo wTO,
                  const double eO,
                  const double alpha,
-                 const double cO) {
+                 const double cO,
+                 const std::string scheme) {
    _inputs = inputs;
    _weightsFromInputs = wFI;
    _hiddenLayers = hL;
@@ -16,6 +17,7 @@ Network::Network(const vecdo inputs,
    _expectedOutput = eO;
    _alpha = alpha;
    _calculatedOutput = cO;
+   _scheme = scheme;
 }
 
 void Network::initialiseWeights(const uint16_t seed,

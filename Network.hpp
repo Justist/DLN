@@ -45,6 +45,10 @@ private:
    // The output of the network. As of currently, this is only a single number,
    // but later additions or experiments might require more outputs.
    double _calculatedOutput;
+   
+   // The scheme according to which the weights of the network are initialised.
+   // To better understand this, please read the accompanying paper.
+   std::string _scheme;
 
 public:
    
@@ -55,7 +59,8 @@ public:
            vecvecdo wTO,
            double eO,
            double alpha,
-           double cO);
+           double cO,
+           std::string scheme);
            
    void initialiseWeights(const uint16_t seed,
                           const vecdo& schemeWeights = {});
@@ -122,6 +127,8 @@ public:
    
    const double& calculatedOutput() const { return _calculatedOutput; }
    
+   const std::string& scheme() const { return _scheme; }
+   
    /* Setters */
    
    void inputs(const vecdo& a) { _inputs = a; }
@@ -175,6 +182,8 @@ public:
    void alpha(const double& a) { _alpha = a; }
    
    void calculatedOutput(const double& a) { _calculatedOutput = a;}
+   
+   void scheme(const std::string& a) { _scheme = a; }
    
 };
 
