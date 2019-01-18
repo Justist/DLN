@@ -6,18 +6,32 @@
 
 class Tests {
    private:
-      
+      template <typename T>
+      void Print(FILE* of,
+                 T toWrite,
+                 bool toFile);
+   
+      void PrintResults(const vecvecdo& inputs,
+                        const vecdo& outputs,
+                        bool toFile/* = false*/,
+                        const std::string& filename/* = ""*/,
+                        const std::string& writeMode/* = "w"*/,
+                        const std::string& firstString/* = "In: "*/,
+                        const std::string& secondString/* = "Out: "*/,
+                        bool equalSize/* = true*/);
    public:
       Tests() = default;
    
       void XOR(vecdo&, double&);
       void XORTest(Network n,
-                   const bool toFile = false,
+                   bool toFile = false,
                    std::string filename = "",
                    const std::string& writeMode = "w",
-                   const bool seedTest = false,
-                   const int seed = -1,
+                   bool seedTest = false,
+                   int seed = -1,
                    const std::string& addition = "");
+      
+      
 };
 
 #endif

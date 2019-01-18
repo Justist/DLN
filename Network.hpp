@@ -62,7 +62,7 @@ public:
            double cO,
            std::string scheme);
            
-   void initialiseWeights(const uint16_t seed,
+   void initialiseWeights(uint16_t seed,
                           const vecdo& schemeWeights = {});
    // Forward propagation for the network
    void forward();
@@ -82,7 +82,7 @@ public:
    
    /* Getters */
    
-   const vecdo& inputs() const { return _inputs; }
+   const vecdo&  inputs() const { return _inputs; }
    const double& inputs(const uint16_t i) const
    { return _inputs[i]; }
    

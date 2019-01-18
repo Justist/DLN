@@ -119,8 +119,6 @@ void Network::train() {
    const auto hiddenLayers = amHiddenLayers();
    const auto hiddenNodes  = amHiddenNodes();
    
-   double previous;
-
    // Forward
    forward();
 
@@ -140,7 +138,7 @@ void Network::train() {
          deltaOutput;
    }
 
-   for (int16_t l = hiddenLayers - 2; l >= 0; l--) {
+   for (auto l = static_cast<int16_t>(hiddenLayers - 2); l >= 0; l--) {
       for (uint16_t hp = 0; hp < hiddenNodes; hp++) {
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             deltas[l][hp] +=

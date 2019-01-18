@@ -1,5 +1,49 @@
 #include "Tests.hpp"
 
+template <typename T>
+void Tests::Print(FILE* of,
+                  const T toWrite,
+                  const bool toFile) {
+   std::ostringstream oss;
+   oss << toWrite;
+   if (toFile) {
+      fprintf(of, "%s,", oss.str().c_str());
+   } else {
+      printf("%s,", oss.str().c_str());
+   }
+}
+
+void Tests::PrintResults(const vecvecdo& inputs,
+                         const vecdo& outputs,
+                         const bool toFile = false,
+                         const std::string& filename = "",
+                         const std::string& writeMode = "w",
+                         const std::string& firstString = "In: ",
+                         const std::string& secondString = "Out: ",
+                         const bool equalSize = true) {
+   /*
+    * Prints the inputs and outputs of the
+    */
+   unsigned long inputSize  = inputs.size();
+   unsigned long outputSize = outputs.size();
+   if (equalSize) {
+      assert(inputSize == outputSize || "No equal size of input and output vector!");
+   }
+   FILE *of = nullptr;
+   if (toFile) {
+      of = fopen(filename.c_str(), writeMode.c_str());
+   }
+   for (auto i = 0; i < inputSize; i++) {
+      Print(of, firstString, toFile);
+      for (double x : inputs[i]) {
+         Print(of, x, toFile);
+      }
+      Print(of, secondString, toFile);
+      Print(of, outputs[i], toFile);
+      Print(of, "\n", toFile);
+   }
+}
+
 void Tests::XOR(vecdo& inputs, double& output) {
    /*
     * Create input and expected output for the XOR
@@ -32,6 +76,9 @@ void Tests::XORTest(Network n,
     * The error is then either printed to a file or to
     * the terminal.
     */
+   
+   vecvecdo inputs;
+   vecdo outputs;
    if (filename.empty()) {
       filename = "i" + std::to_string(n.amInputNodes()) +
                  "l" + std::to_string(n.amHiddenLayers()) +
@@ -41,32 +88,31 @@ void Tests::XORTest(Network n,
    }
    filename.insert(filename.find(".xoroutput"), addition);
    FILE * of = fopen(filename.c_str(), writeMode.c_str());
+   double outputDifference;
    double error = 0.0;
-   for (int8_t i = -1; i <= 1; i += 2) {
-      for (int8_t j = -1; j <= 1; j += 2) {
-         n.inputs({-1.0, static_cast<float>(i), static_cast<float>(j)});
+   for (float i = -1; i <= 1; i += 2) {
+      for (float j = -1; j <= 1; j += 2) {
+         n.inputs({-1.0, i, j});
          n.expectedOutput(i != j);
          n.forward();
-         error += abs(n.expectedOutput() -
-                      General::sigmoid(n.calculatedOutput()));
+         outputDifference = n.expectedOutput() -
+                            General::sigmoid(n.calculatedOutput());
+         error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
          if (!seedTest) {
-            if (toFile) {
-               fprintf(of,
-                       "x: %d, y: %d, gives %.6f\n",
-                       i, j, General::sigmoid(n.calculatedOutput()));
-            } else {
-               printf("x: %d, y: %d, gives %.6f\n",
-                      i, j, General::sigmoid(n.calculatedOutput()));
-            }
+            inputs.push_back({i, j});
+            outputs.push_back(General::sigmoid(n.calculatedOutput()));
          }
       }
    }
-   if (toFile) {
-      if (seedTest) {
-         fprintf(of, "seed: %d, error: %.6f\n", seed, error);
-      } else {
-         fprintf(of, "error: %.6f\n", error);
-      }
-   } else { printf("error: %.6f\n", error); }
+   PrintResults(inputs, outputs, toFile, filename, writeMode);
+   inputs.clear();
+   outputs.clear();
+   outputs.push_back(error);
+   if (seedTest) {
+      inputs.push_back({static_cast<double>(seed)});
+      PrintResults(inputs, outputs, toFile, filename, writeMode, "seed: ", "error: ");
+   } else {
+      PrintResults(inputs, outputs, toFile, filename, writeMode, "", "error: ", false);
+   }
    fclose(of);
 }

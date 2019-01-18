@@ -254,7 +254,7 @@ void runSchemes(const std::unordered_set<std::string> schemes,
    __attribute__((unused)) const auto unused =
                static_cast<const uint16_t>(system(("mkdir " + folder).c_str()));
    for(const std::string& scheme : schemes) {
-      fileName = folder +
+      fileName = folder                                  +
                  "w" + scheme                            +
                  "e" + std::to_string(epochs)            +
                  "a" + General::to_string_prec(alpha, 2) +
@@ -314,9 +314,9 @@ int main (const int argc, const char **argv) {
    double alpha;
    uint16_t seed;
    if (argc == 4) {
-      epochs = atoi(argv[1]);
+      epochs = static_cast<uint64_t>(atoi(argv[1]));
       alpha = atof(argv[2]);
-      seed = atoi(argv[3]);
+      seed = static_cast<uint16_t>(atoi(argv[3]));
    } else {
       epochs = 20000;
       alpha = 0.5;
