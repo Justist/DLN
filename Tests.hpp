@@ -2,6 +2,8 @@
 #define TESTS_HPP
 
 #include "Includes.hpp"
+
+#include "General.cpp"
 #include "Network.hpp"
 
 class Tests {
@@ -22,7 +24,7 @@ class Tests {
    public:
       Tests() = default;
    
-      void XOR(vecdo&, double&);
+      void XOR(vecdo& inputs, double& output);
       void XORTest(Network n,
                    bool toFile = false,
                    std::string filename = "",
@@ -30,8 +32,8 @@ class Tests {
                    bool seedTest = false,
                    int seed = -1,
                    const std::string& addition = "");
-      
-      
+   
+      void ABC(vecdo& inputs, double& output);
 };
 
 #endif
