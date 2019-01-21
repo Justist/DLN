@@ -27,7 +27,8 @@ void Tests::PrintResults(const vecvecdo& inputs,
    unsigned long inputSize  = inputs.size();
    unsigned long outputSize = outputs.size();
    if (equalSize) {
-      assert(inputSize == outputSize || "No equal size of input and output vector!");
+      assert(inputSize == outputSize && 
+      "No equal size of input and output vector!");
    }
    FILE *of = nullptr;
    if (toFile) {
@@ -61,13 +62,15 @@ void Tests::XOR(vecdo& inputs, double& output) {
    inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
 }
 
+// TODO use TestParameters
+
 void Tests::XORTest(Network n,
-                    const bool toFile/* = false*/,
-                    std::string filename/* = ""*/,
+                    const bool toFile           /* = false*/,
+                    std::string filename        /* = ""*/,
                     const std::string& writeMode/* = "w"*/,
-                    const bool seedTest/* = false*/,
-                    const int seed/* = -1*/,
-                    const std::string& addition/* = ""*/) {
+                    const bool seedTest         /* = false*/,
+                    const int seed              /* = -1*/,
+                    const std::string& addition /* = ""*/) {
    /*
     * Given the trained network, calculate the error by
     * doing one forward propagation and comparing the
@@ -149,12 +152,12 @@ void Tests::ABC(vecdo& inputs, double& output) {
 }
 
 void Tests::ABCTest(Network n,
-                    const bool toFile/* = false*/,
-                    std::string filename/* = ""*/,
+                    const bool toFile           /* = false*/,
+                    std::string filename        /* = ""*/,
                     const std::string& writeMode/* = "w"*/,
-                    const bool seedTest/* = false*/,
-                    const int seed/* = -1*/,
-                    const std::string& addition/* = ""*/) {
+                    const bool seedTest         /* = false*/,
+                    const int seed              /* = -1*/,
+                    const std::string& addition /* = ""*/) {
    /*
     * Tests the trained networks performance on calculating the
     * ABC formula. To do this, a few sets of variables are each tested
@@ -182,43 +185,56 @@ void Tests::ABCTest(Network n,
    filename.insert(filename.find(".abcoutput"), addition);
    FILE * of = fopen(filename.c_str(), writeMode.c_str());
    
-   vecvecdo testcases = {
+   const vecvecdo testcases = {
         // a, b, c, output
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
+        {9, 12, 5, 0},
+        {20, 1, 20, 0},
+        {1, 10, 25, 1},
+        {1, -2, 1, 1},
+        {5, -44, 1, 2},
+        {-1, 30, -8, 2},
+        {-5, -20, -4, 2},
+        {3, 8, 4, 2},
    };
    
    double outputDifference;
    double error = 0.0;
-   for (float i = -1; i <= 1; i += 2) {
-      for (float j = -1; j <= 1; j += 2) {
-         n.inputs({-1.0, i, j});
-         n.expectedOutput(i != j);
-         n.forward();
-         outputDifference = n.expectedOutput() -
-                            General::sigmoid(n.calculatedOutput());
-         error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
-         if (!seedTest) {
-            inputs.push_back({i, j});
-            outputs.push_back(General::sigmoid(n.calculatedOutput()));
-         }
+   
+   for (vecdo test : testcases) {
+      n.inputs({-1.0, test[0], test[1], test[2]});
+      n.expectedOutput(test[3]);
+      n.forward();
+      outputDifference = n.expectedOutput() -
+                         General::sigmoid(n.calculatedOutput());
+      error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
+      if (!seedTest) {
+         inputs.push_back({test[0], test[1], test[2]});
+         outputs.push_back(General::sigmoid(n.calculatedOutput()));
       }
    }
+   
    PrintResults(inputs, outputs, toFile, filename, writeMode);
    inputs.clear();
    outputs.clear();
    outputs.push_back(error);
    if (seedTest) {
       inputs.push_back({static_cast<double>(seed)});
-      PrintResults(inputs, outputs, toFile, filename, writeMode, "seed: ", "error: ");
+      PrintResults(inputs, 
+                   outputs, 
+                   toFile, 
+                   filename, 
+                   writeMode, 
+                   "seed: ", 
+                   "error: ");
    } else {
-      PrintResults(inputs, outputs, toFile, filename, writeMode, "", "error: ", false);
+      PrintResults(inputs, 
+                   outputs, 
+                   toFile, 
+                   filename, 
+                   writeMode, 
+                   "", 
+                   "error: ", 
+                   false);
    }
    fclose(of);
 }

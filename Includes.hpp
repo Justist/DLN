@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <exception>
 #include <future>
 #include <iomanip>
 #include <iostream>
@@ -19,6 +20,7 @@
 #include <regex>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 #include <unordered_set>
 #include <vector>
 

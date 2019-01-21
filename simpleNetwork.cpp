@@ -187,7 +187,9 @@ void run(Network n,
          const uint64_t maxEpochs,
          const uint16_t seed,
          const bool toFile,
-         std::string fileName = "") {
+         std::string fileName,
+         const bool seedtest,
+         const std::string& test) {
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -197,7 +199,19 @@ void run(Network n,
    double expectedOutput;
    uint64_t currentEpoch = 0;
    
+   const std::unordered_set< std::string > acceptableTests = {
+      // Might be lengthier in the future
+      "xor",
+      "abc"
+   };
+   
+   assert(acceptableTests.find(test) != acceptableTests.end() && 
+          "Given test is not implemented (yet)!");
+   
    Tests tests;
+   
+   if (fileName.empty()) { fileName = "simple." + test + "output"; }
+   Tests::TestParameters param(n, toFile, fileName, "a", true, seed, "");
 
    while (currentEpoch < maxEpochs) {
       tests.XOR(inputVector, expectedOutput);
@@ -211,16 +225,28 @@ void run(Network n,
                                      std::regex("e" + std::to_string(maxEpochs)),
                                      "e" + std::to_string(currentEpoch));
          }
-         pullScheme(n);
-         tests.XORTest(n, //network
-                       toFile, //whether to write to a file
-                       fileName.empty() ? "simple.xoroutput" :
-                                          fileName, //filename
-                       "a", //writing mode for the file
-                       true, //seedtest
-                       seed, //seed
-                       "e" + std::to_string(currentEpoch) //amount of epochs
-                       );
+         //pullScheme(n);
+         if (test == "xor") {
+            tests.XORTest(n, //network
+                          toFile, //whether to write to a file
+                          fileName.empty() ? "simple.xoroutput" :
+                                             fileName, //filename
+                          "a", //writing mode for the file
+                          true, //seedtest
+                          seed, //seed
+                          "e" + std::to_string(currentEpoch) //amount of epochs
+                          );
+         } else if (test == "abc") {
+            tests.ABCTest(n, //network
+                          toFile, //whether to write to a file
+                          fileName.empty() ? "simple.xoroutput" :
+                                             fileName, //filename
+                          "a", //writing mode for the file
+                          true, //seedtest
+                          seed, //seed
+                          "e" + std::to_string(currentEpoch) //amount of epochs
+                          );
+         }
       }
    }
 
@@ -242,7 +268,9 @@ void runSchemes(const std::unordered_set<std::string> schemes,
                 const uint64_t epochs,
                 const uint16_t seed,
                 const double alpha,
-                const bool toFile) {
+                const bool toFile,
+                const bool seedtest,
+                const std::string& test = "xor") {
    /*
     * Given the set of schemes, run an identical network
     * on each of the schemes for the given seed.
@@ -271,7 +299,7 @@ void runSchemes(const std::unordered_set<std::string> schemes,
                      alpha,
                      seed,
                      scheme),
-         epochs, seed, toFile, fileName
+         epochs, seed, toFile, fileName, seedtest, test
       );
    }
 }
@@ -295,14 +323,71 @@ void updateStatusBar (const double percent) {
    std::cout.flush();
 }
 
-int main (const int argc, const char **argv) {
+struct inputArgs {
+   bool schemes;
+   uint64_t epochs;
+   double alpha;
+   uint16_t seed;
+   std::string test;
+};
+
+void usage(const std::string& programName) {
+   printf("Usage: %s [-s] [-eadt]() [-h]", programName.c_str());
+   const char* toPrint = R"(
+   -s           : If given, the program uses schemes. 
+   -e <epochs>  : The amount of epochs to be run.
+   -a <alpha>   : The alpha of the network.
+   -d <seed>    : The seed of the network.
+   -t <test>    : The test to be run.
+   )";
+}
+
+inputArgs parseArgs(const int argc, char **argv) {
+   inputArgs ia;
+   
+   int c;
+   
+   ia.schemes = false;
+   ia.epochs = 20000;
+   ia.alpha = 0.5;
+   ia.seed = 1230;
+   ia.test = "xor";
+   
+   while ((c = getopt (argc, argv, "se:a:d:t:")) != -1) {
+      switch (c) {
+         case 's':
+            ia.schemes = true;
+            break;
+         case 'e':
+            if (optarg) { ia.epochs = std::atol(optarg); }
+            break;
+         case 'a':
+            if (optarg) { ia.alpha = std::atof(optarg); }
+            break;
+         case 'd':
+            if (optarg) { ia.seed = std::atoi(optarg); }
+            break;
+         case 't':
+            if (optarg) { ia.test = optarg; }
+            break;
+         default:
+            usage(argv[0]);
+            throw("Undefined option!");
+      }
+    }
+    
+    return ia;
+}
+
+int main (const int argc, char **argv) {
 
    // Raise an error when one of these float exceptions occur.
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 
-   if (!(argc == 4 || (argc == 2 && !strcmp(argv[1], "schemes")))) {
-      printf("Usage: %s <epochs> <alpha> <seed>\n", argv[0]);
-      return 1;
+   try { 
+      inputArgs ia = parseArgs(argc, argv);
+   } catch (std::exception& e) {
+      fprintf(stderr, "%s\n", e.what());
    }
 
    // + 1 for the bias node
@@ -335,9 +420,9 @@ int main (const int argc, const char **argv) {
    // Do we write the results to a file?
    const bool toFile = true;
    // Do we run the program for multiple seeds?
-   const bool seedRun = true;
+   const bool seedtest = true;
 
-   if (seedRun) {
+   if (seedtest) {
       float progress = 0.0;
       updateStatusBar(progress);
       const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
@@ -357,7 +442,7 @@ int main (const int argc, const char **argv) {
                                        alpha,
                                        toFile] {
             runSchemes(schemes, inputs, hiddenLayers, hiddenNodes, outputs,
-                       epochs, s, alpha, toFile);
+                       epochs, s, alpha, toFile, seedtest);
             updateStatusBar(1.0 / (const float) steps);
          });
       }
@@ -370,7 +455,8 @@ int main (const int argc, const char **argv) {
                  epochs,
                  seed,
                  alpha,
-                 toFile);
+                 toFile,
+                 seedtest);
    }
    return 0;
 }
