@@ -307,7 +307,7 @@ void updateStatusBar (const double percent) {
 }
 
 void usage(const std::string& programName) {
-   printf("Usage: %s [-s] [-lneadt]() [-h]", programName.c_str());
+   printf("Usage: %s [-s] [-lneadt]() [-h]\n", programName.c_str());
    const char* toPrint = R"(
    -s            : If given, the program uses schemes.
    -l <integer>  : The amount of hidden layers in the network.
@@ -318,6 +318,7 @@ void usage(const std::string& programName) {
    -t <string>   : The test to be run.
    -f <string>   : The name of the folder to store the results in.
    )";
+   printf("%s\n", toPrint);
 }
 
 InputArgs parseArgs(const int argc, char **argv) {
