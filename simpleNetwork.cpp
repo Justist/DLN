@@ -384,7 +384,7 @@ int main (const int argc, char **argv) {
    }
 
    // + 1 for the bias node
-   const uint8_t inputs = 2;
+   const uint8_t inputs = 3;
    const uint8_t outputs = 1;
 
    const uint16_t hiddenPlusBias = ia.nodes + 1;

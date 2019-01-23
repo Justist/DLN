@@ -90,7 +90,7 @@ void Network::forward() {
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
          //bias has value -1
-         _hiddenLayers[l + 1][hn + 1] = -_weightsHiddenLayers[l + 1][0][hn];
+         _hiddenLayers[l + 1][hn + 1] = -_weightsHiddenLayers[l][0][hn];
          for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
             _hiddenLayers[l + 1][hn + 1] +=
                _weightsHiddenLayers[l][hp][hn] * 

@@ -1,5 +1,7 @@
 #include "Tests.hpp"
 
+
+// TODO this gives a segfault, as sometimes of is 0x0
 template <typename T>
 void Tests::Print(FILE* of,
                   const T toWrite,
@@ -31,7 +33,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
       "No equal size of input and output vector!");
    }
    FILE *of = nullptr;
-   if (toFile) {
+   if (toFile && filename != "") {
       of = fopen(filename.c_str(), writeMode.c_str());
    }
    for (auto i = 0; i < inputSize; i++) {
@@ -200,8 +202,11 @@ void Tests::ABCTest(TestParameters tp) {
    double error = 0.0;
    
    for (vecdo test : testcases) {
-      n.inputs({-1.0, test[0], test[1], test[2]});
-      n.expectedOutput(test[3]);
+      n.inputs({-1.0, 
+                General::sigmoid(test[0]), 
+                General::sigmoid(test[1]), 
+                General::sigmoid(test[2])});
+      n.expectedOutput(General::sigmoid(test[3]));
       n.forward();
       outputDifference = n.expectedOutput() -
                          General::sigmoid(n.calculatedOutput());

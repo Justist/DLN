@@ -4,7 +4,7 @@ STD = -std=c++11
 ERROR = -Wall -Wextra
 THR = -pthread
 OPT = -O3
-CFLAGS = $(STD) $(THR) $(OPT)
+CFLAGS = $(STD) $(THR)
 TESTFLAGS = $(ERROR) $(STD) $(THR) $(DEBUG)
 LFLAGS = $(ERROR)
 SOURCES = $(wildcard *.cpp)
@@ -15,13 +15,13 @@ TESTEXE = dlntest
 all: $(EXE)
 
 $(EXE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(EXE)
+	$(CC) $(CFLAGS) $(OPT) $(OBJECTS) -o $(EXE)
 	
 $(TESTEXE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(TESTFLAGS) -o $(EXE)
+	$(CC) $(OBJECTS) $(TESTFLAGS) -o $(TESTEXE)
 	
 %.o: %.cpp
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(DEBUG) $< -o $@
 
 run:
 	./$(EXE)
