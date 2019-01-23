@@ -39,6 +39,7 @@ network20*
 *.log
 *.pdf
 *.synctex.gz
+*.toc
 
 # Other stuff
 *.txt

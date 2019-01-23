@@ -218,46 +218,22 @@ void run(Network n,
       n.inputs(inputVector);
       n.expectedOutput(expectedOutput);
       n.train();
+      param.network = n;
       currentEpoch++;
       if (currentEpoch % (maxEpochs / 20) == 0) {
-         if (!fileName.empty()) {
-            fileName = regex_replace(fileName,
-                                     std::regex("e" + std::to_string(maxEpochs)),
-                                     "e" + std::to_string(currentEpoch));
+         if (!param.fileName.empty()) {
+            param.fileName = regex_replace(param.fileName,
+                                           std::regex("e" + 
+                                                      std::to_string(maxEpochs)),
+                                           "e" + std::to_string(currentEpoch));
          }
          //pullScheme(n);
-         if (test == "xor") {
-            tests.XORTest(n, //network
-                          toFile, //whether to write to a file
-                          fileName.empty() ? "simple.xoroutput" :
-                                             fileName, //filename
-                          "a", //writing mode for the file
-                          true, //seedtest
-                          seed, //seed
-                          "e" + std::to_string(currentEpoch) //amount of epochs
-                          );
-         } else if (test == "abc") {
-            tests.ABCTest(n, //network
-                          toFile, //whether to write to a file
-                          fileName.empty() ? "simple.xoroutput" :
-                                             fileName, //filename
-                          "a", //writing mode for the file
-                          true, //seedtest
-                          seed, //seed
-                          "e" + std::to_string(currentEpoch) //amount of epochs
-                          );
-         }
+         tests.runTest(param, test);
       }
    }
 
    //For the seedtest
-   tests.XORTest(n, //network
-                 toFile, //whether to write to a file
-                 fileName.empty() ? "simple.xoroutput" :
-                 fileName, //filename
-                 "a", //writing mode for the file
-                 true, //seedtest
-                 seed); //seed
+   tests.runTest(param, test);
 }
 
 void runSchemes(const std::unordered_set<std::string> schemes,

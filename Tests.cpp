@@ -62,64 +62,6 @@ void Tests::XOR(vecdo& inputs, double& output) {
    inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
 }
 
-// TODO use TestParameters
-
-void Tests::XORTest(Network n,
-                    const bool toFile           /* = false*/,
-                    std::string filename        /* = ""*/,
-                    const std::string& writeMode/* = "w"*/,
-                    const bool seedTest         /* = false*/,
-                    const int seed              /* = -1*/,
-                    const std::string& addition /* = ""*/) {
-   /*
-    * Given the trained network, calculate the error by
-    * doing one forward propagation and comparing the
-    * output with the expected output for each possible
-    * input.
-    * The error is then either printed to a file or to
-    * the terminal.
-    */
-   
-   vecvecdo inputs;
-   vecdo outputs;
-   if (filename.empty()) {
-      filename = "i" + std::to_string(n.amInputNodes()) +
-                 "l" + std::to_string(n.amHiddenLayers()) +
-                 "h" + std::to_string(n.amHiddenNodes()) +
-                 "a" + std::to_string(n.alpha()) +
-                 ".xoroutput";
-   }
-   filename.insert(filename.find(".xoroutput"), addition);
-   FILE * of = fopen(filename.c_str(), writeMode.c_str());
-   double outputDifference;
-   double error = 0.0;
-   for (float i = -1; i <= 1; i += 2) {
-      for (float j = -1; j <= 1; j += 2) {
-         n.inputs({-1.0, i, j});
-         n.expectedOutput(i != j);
-         n.forward();
-         outputDifference = n.expectedOutput() -
-                            General::sigmoid(n.calculatedOutput());
-         error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
-         if (!seedTest) {
-            inputs.push_back({i, j});
-            outputs.push_back(General::sigmoid(n.calculatedOutput()));
-         }
-      }
-   }
-   PrintResults(inputs, outputs, toFile, filename, writeMode);
-   inputs.clear();
-   outputs.clear();
-   outputs.push_back(error);
-   if (seedTest) {
-      inputs.push_back({static_cast<double>(seed)});
-      PrintResults(inputs, outputs, toFile, filename, writeMode, "seed: ", "error: ");
-   } else {
-      PrintResults(inputs, outputs, toFile, filename, writeMode, "", "error: ", false);
-   }
-   fclose(of);
-}
-
 void Tests::ABC(vecdo& inputs, double& output) {
    /*
     * Create input and expected output for the ABC-formula.
@@ -151,13 +93,67 @@ void Tests::ABC(vecdo& inputs, double& output) {
    output = static_cast<double>((x1 == 0.0) + (x2 == 0.0));
 }
 
-void Tests::ABCTest(Network n,
-                    const bool toFile           /* = false*/,
-                    std::string filename        /* = ""*/,
-                    const std::string& writeMode/* = "w"*/,
-                    const bool seedTest         /* = false*/,
-                    const int seed              /* = -1*/,
-                    const std::string& addition /* = ""*/) {
+void Tests::runTest(TestParameters tp, const std::string& test) {
+   if(test == "xor") { XORTest(tp); }
+   if(test == "abc") { ABCTest(tp); }
+}
+
+void Tests::XORTest(TestParameters tp) {
+   /*
+    * Given the trained network, calculate the error by
+    * doing one forward propagation and comparing the
+    * output with the expected output for each possible
+    * input.
+    * The error is then either printed to a file or to
+    * the terminal.
+    */
+   
+   vecvecdo inputs;
+   vecdo outputs;
+   
+   Network n = tp.network;
+   
+   if (tp.fileName.empty()) {
+      tp.fileName = "i" + std::to_string(n.amInputNodes()) +
+                    "l" + std::to_string(n.amHiddenLayers()) +
+                    "h" + std::to_string(n.amHiddenNodes()) +
+                    "a" + std::to_string(n.alpha()) +
+                    ".xoroutput";
+   }
+   tp.fileName.insert(tp.fileName.find(".xoroutput"), tp.addition);
+   FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
+   double outputDifference;
+   double error = 0.0;
+   for (float i = -1; i <= 1; i += 2) {
+      for (float j = -1; j <= 1; j += 2) {
+         n.inputs({-1.0, i, j});
+         n.expectedOutput(i != j);
+         n.forward();
+         outputDifference = n.expectedOutput() -
+                            General::sigmoid(n.calculatedOutput());
+         error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
+         if (!tp.seedtest) {
+            inputs.push_back({i, j});
+            outputs.push_back(General::sigmoid(n.calculatedOutput()));
+         }
+      }
+   }
+   PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
+   inputs.clear();
+   outputs.clear();
+   outputs.push_back(error);
+   if (tp.seedtest) {
+      inputs.push_back({static_cast<double>(tp.seed)});
+      PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
+                   tp.writeMode, "seed: ", "error: ");
+   } else {
+      PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
+                   tp.writeMode, "", "error: ", false);
+   }
+   fclose(of);
+}
+
+void Tests::ABCTest(TestParameters tp) {
    /*
     * Tests the trained networks performance on calculating the
     * ABC formula. To do this, a few sets of variables are each tested
@@ -175,15 +171,18 @@ void Tests::ABCTest(Network n,
     */
    vecvecdo inputs;
    vecdo outputs;
-   if (filename.empty()) {
-      filename = "i" + std::to_string(n.amInputNodes()) +
-                 "l" + std::to_string(n.amHiddenLayers()) +
-                 "h" + std::to_string(n.amHiddenNodes()) +
-                 "a" + std::to_string(n.alpha()) +
-                 ".abcoutput";
+   
+   Network n = tp.network;
+   
+   if (tp.fileName.empty()) {
+      tp.fileName = "i" + std::to_string(n.amInputNodes()) +
+                    "l" + std::to_string(n.amHiddenLayers()) +
+                    "h" + std::to_string(n.amHiddenNodes()) +
+                    "a" + std::to_string(n.alpha()) +
+                    ".abcoutput";
    }
-   filename.insert(filename.find(".abcoutput"), addition);
-   FILE * of = fopen(filename.c_str(), writeMode.c_str());
+   tp.fileName.insert(tp.fileName.find(".abcoutput"), tp.addition);
+   FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
    
    const vecvecdo testcases = {
         // a, b, c, output
@@ -207,31 +206,31 @@ void Tests::ABCTest(Network n,
       outputDifference = n.expectedOutput() -
                          General::sigmoid(n.calculatedOutput());
       error += outputDifference > 0 ? outputDifference : 1.0 - outputDifference;
-      if (!seedTest) {
+      if (!tp.seedtest) {
          inputs.push_back({test[0], test[1], test[2]});
          outputs.push_back(General::sigmoid(n.calculatedOutput()));
       }
    }
    
-   PrintResults(inputs, outputs, toFile, filename, writeMode);
+   PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
    inputs.clear();
    outputs.clear();
    outputs.push_back(error);
-   if (seedTest) {
-      inputs.push_back({static_cast<double>(seed)});
+   if (tp.seedtest) {
+      inputs.push_back({static_cast<double>(tp.seed)});
       PrintResults(inputs, 
                    outputs, 
-                   toFile, 
-                   filename, 
-                   writeMode, 
+                   tp.toFile, 
+                   tp.fileName, 
+                   tp.writeMode, 
                    "seed: ", 
                    "error: ");
    } else {
       PrintResults(inputs, 
                    outputs, 
-                   toFile, 
-                   filename, 
-                   writeMode, 
+                   tp.toFile, 
+                   tp.fileName, 
+                   tp.writeMode, 
                    "", 
                    "error: ", 
                    false);
