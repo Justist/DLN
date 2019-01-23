@@ -8,6 +8,17 @@
 unordered_set<std::string> globalSchemes;
 mutex mtx;*/
 
+struct InputArgs {
+   bool schemes;
+   uint8_t layers;
+   uint8_t nodes;
+   uint64_t epochs;
+   double alpha;
+   uint16_t seed;
+   std::string test;
+   std::string folder;
+};
+
 vecdo initialiseWeightsByScheme(const std::string& scheme,
                                 const unsigned int seed) {
    /*
@@ -237,16 +248,12 @@ void run(Network n,
 }
 
 void runSchemes(const std::unordered_set<std::string> schemes,
+                const InputArgs ia,
                 const uint16_t inputs,
-                const uint16_t hiddenLayers,
-                const uint16_t hiddenNodes,
                 const uint16_t outputs,
-                const uint64_t epochs,
-                const uint16_t seed,
-                const double alpha,
                 const bool toFile,
                 const bool seedtest,
-                const std::string& test = "xor") {
+                const uint64_t seed) {
    /*
     * Given the set of schemes, run an identical network
     * on each of the schemes for the given seed.
@@ -254,28 +261,28 @@ void runSchemes(const std::unordered_set<std::string> schemes,
     * to be written to.
     */
    std::string fileName;
-   const std::string folder = "nudgingtest2hidden3/";
    __attribute__((unused)) const auto unused =
-               static_cast<const uint16_t>(system(("mkdir " + folder).c_str()));
+               static_cast<const uint16_t>(system(("mkdir " + ia.folder).c_str()));
    for(const std::string& scheme : schemes) {
-      fileName = folder                                  +
-                 "w" + scheme                            +
-                 "e" + std::to_string(epochs)            +
-                 "a" + General::to_string_prec(alpha, 2) +
-                 "i" + std::to_string(inputs)            +
-                 "l" + std::to_string(hiddenLayers)      +
-                 "h" + std::to_string(hiddenNodes)       +
-                 "o" + std::to_string(outputs)           +
-                 ".xoroutput";
+      fileName = ia.folder                                  +
+                 "w" + scheme                               +
+                 "e" + std::to_string(ia.epochs)            +
+                 "a" + General::to_string_prec(ia.alpha, 2) +
+                 "i" + std::to_string(inputs)               +
+                 "l" + std::to_string(ia.layers)            +
+                 "h" + std::to_string(ia.nodes)             +
+                 "o" + std::to_string(outputs)              +
+                 "." + ia.test                              + 
+                 "output";
       run(
          makeNetwork(inputs,
-                     hiddenLayers,
-                     hiddenNodes,
+                     ia.layers,
+                     ia.nodes,
                      outputs,
-                     alpha,
-                     seed,
+                     ia.alpha,
+                     ia.seed,
                      scheme),
-         epochs, seed, toFile, fileName, seedtest, test
+         ia.epochs, ia.seed, toFile, fileName, seedtest, ia.test
       );
    }
 }
@@ -299,40 +306,44 @@ void updateStatusBar (const double percent) {
    std::cout.flush();
 }
 
-struct inputArgs {
-   bool schemes;
-   uint64_t epochs;
-   double alpha;
-   uint16_t seed;
-   std::string test;
-};
-
 void usage(const std::string& programName) {
-   printf("Usage: %s [-s] [-eadt]() [-h]", programName.c_str());
+   printf("Usage: %s [-s] [-lneadt]() [-h]", programName.c_str());
    const char* toPrint = R"(
-   -s           : If given, the program uses schemes. 
-   -e <epochs>  : The amount of epochs to be run.
-   -a <alpha>   : The alpha of the network.
-   -d <seed>    : The seed of the network.
-   -t <test>    : The test to be run.
+   -s            : If given, the program uses schemes.
+   -l <integer>  : The amount of hidden layers in the network.
+   -n <integer>  : The amount of hidden nodes in each hidden layer.
+   -e <integer>  : The amount of epochs to be run.
+   -a <double>   : The alpha of the network.
+   -d <integer>  : The seed of the network.
+   -t <string>   : The test to be run.
+   -f <string>   : The name of the folder to store the results in.
    )";
 }
 
-inputArgs parseArgs(const int argc, char **argv) {
-   inputArgs ia;
+InputArgs parseArgs(const int argc, char **argv) {
+   InputArgs ia;
    
    int c;
    
    ia.schemes = false;
+   ia.layers = 2;
+   ia.nodes = 2;
    ia.epochs = 20000;
    ia.alpha = 0.5;
    ia.seed = 1230;
    ia.test = "xor";
+   ia.folder = "output/";
    
-   while ((c = getopt (argc, argv, "se:a:d:t:")) != -1) {
+   while ((c = getopt (argc, argv, "sl:n:e:a:d:t:f:")) != -1) {
       switch (c) {
          case 's':
             ia.schemes = true;
+            break;
+         case 'l':
+            if (optarg) { ia.layers = std::atoi(optarg); }
+            break;
+         case 'n':
+            if (optarg) { ia.nodes = std::atoi(optarg); }
             break;
          case 'e':
             if (optarg) { ia.epochs = std::atol(optarg); }
@@ -345,6 +356,9 @@ inputArgs parseArgs(const int argc, char **argv) {
             break;
          case 't':
             if (optarg) { ia.test = optarg; }
+            break;
+         case 'f':
+            if (optarg) { ia.folder = optarg; }
             break;
          default:
             usage(argv[0]);
@@ -360,34 +374,23 @@ int main (const int argc, char **argv) {
    // Raise an error when one of these float exceptions occur.
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 
+   InputArgs ia;
+
    try { 
-      inputArgs ia = parseArgs(argc, argv);
+      ia = parseArgs(argc, argv);
    } catch (std::exception& e) {
       fprintf(stderr, "%s\n", e.what());
+      return -1;
    }
 
    // + 1 for the bias node
-   const uint16_t inputs = 2;
-   const uint16_t hiddenLayers = 2;
-   const uint16_t hiddenNodes = 2;
-   const uint16_t outputs = 1;
-   uint64_t epochs;
-   double alpha;
-   uint16_t seed;
-   if (argc == 4) {
-      epochs = static_cast<uint64_t>(atoi(argv[1]));
-      alpha = atof(argv[2]);
-      seed = static_cast<uint16_t>(atoi(argv[3]));
-   } else {
-      epochs = 20000;
-      alpha = 0.5;
-      seed = 1230;
-   }
+   const uint8_t inputs = 2;
+   const uint8_t outputs = 1;
 
-   const uint16_t hiddenPlusBias = hiddenNodes + 1;
+   const uint16_t hiddenPlusBias = ia.nodes + 1;
    const uint16_t amountWeights =
-      ((inputs + 1) * hiddenNodes) +
-      (hiddenPlusBias * hiddenNodes * (hiddenLayers - 1)) +
+      ((inputs + 1) * ia.nodes) +
+      (hiddenPlusBias * ia.nodes * (ia.layers - 1)) +
       (hiddenPlusBias * outputs);
    const std::string initialScheme(amountWeights, 'A');
    const std::unordered_set<std::string> schemes = 
@@ -409,30 +412,24 @@ int main (const int argc, char **argv) {
       for (uint16_t s = startseed; s <= endseed; s += stepseed) {
          threads[(s/10 - 10)] = async(std::launch::async,
                                       [schemes,
+                                       ia,
                                        inputs,
-                                       hiddenLayers,
-                                       hiddenNodes,
                                        outputs,
-                                       epochs,
                                        s,
-                                       alpha,
                                        toFile] {
-            runSchemes(schemes, inputs, hiddenLayers, hiddenNodes, outputs,
-                       epochs, s, alpha, toFile, seedtest);
+            runSchemes(schemes, ia, inputs, outputs,
+                       toFile, seedtest, s);
             updateStatusBar(1.0 / (const float) steps);
          });
       }
    } else {
       runSchemes(schemes,
+                 ia,
                  inputs,
-                 hiddenLayers,
-                 hiddenNodes,
                  outputs,
-                 epochs,
-                 seed,
-                 alpha,
                  toFile,
-                 seedtest);
+                 seedtest,
+                 ia.seed);
    }
    return 0;
 }
