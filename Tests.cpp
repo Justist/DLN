@@ -6,6 +6,8 @@ template <typename T>
 void Tests::Print(FILE* of,
                   const T toWrite,
                   const bool toFile) {
+   assert(((toFile && of != nullptr) || !toFile) &&
+          "No file to be opened but expected!");
    std::ostringstream oss;
    oss << toWrite;
    if (toFile) {
@@ -30,10 +32,12 @@ void Tests::PrintResults(const vecvecdo& inputs,
    unsigned long outputSize = outputs.size();
    if (equalSize) {
       assert(inputSize == outputSize && 
-      "No equal size of input and output vector!");
+             "No equal size of input and output vector!");
    }
    FILE *of = nullptr;
-   if (toFile && filename != "") {
+   assert(((toFile && !filename.empty()) || !toFile) &&
+          "No filename given but expected!");
+   if (toFile) {
       of = fopen(filename.c_str(), writeMode.c_str());
    }
    for (auto i = 0; i < inputSize; i++) {
@@ -45,6 +49,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
       Print(of, outputs[i], toFile);
       Print(of, "\n", toFile);
    }
+   fclose(of);
 }
 
 void Tests::XOR(vecdo& inputs, double& output) {

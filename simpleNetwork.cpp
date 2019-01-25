@@ -341,22 +341,26 @@ InputArgs parseArgs(const int argc, char **argv) {
             ia.schemes = true;
             break;
          case 'l':
-            if (optarg) { ia.layers = std::atoi(optarg); }
+            if (optarg) { ia.layers = static_cast<uint8_t>(
+                                        std::atoi(optarg)); }
             break;
          case 'n':
-            if (optarg) { ia.nodes = std::atoi(optarg); }
+            if (optarg) { ia.nodes  = static_cast<uint8_t>(
+                                        std::atoi(optarg)); }
             break;
          case 'e':
-            if (optarg) { ia.epochs = std::atol(optarg); }
+            if (optarg) { ia.epochs = static_cast<uint64_t>(
+                                        std::atol(optarg)); }
             break;
          case 'a':
-            if (optarg) { ia.alpha = std::atof(optarg); }
+            if (optarg) { ia.alpha  = std::atof(optarg); }
             break;
          case 'd':
-            if (optarg) { ia.seed = std::atoi(optarg); }
+            if (optarg) { ia.seed   = static_cast<uint16_t>(
+                                        std::atoi(optarg)); }
             break;
          case 't':
-            if (optarg) { ia.test = optarg; }
+            if (optarg) { ia.test   = optarg; }
             break;
          case 'f':
             if (optarg) { ia.folder = optarg; }
@@ -388,11 +392,12 @@ int main (const int argc, char **argv) {
    const uint8_t inputs = 3;
    const uint8_t outputs = 1;
 
-   const uint16_t hiddenPlusBias = ia.nodes + 1;
-   const uint16_t amountWeights =
-      ((inputs + 1) * ia.nodes) +
-      (hiddenPlusBias * ia.nodes * (ia.layers - 1)) +
-      (hiddenPlusBias * outputs);
+   const auto hiddenPlusBias = static_cast<const uint16_t>(ia.nodes + 1);
+   const auto amountWeights =
+           static_cast<const uint16_t>(
+                   ((inputs + 1) * ia.nodes)                     +
+                   (hiddenPlusBias * ia.nodes * (ia.layers - 1)) +
+                   (hiddenPlusBias * outputs));
    const std::string initialScheme(amountWeights, 'A');
    const std::unordered_set<std::string> schemes = 
       generateInitialSchemes(initialScheme);
