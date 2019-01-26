@@ -1,5 +1,5 @@
 CC = g++
-DEBUG = -ggdb -D_XOPEN_SOURCE
+DEBUG = #-ggdb -D_XOPEN_SOURCE
 STD = -std=c++11
 ERROR = -Wall -Wextra
 THR = -pthread
