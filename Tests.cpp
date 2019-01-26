@@ -100,12 +100,12 @@ void Tests::ABC(vecdo& inputs, double& output) {
    output = static_cast<double>((x1 == 0.0) + (x2 == 0.0));
 }
 
-void Tests::runTest(TestParameters tp, const std::string& test) {
-   if(test == "xor") { XORTest(tp); }
-   if(test == "abc") { ABCTest(tp); }
+double Tests::runTest(TestParameters tp, const std::string& test) {
+   if(test == "xor") { return XORTest(tp); }
+   if(test == "abc") { return ABCTest(tp); }
 }
 
-void Tests::XORTest(TestParameters tp) {
+double Tests::XORTest(TestParameters tp) {
    /*
     * Given the trained network, calculate the error by
     * doing one forward propagation and comparing the
@@ -158,9 +158,10 @@ void Tests::XORTest(TestParameters tp) {
                    tp.writeMode, "", "error: ", false);
    }
    fclose(of);
+   return error;
 }
 
-void Tests::ABCTest(TestParameters tp) {
+double Tests::ABCTest(TestParameters tp) {
    /*
     * Tests the trained networks performance on calculating the
     * ABC formula. To do this, a few sets of variables are each tested
@@ -246,4 +247,5 @@ void Tests::ABCTest(TestParameters tp) {
                    false);
    }
    fclose(of);
+   return error;
 }

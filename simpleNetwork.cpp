@@ -41,64 +41,6 @@ vecdo initialiseWeightsByScheme(const std::string& scheme,
    return weights;
 }
 
-inline void pullScheme(Network& n) {
-   /*
-    * "Pull" the weights of the network together according to the scheme of the network.
-    * This means that the weights which have been assigned the same letter will get a
-    * small nudge to come closer to each other.
-    * The nudge is half the distance to the average of their weights.
-    */
-    std::string scheme = n.scheme();
-    auto schemeLength = static_cast<unsigned int>(scheme.length());
-    vecdo weightSums(schemeLength, 0.0);
-    auto wFIFlat = General::flatten(n.weightsFromInputs());
-    auto wHLFlat = General::flatten(n.weightsHiddenLayers());
-    auto wTOFlat = General::flatten(n.weightsToOutput());
-    vecdo allWeightsFlat = General::flatten({wFIFlat, wHLFlat, wTOFlat});
-    std::vector<unsigned int> letterCount(schemeLength, 0);
-    unsigned int index = 0;
-    
-    for (unsigned int i = 0; i < schemeLength; i++) {
-       index = static_cast<unsigned int>(scheme[i] - 'A');
-       weightSums[index] += allWeightsFlat[i];
-       letterCount[index]++;
-    }
-    
-    // Take the averages of the weightSums
-    vecdo weightAverages(schemeLength, 0.0);
-    for (unsigned int j = 0; j < schemeLength; j++) {
-       index = static_cast<unsigned int>(scheme[j] - 'A');
-       weightAverages[index] = letterCount[index] > 0 ? weightSums[index] / 
-       letterCount[index] : 0;
-    }
-    
-    // Then use these to nudge the weights
-    for (unsigned int k = 0; k < schemeLength; k++) {
-      index = static_cast<unsigned int>(scheme[k] - 'A');
-//      for (double w : wFIFlat) {
-//         printf("%f ", w);
-//      }
-//      cout << endl;
-//      for (double w : wHLFlat) {
-//         printf("%f ", w);
-//      }
-//      cout << endl;
-//      for (double w : wTOFlat) {
-//         printf("%f ", w);
-//      }
-//      cout << endl;
-//      cout << n.scheme << endl;
-//      throw;
-      
-      allWeightsFlat[k] -= (allWeightsFlat[k] - 
-                            weightAverages[index]) / 2.0;
-    }
-    
-    // Then update the weights according to the flat weight vector
-    n.initialiseWeights(0, //seed (not relevant in this case)
-                      allWeightsFlat); //scheme weights
-}
-
 Network makeNetwork(const uint16_t inputs,
                     const uint16_t hiddenLayers,
                     const uint16_t hiddenNodes,
@@ -200,7 +142,8 @@ void run(Network n,
          const bool toFile,
          std::string fileName,
          const bool seedtest,
-         const std::string& test) {
+         const std::string& test,
+         const bool convergenceTest = true) {
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -220,6 +163,7 @@ void run(Network n,
           "Given test is not implemented (yet)!");
    
    Tests tests;
+   double error;
    
    if (fileName.empty()) { fileName = "simple." + test + "output"; }
    Tests::TestParameters param(n, toFile, fileName, "a", true, seed, "");
@@ -231,14 +175,20 @@ void run(Network n,
       n.train();
       param.network = n;
       currentEpoch++;
-      if (currentEpoch % (maxEpochs / 20) == 0) {
+      if (convergenceTest) {
+         if (currentEpoch % 10 == 0) {
+            error = tests.runTest(param, test);
+            if (error < 0.05) {
+               ;// TODO print the results
+            }
+         }
+      } else if (currentEpoch % (maxEpochs / 20) == 0) {
          if (!param.fileName.empty()) {
             param.fileName = regex_replace(param.fileName,
-                                           std::regex("e" + 
+                                           std::regex("e" +
                                                       std::to_string(maxEpochs)),
                                            "e" + std::to_string(currentEpoch));
          }
-         //pullScheme(n);
          tests.runTest(param, test);
       }
    }

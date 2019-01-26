@@ -49,7 +49,7 @@ class Tests {
    
       void ABC(vecdo& inputs, double& output);
       
-      void runTest(TestParameters tp, const std::string& test);
+      double runTest(TestParameters tp, const std::string& test);
       
    private:
       template <typename T>
@@ -66,8 +66,8 @@ class Tests {
                         const std::string& secondString/* = "Out: "*/,
                         bool equalSize/* = true*/);
       
-      void XORTest(TestParameters tp);
-      void ABCTest(TestParameters tp);
+      double XORTest(TestParameters tp);
+      double ABCTest(TestParameters tp);
 };
 
 #endif
