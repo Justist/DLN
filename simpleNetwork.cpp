@@ -179,7 +179,7 @@ void run(Network n,
          if (currentEpoch % 10 == 0) {
             error = tests.runTest(param, test);
             if (error < 0.05) {
-               ;// TODO print the results
+               break; //the results have already been printed
             }
          }
       } else if (currentEpoch % (maxEpochs / 20) == 0) {
@@ -192,9 +192,6 @@ void run(Network n,
          tests.runTest(param, test);
       }
    }
-
-   //For the seedtest
-   tests.runTest(param, test);
 }
 
 void runSchemes(const std::unordered_set<std::string> schemes,

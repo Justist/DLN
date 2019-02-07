@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 #ifndef TESTS_HPP
 #define TESTS_HPP
 
@@ -22,24 +26,24 @@ class Tests {
          std::string epoch;
          std::string addition;
          
-         TestParameters(const Network& n,
+         TestParameters(Network n,
                         const bool t,
-                        const std::string& f,
-                        const std::string& w,
+                        std::string f,
+                        std::string w,
                         const bool st,
                         const int s,
                         const std::string& e = "",
-                        const std::string& a = "") 
+                        std::string a = "")
                         :
-                        network(n),
+                        network(std::move(n)),
                         toFile(t),
-                        fileName(f),
-                        writeMode(w),
+                        fileName(std::move(f)),
+                        writeMode(std::move(w)),
                         seedtest(st),
                         seed(s),
-                        addition(a)
+                        addition(std::move(a))
          {
-            if (e != "") { epoch = e; }
+            if (!e.empty()) { epoch = e; }
          };
       };
    

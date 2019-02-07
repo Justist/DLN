@@ -103,6 +103,7 @@ void Tests::ABC(vecdo& inputs, double& output) {
 double Tests::runTest(TestParameters tp, const std::string& test) {
    if(test == "xor") { return XORTest(tp); }
    if(test == "abc") { return ABCTest(tp); }
+   else { throw("Given test does not exist!\n"); }
 }
 
 double Tests::XORTest(TestParameters tp) {
