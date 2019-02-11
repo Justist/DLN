@@ -1,18 +1,21 @@
 import re
 import sys
 
+if len(sys.argv) is not 2:
+    raise Exception("Wrong number of arguments given!")
+
 filename = sys.argv[1]
 with open(filename, "r") as a:
-	alllines = a.readlines()
-	epoch = re.search(r"e(\d+)", filename).group(0)
+    alllines = a.readlines()
+    epoch = re.search(r"e(\d+)", filename).group(0)
 with open(filename + ".verbatim", "w") as b:
-	b.write("""
+    b.write("""
 \\begin{figure}[!ht]
  \\begin{verbatim}
 """)
-	for line in alllines:
-		b.write(line)
-	b.write("""
+    for line in alllines:
+        b.write(line)
+    b.write("""
  \\end{verbatim}
  \\caption{"""+ "The {} of epoch ${}$.".format(sys.argv[2], epoch[1:]) +"""}
 \\end{figure}
