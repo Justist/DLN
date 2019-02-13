@@ -14,6 +14,61 @@ import threading as thr
 
 ### Extraction functions
 
+def initialFunction(inputdir):
+   """
+   THIS FUNCTION SHOULD BE RUN FIRST!
+   For each file in the experiment, this function takes
+   the sum of the values in the file, and prints those
+   to a seperate file. The created files form the basis
+   for all other functions in this file.
+   """
+   directory = os.fsencode(inputdir)
+   schemeErrorsdir = inputdir[:-1] + "_schemeErrors/"
+   if not os.path.exists(schemeErrorsdir):
+       os.makedirs(schemeErrorsdir)
+   resultsdirectory = os.fsencode(schemeErrorsdir)
+
+   def threadfunctionfirst(file):
+       filename = os.fsdecode(file)
+       scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
+       try:
+           epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
+       except AttributeError:
+           return #those are the same as the e20000 anyway
+       with open(schemeErrorsdir + "e" + epoch + ".schemeerrors", "a") as sea:
+           with open(inputdir + "/" + filename, "r") as fo:
+               sum = 0.0
+               for line in fo:
+                   ls = line.split()
+                   sum += float(ls[3])
+               sea.write(scheme + "," + str(sum) + "\n")
+
+   for filePointer in os.listdir(directory):
+       t = thr.Thread(target = threadfunctionfirst, args = (filePointer, ))
+       while thr.active_count() > 500:
+           sleep(0.005)
+       t.start()
+
+   while thr.active_count() > 1:
+       sleep(0.05)
+
+   def threadfunctionsecond(result):
+       filename = schemeErrorsdir + "/" + os.fsdecode(result)
+       with open(filename, "r") as a:
+           lines = sorted(set(a.readlines()))
+           with open(filename + ".sorted", "w") as b:
+               for line in lines:
+                   b.write(line)
+
+   #can be shorter possibly, but it works
+   for result in os.listdir(resultsdirectory):
+       u = thr.Thread(target = threadfunctionsecond, args = (result, ))
+       while thr.active_count() > 500:
+           sleep(0.005)
+       u.start()
+
+   return schemeErrorsdir
+
 def extractResults(inputdir, outputdir):
    """
    For each epoch among the performed experiments, find the highest error value,
@@ -76,132 +131,82 @@ def extractVariation(inputdir, outputdir):
       variancevalues = defaultdict(lambda: 0)
       variancecounts = defaultdict(lambda: 0)
 
-def initialFunction(inputdir):
-   """
-   THIS FUNCTION SHOULD BE RUN FIRST!
-   For each file in the experiment, this function takes
-   the sum of the values in the file, and prints those
-   to a seperate file. The created files form the basis
-   for all other functions in this file.
-   """
-   directory = os.fsencode(inputdir)
-   schemeErrorsdir = inputdir[:-1] + "_schemeErrors/"
-   if not os.path.exists(schemeErrorsdir):
-       os.makedirs(schemeErrorsdir)
-   resultsdirectory = os.fsencode(schemeErrorsdir)
-
-   def threadfunctionfirst(file):
-       filename = os.fsdecode(file)
-       scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
-       try:
-           epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
-       except AttributeError:
-           return #those are the same as the e20000 anyway
-       with open(schemeErrorsdir + "e" + epoch + ".schemeerrors", "a") as sea:
-           with open(inputdir + "/" + filename, "r") as fo:
-               sum = 0.0
-               for line in fo:
-                   ls = line.split()
-                   sum += float(ls[3])
-               sea.write(scheme + "," + str(sum) + "\n")
-
-   for filePointer in os.listdir(directory):
-       t = thr.Thread(target = threadfunctionfirst, args = (filePointer, ))
-       while thr.active_count() > 500:
-           sleep(0.005)
-       t.start()
-
-   while thr.active_count() > 1:
-       sleep(0.05)
-
-   def threadfunctionsecond(result):
-       filename = schemeErrorsdir + "/" + os.fsdecode(result)
-       with open(filename, "r") as a:
-           lines = sorted(set(a.readlines()))
-           with open(filename + ".sorted", "w") as b:
-               for line in lines:
-                   b.write(line)
-
-   #can be shorter possibly, but it works
-   for result in os.listdir(resultsdirectory):
-       u = thr.Thread(target = threadfunctionsecond, args = (result, ))
-       while thr.active_count() > 500:
-           sleep(0.005)
-       u.start()
-
-   return schemeErrorsdir
-
 ### Paper functions
 
-def roundVariations(outputdir, filename):
+def roundVariations(outputdir, regString = "*.variation.output"):
    """
    Just round the error values of the variations.
    This is a function to make the values more aesthetically
    pleasing in the paper.
    """
-   with open(outputdir + filename, "r") as a:
-      lines = a.readlines()
-      for i in range(len(lines)):
-         line = lines[i]
-         if ":" in line:
-            ls = line.split()
-            if len(ls) == 4:
-               lines[i] = "{} {}    {} {}\n".format(ls[0],
-                  round(float(ls[1]), 4), ls[2],
-                  round(float(ls[3]), 4))
-            else:
-               lines[i] = "{} {}\n".format(ls[0], round(float(ls[1]), 4))
-   with open(outputdir + filename + ".rounded", "w") as b:
-      for l in lines:
-         b.write(l)
+   for filename in glob(outputdir + regString):
+      with open(filename, "r") as a:
+         lines = a.readlines()
+         for i in range(len(lines)):
+            line = lines[i]
+            if ":" in line:
+               ls = line.split()
+               if len(ls) == 4:
+                  lines[i] = "{} {}    {} {}\n".format(ls[0],
+                     round(float(ls[1]), 4), ls[2],
+                     round(float(ls[3]), 4))
+               else:
+                  lines[i] = "{} {}\n".format(ls[0], round(float(ls[1]), 4))
+      with open(filename + ".rounded", "w") as b:
+         for l in lines:
+            b.write(l)
 
-def makeReadable(outputdir, filename):
+def makeReadable(outputdir, regString = "*.rounded"):
    """
    Re-orders the results in a given file to be more
    aesthetically pleasing. Just adds a lot of whitespace.
+   Made for the variation results.
    """
-   with open(outputdir + filename, "r") as a:
-       alllines = a.readlines()
-       lenfile = len(alllines)
-       halflenfile = (lenfile // 2) + 1
-       for i in range(lenfile):
-           line = alllines[i]
-           if i >= halflenfile:
-               alllines[i - halflenfile] = alllines[i - halflenfile][:-1] + " " + line
-       alllines = alllines[:halflenfile]
-   with open(outputdir + filename + ".readable", "w") as b:
-       for line in alllines:
-           b.write(line)
+   for filename in glob(outputdir + regString):
+      with open(filename, "r") as a:
+          alllines = a.readlines()
+          lenfile = len(alllines)
+          halflenfile = (lenfile // 2) + 1
+          for i in range(lenfile):
+              line = alllines[i]
+              if i >= halflenfile:
+                  alllines[i - halflenfile] = alllines[i - halflenfile][:-1] + " " + line
+          alllines = alllines[:halflenfile]
+      with open(filename + ".readable", "w") as b:
+          for line in alllines:
+              b.write(line)
 
 def makeVerbatim(outputdir, filename, captionString):
    """
    Envelops the results in a given file in verbatim.
    """
-   filename = sys.argv[1]
-   with open(outputdir + filename, "r") as a:
-      alllines = a.readlines()
-      epoch = re.search(r"e(\d+)", filename).group(0)
-      with open(outputdir + filename + ".verbatim", "w") as b:
-         b.write("""
-         \\begin{figure}[!ht]
-         \\begin{verbatim}
-         """)
-      for line in alllines:
-         b.write(line)
-         b.write("""
-         \\end{verbatim}
-         \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
-         \\end{figure}
+   toVerbate = glob(outputdir + "*.readable")
+   toVerbate.extend(glob(outputdir + "*.extracted"))
+   for filename in toVerbate:
+      with open(filename, "r") as a:
+         alllines = a.readlines()
+         epoch = re.search(r"e(\d+)", filename).group(0)
+         with open(filename + ".verbatim", "w") as b:
+            b.write("""
+            \\begin{figure}[!ht]
+            \\begin{verbatim}
+            """)
+         for line in alllines:
+            b.write(line)
+            b.write("""
+            \\end{verbatim}
+            \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
+            \\end{figure}
 
-         """)
+            """)
          
 def developmentExtracted(outputdir):
    """
    Shows the development in the extreme values which have been extracted.
    """
-   for fullfilename in glob(outputdir + "*.extracted"):
-      with open(fullfilename, "r") as filePointer:
-         name = os.path.basename(fullfilename).replace(".extracted", "")
+   for filename in glob(outputdir + "*.extracted"):
+      with open(filename, "r") as filePointer:
+         name = os.path.basename(filename).replace(".extracted", "")
          epochLocation = name.find("e")
          epoch = "last"
          if epochLocation > 0:
@@ -243,6 +248,11 @@ def main():
       raise Exception("Inputdir does not exist! Please check your path!")
 
    inputdir = initialFunction(inputdir)
+   extractResults(inputdir, outputdir)
+   extractVariation(inputdir, outputdir)
+   
+   roundVariations(outputdir)
+   
 
 if __name__ == "__main__":
    main()
