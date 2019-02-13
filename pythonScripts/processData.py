@@ -156,7 +156,7 @@ def roundVariations(outputdir, regString = "*.variation.output"):
          for l in lines:
             b.write(l)
 
-def makeReadable(outputdir, regString = "*.rounded"):
+def readableVariations(outputdir, regString = "*.rounded"):
    """
    Re-orders the results in a given file to be more
    aesthetically pleasing. Just adds a lot of whitespace.
@@ -175,30 +175,6 @@ def makeReadable(outputdir, regString = "*.rounded"):
       with open(filename + ".readable", "w") as b:
           for line in alllines:
               b.write(line)
-
-def makeVerbatim(outputdir, filename, captionString):
-   """
-   Envelops the results in a given file in verbatim.
-   """
-   toVerbate = glob(outputdir + "*.readable")
-   toVerbate.extend(glob(outputdir + "*.extracted"))
-   for filename in toVerbate:
-      with open(filename, "r") as a:
-         alllines = a.readlines()
-         epoch = re.search(r"e(\d+)", filename).group(0)
-         with open(filename + ".verbatim", "w") as b:
-            b.write("""
-            \\begin{figure}[!ht]
-            \\begin{verbatim}
-            """)
-         for line in alllines:
-            b.write(line)
-            b.write("""
-            \\end{verbatim}
-            \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
-            \\end{figure}
-
-            """)
          
 def developmentExtracted(outputdir):
    """
@@ -221,6 +197,29 @@ def developmentExtracted(outputdir):
                ls = lines[i][:-1].split(",")
                f.write(epoch + "," + ls[2] + "," + ls[1][:15] + "\n")
             i += 1
+            
+def makeVerbatim(outputdir, regString, captionString):
+   """
+   Envelops the results in a given file in verbatim.
+   """
+   toVerbate = glob(outputdir + regString)
+   for filename in toVerbate:
+      with open(filename, "r") as a:
+         alllines = a.readlines()
+         epoch = re.search(r"e(\d+)", filename).group(0)
+         with open(filename + ".verbatim", "w") as b:
+            b.write("""
+            \\begin{figure}[!ht]
+            \\begin{verbatim}
+            """)
+         for line in alllines:
+            b.write(line)
+            b.write("""
+            \\end{verbatim}
+            \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
+            \\end{figure}
+
+            """)
 
 ### Main
 
@@ -252,7 +251,10 @@ def main():
    extractVariation(inputdir, outputdir)
    
    roundVariations(outputdir)
-   
+   readableVariations(outputdir)
+   developmentExtracted(outputdir)
+   makeVerbatim(outputdir, "*.readable", "average errors for each amount of variation")
+   makeVerbatim(outputdir, "*.extracted", "extreme values of the summed errors")
 
 if __name__ == "__main__":
    main()
