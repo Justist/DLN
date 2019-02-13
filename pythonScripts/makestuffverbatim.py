@@ -1,7 +1,7 @@
 import re
 import sys
 
-if len(sys.argv) is not 2:
+if len(sys.argv) is not 3:
     raise Exception("Wrong number of arguments given!")
 
 filename = sys.argv[1]

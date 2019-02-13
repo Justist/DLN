@@ -23,5 +23,4 @@ for fullfilename in glob(targetdir + "*.extracted"):
             with open(targetdir + name + "-" + x, "a") as f:
                 ls = lines[i][:-1].split(",")
                 f.write(epoch + "," + ls[2] + "," + ls[1][:15] + "\n")
-                #f.write("{},{},{}".format(epoch,ls[2],ls[1]))
             i += 1
