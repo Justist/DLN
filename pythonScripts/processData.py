@@ -4,6 +4,8 @@ Basically all the earlier scripts are merged into one, so the execution of those
 can be streamlined.
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
 from collections import defaultdict
 from glob import glob
 import os
@@ -14,7 +16,7 @@ import threading as thr
 
 ### Extraction functions
 
-def initialFunction(inputdir):
+def initialFunction(inputdir, outputdir):
    """
    THIS FUNCTION SHOULD BE RUN FIRST!
    For each file in the experiment, this function takes
@@ -26,6 +28,8 @@ def initialFunction(inputdir):
    schemeErrorsdir = inputdir[:-1] + "_schemeErrors/"
    if not os.path.exists(schemeErrorsdir):
        os.makedirs(schemeErrorsdir)
+   if not os.path.exists(outputdir):
+       os.makedirs(outputdir)
    resultsdirectory = os.fsencode(schemeErrorsdir)
 
    def threadfunctionfirst(file):
@@ -212,14 +216,56 @@ def makeVerbatim(outputdir, regString, captionString):
             \\begin{figure}[!ht]
             \\begin{verbatim}
             """)
-         for line in alllines:
-            b.write(line)
+            for line in alllines:
+               b.write(line)
             b.write("""
             \\end{verbatim}
             \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
             \\end{figure}
 
             """)
+            
+def makeGraphExtremes(outputdir, epochgroups = 20, maxEpoch = 20000):
+   first = ()
+   last = ()
+   high = ()
+   low = ()
+   
+   for filename in glob(outputdir + "*.extracted"):
+      with open(filename, "r") as filePointer:
+         for line in filePointer:
+            ls = line.split(",")
+            if ls[0] == "first":
+               first.append(ls[2])
+            elif ls[0] == "last":
+               last.append(ls[2])
+            elif ls[0] == "highest":
+               high.append(ls[2])
+            elif ls[0] == "lowest":
+               low.append(ls[2])
+   
+   fig, ax = plt.subplots()
+   index = np.arange(epochgroups)
+   barWidth = 0.2
+   
+   firstbars = ax.bar(index, first, barWidth, color='r', label="First")
+   firstbars = ax.bar(index, last, barWidth, color='y', label="Last")
+   firstbars = ax.bar(index, high, barWidth, color='g', label="Highest")
+   firstbars = ax.bar(index, low, barWidth, color='b', label="Lowest")
+   
+   ax.set_xlabel("Epochs")
+   ax.set_ylabel("Sum of errors")
+   ax.set_title("Extremes per epoch")
+   ax.set_xticks(index + barWidth / 2)
+   ax.set_xticklabels(range(maxEpoch / epochGroups, 
+                            maxEpoch, 
+                            maxEpoch / epochGroups))
+   ax.legend()
+   fig.tight_layout()
+   
+   #plt.show()
+   plt.savefig(outputdir + "extremes.png")
+   
 
 ### Main
 
