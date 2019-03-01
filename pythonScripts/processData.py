@@ -4,6 +4,8 @@ Basically all the earlier scripts are merged into one, so the execution of those
 can be streamlined.
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
 from collections import defaultdict
 from glob import glob
 import os
@@ -14,7 +16,7 @@ import threading as thr
 
 ### Extraction functions
 
-def initialFunction(inputdir):
+def initialFunction(inputdir, outputdir):
    """
    THIS FUNCTION SHOULD BE RUN FIRST!
    For each file in the experiment, this function takes
@@ -22,28 +24,27 @@ def initialFunction(inputdir):
    to a seperate file. The created files form the basis
    for all other functions in this file.
    """
-   directory = os.fsencode(inputdir)
-   schemeErrorsdir = inputdir[:-1] + "_schemeErrors/"
-   if not os.path.exists(schemeErrorsdir):
-       os.makedirs(schemeErrorsdir)
-   resultsdirectory = os.fsencode(schemeErrorsdir)
+   inputdirectory = os.fsencode(inputdir)
+   if not os.path.exists(outputdir):
+       os.makedirs(outputdir)
+   resultsdirectory = os.fsencode(outputdir)
 
-   def threadfunctionfirst(file):
-       filename = os.fsdecode(file)
+   def threadfunctionfirst(fileInput):
+       filename = os.fsdecode(fileInput)
        scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
        try:
            epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
        except AttributeError:
            return #those are the same as the e20000 anyway
-       with open(schemeErrorsdir + "e" + epoch + ".schemeerrors", "a") as sea:
+       with open(outputdir + "e" + epoch + ".schemeerrors", "a") as sea:
            with open(inputdir + "/" + filename, "r") as fo:
-               sum = 0.0
+               errorSum = 0.0
                for line in fo:
                    ls = line.split()
-                   sum += float(ls[3])
-               sea.write(scheme + "," + str(sum) + "\n")
+                   errorSum += float(ls[3])
+               sea.write(scheme + "," + str(errorSum) + "\n")
 
-   for filePointer in os.listdir(directory):
+   for filePointer in os.listdir(inputdirectory):
        t = thr.Thread(target = threadfunctionfirst, args = (filePointer, ))
        while thr.active_count() > 500:
            sleep(0.005)
@@ -53,7 +54,7 @@ def initialFunction(inputdir):
        sleep(0.05)
 
    def threadfunctionsecond(result):
-       filename = schemeErrorsdir + "/" + os.fsdecode(result)
+       filename = outputdir + "/" + os.fsdecode(result)
        with open(filename, "r") as a:
            lines = sorted(set(a.readlines()))
            with open(filename + ".sorted", "w") as b:
@@ -67,16 +68,14 @@ def initialFunction(inputdir):
            sleep(0.005)
        u.start()
 
-   return schemeErrorsdir
-
-def extractResults(inputdir, outputdir):
+def extractResults(outputdir):
    """
    For each epoch among the performed experiments, find the highest error value,
    the lowest, the first, and the last. The first two of these are to give a sense
    of the extremes in the dataset, and the latter two to see if those correspond to
    either the scheme with the least or with the most variation.
    """
-   for fullfilename in glob(inputdir + "*.sorted"):
+   for fullfilename in glob(outputdir + "*.sorted"):
       filePointer = open(fullfilename, "r")
       epoch = os.path.basename(fullfilename).replace(".schemeerrors.sorted", "")[1:]
 
@@ -104,7 +103,7 @@ def extractResults(inputdir, outputdir):
                  "\nlowest," + lowestscheme  + "," + str(lowestvalue)  +
                  "\n\n")
 
-def extractVariation(inputdir, outputdir):
+def extractVariation(outputdir):
    """
    For each epoch among the performed experiments, calculate the average error
    for each amount of variation. These are kept in dictionaries, as in this way
@@ -114,7 +113,7 @@ def extractVariation(inputdir, outputdir):
    """
    variancevalues = defaultdict(lambda: 0)
    variancecounts = defaultdict(lambda: 0)
-   for filename in glob(inputdir + "*.sorted"):
+   for filename in glob(outputdir + "*.sorted"):
       filePointer = open(filename, "r")
       epoch = os.path.basename(filename).replace(".schemeerrors.sorted", "")
       for line in filePointer:
@@ -212,14 +211,56 @@ def makeVerbatim(outputdir, regString, captionString):
             \\begin{figure}[!ht]
             \\begin{verbatim}
             """)
-         for line in alllines:
-            b.write(line)
+            for line in alllines:
+               b.write(line)
             b.write("""
             \\end{verbatim}
             \\caption{"""+ "The {} of epoch ${}$.".format(captionString, epoch[1:]) +"""}
             \\end{figure}
 
             """)
+            
+def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
+   first = ()
+   last = ()
+   high = ()
+   low = ()
+   
+   for filename in glob(outputdir + "*.extracted"):
+      with open(filename, "r") as filePointer:
+         for line in filePointer:
+            ls = line.split(",")
+            if ls[0] == "first":
+               first += (float(ls[2]),)
+            elif ls[0] == "last":
+               last += (float(ls[2]),)
+            elif ls[0] == "highest":
+               high += (float(ls[2]),)
+            elif ls[0] == "lowest":
+               low += (float(ls[2]),)
+   
+   fig, ax = plt.subplots()
+   index = np.arange(epochGroups)
+   barWidth = 0.2
+   
+   firstbars = ax.bar(index, first, barWidth, color='r', label="First")
+   firstbars = ax.bar(index, last, barWidth, color='y', label="Last")
+   firstbars = ax.bar(index, high, barWidth, color='g', label="Highest")
+   firstbars = ax.bar(index, low, barWidth, color='b', label="Lowest")
+   
+   ax.set_xlabel("Epochs")
+   ax.set_ylabel("Sum of errors")
+   ax.set_title("Extremes per epoch")
+   ax.set_xticks(index + barWidth / 2)
+   ax.set_xticklabels(range(maxEpoch // epochGroups, 
+                            maxEpoch, 
+                            maxEpoch // epochGroups))
+   ax.legend()
+   fig.tight_layout()
+   
+   #plt.show()
+   plt.savefig(outputdir + "extremes.png")
+   
 
 ### Main
 
@@ -246,15 +287,17 @@ def main():
    if not os.path.exists(inputdir):
       raise Exception("Inputdir does not exist! Please check your path!")
 
-   inputdir = initialFunction(inputdir)
-   extractResults(inputdir, outputdir)
-   extractVariation(inputdir, outputdir)
+   #initialFunction(inputdir, outputdir)
+   extractResults(outputdir)
+   extractVariation(outputdir)
    
    roundVariations(outputdir)
    readableVariations(outputdir)
    developmentExtracted(outputdir)
    makeVerbatim(outputdir, "*.readable", "average errors for each amount of variation")
    makeVerbatim(outputdir, "*.extracted", "extreme values of the summed errors")
+   makeGraphExtremes(outputdir)
 
+   
 if __name__ == "__main__":
    main()
