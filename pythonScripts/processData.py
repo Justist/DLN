@@ -243,7 +243,6 @@ def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
    fig, ax = plt.subplots(figsize=(20, 15))
    index = np.arange(epochGroups)
    barWidth = 0.15
-   sys.stderr.write("Length of first: " + str(len(first)) + "\n")
    firstbars = ax.bar(index, first, barWidth, color=colors.to_rgb('xkcd:grapefruit'), label="First")
    firstbars = ax.bar(index + barWidth, last, barWidth, color='xkcd:yellow tan', label="Last")
    firstbars = ax.bar(index + 2 * barWidth, high, barWidth, color='xkcd:dark yellow green', label="Highest")
