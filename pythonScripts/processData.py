@@ -6,6 +6,7 @@ can be streamlined.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import colors
 from collections import defaultdict
 from glob import glob
 import os
@@ -239,26 +240,29 @@ def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
             elif ls[0] == "lowest":
                low += (float(ls[2]),)
    
-   fig, ax = plt.subplots()
+   fig, ax = plt.subplots(figsize=(20, 15))
    index = np.arange(epochGroups)
-   barWidth = 0.2
-   
-   firstbars = ax.bar(index, first, barWidth, color='r', label="First")
-   firstbars = ax.bar(index, last, barWidth, color='y', label="Last")
-   firstbars = ax.bar(index, high, barWidth, color='g', label="Highest")
-   firstbars = ax.bar(index, low, barWidth, color='b', label="Lowest")
+   barWidth = 0.15
+   sys.stderr.write("Length of first: " + str(len(first)) + "\n")
+   firstbars = ax.bar(index, first, barWidth, color=colors.to_rgb('xkcd:grapefruit'), label="First")
+   firstbars = ax.bar(index + barWidth, last, barWidth, color='xkcd:yellow tan', label="Last")
+   firstbars = ax.bar(index + 2 * barWidth, high, barWidth, color='xkcd:dark yellow green', label="Highest")
+   firstbars = ax.bar(index + 3 * barWidth, low, barWidth, color='xkcd:dark blue grey', label="Lowest")
    
    ax.set_xlabel("Epochs")
    ax.set_ylabel("Sum of errors")
    ax.set_title("Extremes per epoch")
-   ax.set_xticks(index + barWidth / 2)
-   ax.set_xticklabels(range(maxEpoch // epochGroups, 
-                            maxEpoch, 
-                            maxEpoch // epochGroups))
+   ax.set_xticks(index + 2 * barWidth)
+   ax.set_xticklabels([str(x / 1000) + "k" 
+                       for x in range(maxEpoch // epochGroups, 
+                                      maxEpoch, 
+                                      maxEpoch // epochGroups)])
+   ax.get_yaxis().get_major_formatter().set_useOffset(False)
+   ax.set_ylim([min(low) - 5, max(high) + 5])
    ax.legend()
    fig.tight_layout()
    
-   #plt.show()
+   plt.show()
    plt.savefig(outputdir + "extremes.png")
    
 
@@ -287,7 +291,7 @@ def main():
    if not os.path.exists(inputdir):
       raise Exception("Inputdir does not exist! Please check your path!")
 
-   #initialFunction(inputdir, outputdir)
+   initialFunction(inputdir, outputdir)
    extractResults(outputdir)
    extractVariation(outputdir)
    
