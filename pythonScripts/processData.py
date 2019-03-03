@@ -4,9 +4,6 @@ Basically all the earlier scripts are merged into one, so the execution of those
 can be streamlined.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import colors
 from collections import defaultdict
 from glob import glob
 import os
@@ -51,6 +48,7 @@ def initialFunction(inputdir, outputdir):
            sleep(0.005)
        t.start()
 
+   #if only the base program runs, this is 1
    while thr.active_count() > 1:
        sleep(0.05)
 
@@ -68,6 +66,9 @@ def initialFunction(inputdir, outputdir):
        while thr.active_count() > 500:
            sleep(0.005)
        u.start()
+   
+   while thr.active_count() > 1:
+       sleep(0.05)
 
 def extractResults(outputdir):
    """
@@ -222,6 +223,10 @@ def makeVerbatim(outputdir, regString, captionString):
             """)
             
 def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
+   import numpy as np
+   import matplotlib.pyplot as plt
+   from matplotlib import colors
+   
    first = ()
    last = ()
    high = ()
