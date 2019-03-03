@@ -19,12 +19,12 @@ void Tests::Print(FILE* of,
 
 void Tests::PrintResults(const vecvecdo& inputs,
                          const vecdo& outputs,
-                         const bool toFile = false,
-                         const std::string& filename = "",
-                         const std::string& writeMode = "w",
-                         const std::string& firstString = "In: ",
-                         const std::string& secondString = "Out: ",
-                         const bool equalSize = true) {
+                         const bool toFile/* = false*/,
+                         const std::string& filename/* = ""*/,
+                         const std::string& writeMode/* = "w"*/,
+                         const std::string& firstString/* = "In: "*/,
+                         const std::string& secondString/* = "Out: "*/,
+                         const bool equalSize/* = true*/) {
    /*
     * Prints the inputs and outputs of the
     */
@@ -100,13 +100,15 @@ void Tests::ABC(vecdo& inputs, double& output) {
    output = static_cast<double>((x1 == 0.0) + (x2 == 0.0));
 }
 
-double Tests::runTest(TestParameters tp, const std::string& test) {
-   if(test == "xor") { return XORTest(tp); }
-   if(test == "abc") { return ABCTest(tp); }
+double Tests::runTest(TestParameters tp, 
+                      const std::string& test,
+                      const bool print/* = true*/) {
+   if(test == "xor") { return XORTest(tp, print); }
+   if(test == "abc") { return ABCTest(tp, print); }
    else { throw("Given test does not exist!\n"); }
 }
 
-double Tests::XORTest(TestParameters tp) {
+double Tests::XORTest(TestParameters tp, const bool print) {
    /*
     * Given the trained network, calculate the error by
     * doing one forward propagation and comparing the
@@ -121,15 +123,6 @@ double Tests::XORTest(TestParameters tp) {
    
    Network n = tp.network;
    
-   if (tp.fileName.empty()) {
-      tp.fileName = "i" + std::to_string(n.amInputNodes()) +
-                    "l" + std::to_string(n.amHiddenLayers()) +
-                    "h" + std::to_string(n.amHiddenNodes()) +
-                    "a" + std::to_string(n.alpha()) +
-                    ".xoroutput";
-   }
-   tp.fileName.insert(tp.fileName.find(".xoroutput"), tp.addition);
-   FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
    double outputDifference;
    double error = 0.0;
    for (float i = -1; i <= 1; i += 2) {
@@ -146,23 +139,36 @@ double Tests::XORTest(TestParameters tp) {
          }
       }
    }
-   PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
-   inputs.clear();
-   outputs.clear();
-   outputs.push_back(error);
-   if (tp.seedtest) {
-      inputs.push_back({static_cast<double>(tp.seed)});
-      PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
-                   tp.writeMode, "seed: ", "error: ");
-   } else {
-      PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
-                   tp.writeMode, "", "error: ", false);
+   
+   if(print) {
+      if (tp.fileName.empty()) {
+         tp.fileName = "i" + std::to_string(n.amInputNodes()) +
+                       "l" + std::to_string(n.amHiddenLayers()) +
+                       "h" + std::to_string(n.amHiddenNodes()) +
+                       "a" + std::to_string(n.alpha()) +
+                       ".xoroutput";
+      }
+      tp.fileName.insert(tp.fileName.find(".xoroutput"), tp.addition);
+      FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
+      
+      PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
+      inputs.clear();
+      outputs.clear();
+      outputs.push_back(error);
+      if (tp.seedtest) {
+         inputs.push_back({static_cast<double>(tp.seed)});
+         PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
+                      tp.writeMode, "seed: ", "error: ");
+      } else {
+         PrintResults(inputs, outputs, tp.toFile, tp.fileName, 
+                      tp.writeMode, "", "error: ", false);
+      }
+      fclose(of);
    }
-   fclose(of);
    return error;
 }
 
-double Tests::ABCTest(TestParameters tp) {
+double Tests::ABCTest(TestParameters tp, const bool print) {
    /*
     * Tests the trained networks performance on calculating the
     * ABC formula. To do this, a few sets of variables are each tested
@@ -182,16 +188,6 @@ double Tests::ABCTest(TestParameters tp) {
    vecdo outputs;
    
    Network n = tp.network;
-   
-   if (tp.fileName.empty()) {
-      tp.fileName = "i" + std::to_string(n.amInputNodes()) +
-                    "l" + std::to_string(n.amHiddenLayers()) +
-                    "h" + std::to_string(n.amHiddenNodes()) +
-                    "a" + std::to_string(n.alpha()) +
-                    ".abcoutput";
-   }
-   tp.fileName.insert(tp.fileName.find(".abcoutput"), tp.addition);
-   FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
    
    const vecvecdo testcases = {
         // a, b, c, output
@@ -223,30 +219,41 @@ double Tests::ABCTest(TestParameters tp) {
          outputs.push_back(General::sigmoid(n.calculatedOutput()));
       }
    }
-   
-   PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
-   inputs.clear();
-   outputs.clear();
-   outputs.push_back(error);
-   if (tp.seedtest) {
-      inputs.push_back({static_cast<double>(tp.seed)});
-      PrintResults(inputs, 
-                   outputs, 
-                   tp.toFile, 
-                   tp.fileName, 
-                   tp.writeMode, 
-                   "seed: ", 
-                   "error: ");
-   } else {
-      PrintResults(inputs, 
-                   outputs, 
-                   tp.toFile, 
-                   tp.fileName, 
-                   tp.writeMode, 
-                   "", 
-                   "error: ", 
-                   false);
+   if(print) {
+      if (tp.fileName.empty()) {
+         tp.fileName = "i" + std::to_string(n.amInputNodes()) +
+                       "l" + std::to_string(n.amHiddenLayers()) +
+                       "h" + std::to_string(n.amHiddenNodes()) +
+                       "a" + std::to_string(n.alpha()) +
+                       ".abcoutput";
+      }
+      tp.fileName.insert(tp.fileName.find(".abcoutput"), tp.addition);
+      FILE * of = fopen(tp.fileName.c_str(), tp.writeMode.c_str());
+      PrintResults(inputs, outputs, tp.toFile, tp.fileName, tp.writeMode);
+      inputs.clear();
+      outputs.clear();
+      outputs.push_back(error);
+      if (tp.seedtest) {
+         inputs.push_back({static_cast<double>(tp.seed)});
+         PrintResults(inputs, 
+                      outputs, 
+                      tp.toFile, 
+                      tp.fileName, 
+                      tp.writeMode, 
+                      "seed: ", 
+                      "error: ");
+      } else {
+         PrintResults(inputs, 
+                      outputs, 
+                      tp.toFile, 
+                      tp.fileName, 
+                      tp.writeMode, 
+                      "", 
+                      "error: ", 
+                      false);
+      }
+      fclose(of);
    }
-   fclose(of);
+   
    return error;
 }

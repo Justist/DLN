@@ -53,7 +53,9 @@ class Tests {
    
       void ABC(vecdo& inputs, double& output);
       
-      double runTest(TestParameters tp, const std::string& test);
+      double runTest(TestParameters tp, 
+                     const std::string& test,
+                     bool print = true);
       
    private:
       template <typename T>
@@ -63,15 +65,15 @@ class Tests {
    
       void PrintResults(const vecvecdo& inputs,
                         const vecdo& outputs,
-                        bool toFile/* = false*/,
-                        const std::string& filename/* = ""*/,
-                        const std::string& writeMode/* = "w"*/,
-                        const std::string& firstString/* = "In: "*/,
-                        const std::string& secondString/* = "Out: "*/,
-                        bool equalSize/* = true*/);
+                        bool toFile = false,
+                        const std::string& filename = "",
+                        const std::string& writeMode = "w",
+                        const std::string& firstString = "In: ",
+                        const std::string& secondString = "Out: ",
+                        bool equalSize = true);
       
-      double XORTest(TestParameters tp);
-      double ABCTest(TestParameters tp);
+      double XORTest(TestParameters tp, bool print);
+      double ABCTest(TestParameters tp, bool print);
 };
 
 #endif

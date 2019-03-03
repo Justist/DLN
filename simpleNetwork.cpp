@@ -175,12 +175,11 @@ void run(Network n,
       n.train();
       param.network = n;
       currentEpoch++;
-      if (convergenceTest) {
-         if (currentEpoch % 10 == 0) {
-            error = tests.runTest(param, test);
-            if (error < 0.05) {
-               break; //the results have already been printed
-            }
+      if (convergenceTest && currentEpoch % 10 == 0) {
+         error = tests.runTest(param, test, false);
+         if (error < 0.1) {
+            tests.runTest(param, test, true); //to print the result
+            break;
          }
       } else if (currentEpoch % (maxEpochs / 20) == 0) {
          if (!param.fileName.empty()) {
@@ -189,7 +188,7 @@ void run(Network n,
                                                       std::to_string(maxEpochs)),
                                            "e" + std::to_string(currentEpoch));
          }
-         tests.runTest(param, test);
+         tests.runTest(param, test, true);
       }
    }
 }
@@ -384,5 +383,7 @@ int main (const int argc, char **argv) {
                  seedtest,
                  ia.seed);
    }
+   //to prevent the statusbar from staying at the bottom of the terminal
+   std::cout << std::endl; 
    return 0;
 }
