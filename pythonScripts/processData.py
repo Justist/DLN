@@ -12,6 +12,35 @@ from time import sleep
 import sys
 import threading as thr
 
+### Threaded functions
+
+def threadfunctionfirst(fileInput):
+    filename = os.fsdecode(fileInput)
+    scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
+    try:
+        epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
+    except AttributeError:
+        return #those are the same as the e20000 anyway
+    with open(outputdir + "e" + epoch + ".schemeerrors", "a") as sea:
+        with open(inputdir + "/" + filename, "r") as fo:
+            errorSum = 0.0
+            for line in fo:
+                ls = line.split()
+                errorSum += float(ls[3])
+            sea.write(scheme + "," + str(errorSum) + "\n")
+            fo.flush()
+        sea.flush()
+        
+def threadfunctionsecond(result):
+    filename = outputdir + "/" + os.fsdecode(result)
+    with open(filename, "r") as a:
+        lines = sorted(set(a.readlines()))
+        with open(filename + ".sorted", "w") as b:
+            for line in lines:
+                b.write(line)
+            b.flush()
+        a.flush() 
+
 ### Extraction functions
 
 def initialFunction(inputdir, outputdir):
@@ -27,24 +56,9 @@ def initialFunction(inputdir, outputdir):
        os.makedirs(outputdir)
    resultsdirectory = os.fsencode(outputdir)
 
-   def threadfunctionfirst(fileInput):
-       filename = os.fsdecode(fileInput)
-       scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
-       try:
-           epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
-       except AttributeError:
-           return #those are the same as the e20000 anyway
-       with open(outputdir + "e" + epoch + ".schemeerrors", "a") as sea:
-           with open(inputdir + "/" + filename, "r") as fo:
-               errorSum = 0.0
-               for line in fo:
-                   ls = line.split()
-                   errorSum += float(ls[3])
-               sea.write(scheme + "," + str(errorSum) + "\n")
-
    for filePointer in os.listdir(inputdirectory):
        t = thr.Thread(target = threadfunctionfirst, args = (filePointer, ))
-       while thr.active_count() > 500:
+       while thr.active_count() > 100:
            sleep(0.005)
        t.start()
 
@@ -52,18 +66,10 @@ def initialFunction(inputdir, outputdir):
    while thr.active_count() > 1:
        sleep(0.005)
 
-   def threadfunctionsecond(result):
-       filename = outputdir + "/" + os.fsdecode(result)
-       with open(filename, "r") as a:
-           lines = sorted(set(a.readlines()))
-           with open(filename + ".sorted", "w") as b:
-               for line in lines:
-                   b.write(line)
-
    #can be shorter possibly, but it works
    for result in os.listdir(resultsdirectory):
        u = thr.Thread(target = threadfunctionsecond, args = (result, ))
-       while thr.active_count() > 500:
+       while thr.active_count() > 100:
            sleep(0.005)
        u.start()
    
@@ -98,6 +104,7 @@ def extractResults(outputdir):
          if value < lowestvalue:
             lowestvalue = value
             lowestscheme = scheme
+      filePointer.flush()
       filePointer.close()
       with open(outputdir + "e" + epoch + ".extracted", "w") as n:
          n.write("first,"    + lines[0]      +
@@ -126,10 +133,12 @@ def extractVariation(outputdir):
          variance = ord(scheme[-1]) - ord('A')
          variancevalues[variance] += value
          variancecounts[variance] += 1
+      filePointer.flush()
       filePointer.close()
       with open(outputdir + epoch + "variation.output", "a") as v:
          for k in variancecounts:
             v.write(str(k) + ": " + str(variancevalues[k]/variancecounts[k]) + "\n")
+         v.flush()
       variancevalues = defaultdict(lambda: 0)
       variancecounts = defaultdict(lambda: 0)
 
@@ -154,9 +163,11 @@ def roundVariations(outputdir, regString = "*.variation.output"):
                      round(float(ls[3]), 4))
                else:
                   lines[i] = "{} {}\n".format(ls[0], round(float(ls[1]), 4))
+         a.flush()
       with open(filename + ".rounded", "w") as b:
          for l in lines:
             b.write(l)
+         b.flush()
 
 def readableVariations(outputdir, regString = "*.rounded"):
    """
@@ -174,9 +185,11 @@ def readableVariations(outputdir, regString = "*.rounded"):
               if i >= halflenfile:
                   alllines[i - halflenfile] = alllines[i - halflenfile][:-1] + " " + line
           alllines = alllines[:halflenfile]
+      a.flush()
       with open(filename + ".readable", "w") as b:
           for line in alllines:
               b.write(line)
+          b.flush()
          
 def developmentExtracted(outputdir):
    """
@@ -199,6 +212,7 @@ def developmentExtracted(outputdir):
                ls = lines[i][:-1].split(",")
                f.write(epoch + "," + ls[2] + "," + ls[1][:15] + "\n")
             i += 1
+         filePointer.flush()
             
 def makeVerbatim(outputdir, regString, captionString):
    """
@@ -222,6 +236,8 @@ def makeVerbatim(outputdir, regString, captionString):
             \\end{figure}
 
             """)
+            b.flush()
+         a.flush()
             
 def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
    import numpy as np
