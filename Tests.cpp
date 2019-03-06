@@ -49,7 +49,6 @@ void Tests::PrintResults(const vecvecdo& inputs,
       Print(of, outputs[i], toFile);
       Print(of, "\n", toFile);
    }
-   of.flush()
    fclose(of);
 }
 
