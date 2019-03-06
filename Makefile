@@ -4,7 +4,7 @@ STD = -std=c++11
 ERROR = -Wall -Wextra
 THR = -pthread
 OPT = -O3
-CFLAGS = $(STD) $(THR)
+CFLAGS = $(STD) $(OPT) $(THR)
 TESTFLAGS = $(ERROR) $(STD) $(THR) $(DEBUG)
 LFLAGS = $(ERROR)
 SOURCES = $(wildcard *.cpp)

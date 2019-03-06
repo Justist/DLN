@@ -72,9 +72,9 @@ def initialFunction(inputdir, outputdir):
        while thr.active_count() > 100:
            sleep(0.005)
        u.start()
-   
+
    while thr.active_count() > 1:
-       sleep(0.05)
+      sleep(0.005)
 
 def extractResults(outputdir):
    """
@@ -190,7 +190,7 @@ def readableVariations(outputdir, regString = "*.rounded"):
           for line in alllines:
               b.write(line)
           b.flush()
-         
+
 def developmentExtracted(outputdir):
    """
    Shows the development in the extreme values which have been extracted.
@@ -213,7 +213,7 @@ def developmentExtracted(outputdir):
                f.write(epoch + "," + ls[2] + "," + ls[1][:15] + "\n")
             i += 1
          filePointer.flush()
-            
+
 def makeVerbatim(outputdir, regString, captionString):
    """
    Envelops the results in a given file in verbatim.
@@ -238,17 +238,17 @@ def makeVerbatim(outputdir, regString, captionString):
             """)
             b.flush()
          a.flush()
-            
+
 def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
    import numpy as np
    import matplotlib.pyplot as plt
    from matplotlib import colors
-   
+
    first = ()
    last = ()
    high = ()
    low = ()
-   
+
    for filename in glob(outputdir + "*.extracted"):
       with open(filename, "r") as filePointer:
          for line in filePointer:
@@ -261,7 +261,7 @@ def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
                high += (float(ls[2]),)
             elif ls[0] == "lowest":
                low += (float(ls[2]),)
-   
+
    fig, ax = plt.subplots(figsize=(20, 15))
    index = np.arange(epochGroups)
    barWidth = 0.15
@@ -269,23 +269,23 @@ def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
    firstbars = ax.bar(index + barWidth, last, barWidth, color='xkcd:yellow tan', label="Last")
    firstbars = ax.bar(index + 2 * barWidth, high, barWidth, color='xkcd:dark yellow green', label="Highest")
    firstbars = ax.bar(index + 3 * barWidth, low, barWidth, color='xkcd:dark blue grey', label="Lowest")
-   
+
    ax.set_xlabel("Epochs")
    ax.set_ylabel("Sum of errors")
    ax.set_title("Extremes per epoch")
    ax.set_xticks(index + 2 * barWidth)
-   ax.set_xticklabels([str(x / 1000) + "k" 
-                       for x in range(maxEpoch // epochGroups, 
-                                      maxEpoch, 
+   ax.set_xticklabels([str(x / 1000) + "k"
+                       for x in range(maxEpoch // epochGroups,
+                                      maxEpoch,
                                       maxEpoch // epochGroups)])
    ax.get_yaxis().get_major_formatter().set_useOffset(False)
    ax.set_ylim([min(low) - 5, max(high) + 5])
    ax.legend()
    fig.tight_layout()
-   
+
    plt.show()
    plt.savefig(outputdir + "extremes.png")
-   
+
 
 ### Main
 
@@ -315,7 +315,7 @@ def main():
    initialFunction(inputdir, outputdir)
    extractResults(outputdir)
    extractVariation(outputdir)
-   
+
    roundVariations(outputdir)
    readableVariations(outputdir)
    developmentExtracted(outputdir)
@@ -323,6 +323,6 @@ def main():
    makeVerbatim(outputdir, "*.extracted", "extreme values of the summed errors")
    makeGraphExtremes(outputdir)
 
-   
+
 if __name__ == "__main__":
    main()
