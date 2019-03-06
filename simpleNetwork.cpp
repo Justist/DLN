@@ -169,7 +169,7 @@ void run(Network n,
    Tests::TestParameters param(n, toFile, fileName, "a", true, seed, "");
 
    while (currentEpoch < maxEpochs) {
-      tests.XOR(inputVector, expectedOutput);
+      tests.runSmallTest(inputVector, expectedOutput, test);
       n.inputs(inputVector);
       n.expectedOutput(expectedOutput);
       n.train();

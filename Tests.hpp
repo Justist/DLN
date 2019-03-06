@@ -49,9 +49,9 @@ class Tests {
    
       Tests() = default;
    
-      void XOR(vecdo& inputs, double& output);
-   
-      void ABC(vecdo& inputs, double& output);
+      void runSmallTest(vecdo& inputs, 
+                               double& output, 
+                               const std::string& test);
       
       double runTest(TestParameters tp, 
                      const std::string& test,
@@ -71,7 +71,10 @@ class Tests {
                         const std::string& firstString = "In: ",
                         const std::string& secondString = "Out: ",
                         bool equalSize = true);
-      
+
+      void XOR(vecdo& inputs, double& output);
+      void ABC(vecdo& inputs, double& output);
+
       double XORTest(TestParameters tp, bool print);
       double ABCTest(TestParameters tp, bool print);
 };
