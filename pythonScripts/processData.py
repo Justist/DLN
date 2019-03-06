@@ -50,7 +50,7 @@ def initialFunction(inputdir, outputdir):
 
    #if only the base program runs, this is 1
    while thr.active_count() > 1:
-       sleep(0.05)
+       sleep(0.005)
 
    def threadfunctionsecond(result):
        filename = outputdir + "/" + os.fsdecode(result)
@@ -89,6 +89,7 @@ def extractResults(outputdir):
       lowestscheme = ""
       for line in lines:
          ls = line.split(',')
+         sys.stderr.write("line is " + line + "\n")
          scheme = ls[0]
          value = float(ls[1])
          if value > highestvalue:
