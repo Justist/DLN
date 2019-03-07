@@ -214,7 +214,9 @@ void runSchemes(const std::unordered_set<std::string> schemes,
     */
    std::string fileName;
    __attribute__((unused)) const auto unused =
-               static_cast<const uint16_t>(system(("mkdir " + ia.folder).c_str()));
+               static_cast<uint16_t>(system(("mkdir " +
+                                             ia.folder +
+                                             " 2> /dev/null").c_str()));
    for(const std::string& scheme : schemes) {
       fileName = ia.folder                                  +
                  "w" + scheme                               +

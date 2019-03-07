@@ -74,6 +74,10 @@ class Tests {
 
       void XOR(vecdo& inputs, double& output);
       void ABC(vecdo& inputs, double& output);
+      double ABCFormula(int16_t a,
+                        int16_t b,
+                        int16_t c,
+                        double x);
 
       double XORTest(TestParameters tp, bool print);
       double ABCTest(TestParameters tp, bool print);
