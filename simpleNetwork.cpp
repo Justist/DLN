@@ -174,9 +174,10 @@ void run(Network n,
       n.expectedOutput(expectedOutput);
       n.train();
       param.network = n;
-      currentEpoch++;
+
       if (convergenceTest && currentEpoch % 10 == 0) {
          error = tests.runTest(param, test, false);
+         std::cerr << "error = " << error << std::endl;
          if (error < 0.1) {
             if (!param.fileName.empty()) {
             param.fileName = regex_replace(param.fileName,
@@ -187,7 +188,8 @@ void run(Network n,
             tests.runTest(param, test, true); //to print the result
             break;
          }
-      } if (currentEpoch % (maxEpochs / 20) == 0) {
+      }
+      if (currentEpoch % (maxEpochs / 20) == 0) {
          if (!param.fileName.empty()) {
             param.fileName = regex_replace(param.fileName,
                                            std::regex("e" +
@@ -196,6 +198,8 @@ void run(Network n,
          }
          tests.runTest(param, test, true);
       }
+      currentEpoch++;
+
    }
 }
 
@@ -214,7 +218,9 @@ void runSchemes(const std::unordered_set<std::string> schemes,
     */
    std::string fileName;
    __attribute__((unused)) const auto unused =
-               static_cast<const uint16_t>(system(("mkdir " + ia.folder).c_str()));
+               static_cast<const uint16_t>(system(("mkdir " + 
+                                                   ia.folder + 
+                                                   " 2> /dev/null").c_str()));
    for(const std::string& scheme : schemes) {
       fileName = ia.folder                                  +
                  "w" + scheme                               +
