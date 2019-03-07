@@ -72,13 +72,13 @@ public:
            
    /* Information callers */
 
-   const uint16_t amInputNodes()   const
-                  { return static_cast<const uint16_t>(_inputs.size()); }
-   const uint16_t amHiddenNodes()  const
-                  { return static_cast<const uint16_t>(_hiddenLayers[0].size()); }
-   const uint16_t amHiddenLayers() const
-                  { return static_cast<const uint16_t>(_hiddenLayers.size()); }
-   const uint16_t amOutputNodes()  const { return 1; }
+   uint16_t amInputNodes() const
+      { return static_cast<uint16_t>(_inputs.size()); }
+   uint16_t amHiddenNodes() const
+      { return static_cast<uint16_t>(_hiddenLayers[0].size()); }
+   uint16_t amHiddenLayers() const
+      { return static_cast<uint16_t>(_hiddenLayers.size()); }
+   uint16_t amOutputNodes() const { return 1; }
    
    /* Getters */
    

@@ -40,7 +40,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
    if (toFile) {
       of = fopen(filename.c_str(), writeMode.c_str());
    }
-   for (auto i = 0; i < inputSize; i++) {
+   for (unsigned long i = 0; i < inputSize; i++) {
       Print(of, firstString, toFile);
       for (double x : inputs[i]) {
          Print(of, x, toFile);
@@ -69,6 +69,13 @@ void Tests::XOR(vecdo& inputs, double& output) {
    inputs = {-1.0, static_cast<double>(a), static_cast<double>(b)};
 }
 
+double Tests::ABCFormula(const int16_t a,
+                         const int16_t b,
+                         const int16_t c,
+                         const double x) {
+   return a * x * x + b * x + c;
+}
+
 void Tests::ABC(vecdo& inputs, double& output) {
    /*
     * Create input and expected output for the ABC-formula.
@@ -94,10 +101,16 @@ void Tests::ABC(vecdo& inputs, double& output) {
              static_cast<double>(b),
              static_cast<double>(c)};
    
-   const double x1 = (-b + sqrt(b * b - 4 * a * c)) / 2 * a;
-   const double x2 = (-b - sqrt(b * b - 4 * a * c)) / 2 * a;
+   const long d = b * b - 4 * a * c;
    
-   output = static_cast<double>((x1 == 0.0) + (x2 == 0.0));
+   if(d < 0) { output = 0.0; }
+   else {
+   
+      const double y1 = ABCFormula(a, b, c, (-b + sqrt(d)) / 2 * a);
+      const double y2 = ABCFormula(a, b, c, (-b - sqrt(d)) / 2 * a);
+   
+      output = static_cast<double>((y1 == 0.0) + (y2 == 0.0));
+   }
 }
 
 void Tests::runSmallTest(vecdo& inputs, 
