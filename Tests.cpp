@@ -40,7 +40,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
    if (toFile) {
       of = fopen(filename.c_str(), writeMode.c_str());
    }
-   for (auto i = 0; i < inputSize; i++) {
+   for (unsigned long i = 0; i < inputSize; i++) {
       Print(of, firstString, toFile);
       for (double x : inputs[i]) {
          Print(of, x, toFile);

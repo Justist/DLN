@@ -57,7 +57,7 @@ Network makeNetwork(const uint16_t inputs,
     * The '+ 1' after inputs and hiddenNodes is to account
     * for the bias nodes, which are added to the network.
     */
-   const auto hiddenPlusBias = static_cast<const uint16_t>(hiddenNodes + 1);
+   const auto hiddenPlusBias = static_cast<uint16_t>(hiddenNodes + 1);
    vecvecdo wFI(inputs + 1, vecdo(hiddenNodes));
    std::vector< vecvecdo > wHL(hiddenLayers,
                           vecvecdo(hiddenPlusBias,
@@ -99,7 +99,7 @@ std::unordered_set<std::string> generateInitialSchemes(std::string scheme,
     */
    std::unordered_set<std::string> schemes = {scheme};
    std::unordered_set<std::string> newSchemes;
-   const auto schemeLength = static_cast<const uint16_t>(scheme.length());
+   const auto schemeLength = static_cast<uint16_t>(scheme.length());
    for (int i = schemeLength - 1; i >= multitask; i--) {
       scheme[i]++;
       if (scheme[i] > ('A' + i) ||
@@ -250,7 +250,7 @@ void updateStatusBar (const double percent) {
    progress += percent;
 
    const int barWidth = 70;
-   const auto amountProg = static_cast<const unsigned long>(barWidth * progress);
+   const auto amountProg = static_cast<unsigned long>(barWidth * progress);
 
    std::cout << "[" << std::string(amountProg, '#')
              << std::string(barWidth - amountProg, ' ') << "] "
@@ -344,9 +344,9 @@ int main (const int argc, char **argv) {
    const uint8_t inputs = 3;
    const uint8_t outputs = 1;
 
-   const auto hiddenPlusBias = static_cast<const uint16_t>(ia.nodes + 1);
+   const auto hiddenPlusBias = static_cast<uint16_t>(ia.nodes + 1);
    const auto amountWeights =
-           static_cast<const uint16_t>(
+           static_cast<uint16_t>(
                    ((inputs + 1) * ia.nodes)                     +
                    (hiddenPlusBias * ia.nodes * (ia.layers - 1)) +
                    (hiddenPlusBias * outputs));
@@ -377,7 +377,7 @@ int main (const int argc, char **argv) {
                                        toFile] {
             runSchemes(schemes, ia, inputs, outputs,
                        toFile, seedtest, s);
-            updateStatusBar(1.0 / (const float) steps);
+            updateStatusBar(1.0 / (float) steps);
          });
       }
    } else {

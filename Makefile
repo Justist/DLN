@@ -1,30 +1,28 @@
-CC = g++
-DEBUG = #-ggdb -D_XOPEN_SOURCE
-STD = -std=c++11
+OPTDEBUG = -O3
 ERROR = -Wall -Wextra
+
+ifdef TEST
+OPTDEBUG = -ggdb -D_XOPEN_SOURCE $(ERROR)
+endif
+
+CC = g++
+STD = -std=c++11
 THR = -pthread
-OPT = -O3
-CFLAGS = $(STD) $(OPT) $(THR)
-TESTFLAGS = $(ERROR) $(STD) $(THR) $(DEBUG)
-LFLAGS = $(ERROR)
+CFLAGS = $(STD) $(THR)
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 EXE = dln
-TESTEXE = dlntest
 
 all: $(EXE)
 
 $(EXE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OPT) $(OBJECTS) -o $(EXE)
-	
-$(TESTEXE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(TESTFLAGS) -o $(TESTEXE)
+	$(CC) $(CFLAGS) $(OPTDEBUG) $(OBJECTS) -o $(EXE)
 	
 %.o: %.cpp
-	$(CC) -c $(CFLAGS) $(DEBUG) $< -o $@
+	$(CC) -c $(CFLAGS) $(OPTDEBUG) $< -o $@
 
 run:
 	./$(EXE)
 
 clean:
-	@rm $(OBJECTS) $(EXE) $(TESTEXE) 2>/dev/null || true
+	@rm $(OBJECTS) $(EXE) 2>/dev/null || true
