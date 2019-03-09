@@ -177,7 +177,6 @@ void run(Network n,
 
       if (convergenceTest && currentEpoch % 10 == 0) {
          error = tests.runTest(param, test, false);
-         std::cerr << "error = " << error << std::endl;
          if (error < 0.1) {
             if (!param.fileName.empty()) {
             param.fileName = regex_replace(param.fileName,
@@ -238,9 +237,9 @@ void runSchemes(const std::unordered_set<std::string> schemes,
                      ia.nodes,
                      outputs,
                      ia.alpha,
-                     ia.seed,
+                     seed,
                      scheme),
-         ia.epochs, ia.seed, toFile, fileName, seedtest, ia.test
+         ia.epochs, seed, toFile, fileName, seedtest, ia.test
       );
    }
 }
@@ -333,7 +332,6 @@ InputArgs parseArgs(const int argc, char **argv) {
 }
 
 int main (const int argc, char **argv) {
-
    // Raise an error when one of these float exceptions occur.
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 
@@ -364,7 +362,7 @@ int main (const int argc, char **argv) {
    const bool toFile = true;
    // Do we run the program for multiple seeds?
    const bool seedtest = true;
-
+   
    if (seedtest) {
       float progress = 0.0;
       updateStatusBar(progress);
