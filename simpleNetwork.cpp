@@ -179,7 +179,7 @@ void run(Network n,
          error = tests.runTest(param, test, false);
          if (error < 0.1) {
             if (!param.fileName.empty()) {
-            param.fileName = regex_replace(param.fileName,
+            param.fileName = regex_replace(fileName,
                                            std::regex("e" +
                                                       std::to_string(maxEpochs)),
                                            "e" + std::to_string(currentEpoch));
@@ -190,7 +190,7 @@ void run(Network n,
       }
       if (currentEpoch % (maxEpochs / 20) == 0) {
          if (!param.fileName.empty()) {
-            param.fileName = regex_replace(param.fileName,
+            param.fileName = regex_replace(fileName,
                                            std::regex("e" +
                                                       std::to_string(maxEpochs)),
                                            "e" + std::to_string(currentEpoch));
@@ -198,7 +198,6 @@ void run(Network n,
          tests.runTest(param, test, true);
       }
       currentEpoch++;
-
    }
 }
 
@@ -208,7 +207,7 @@ void runSchemes(const std::unordered_set<std::string> schemes,
                 const uint16_t outputs,
                 const bool toFile,
                 const bool seedtest,
-                const uint64_t seed) {
+                const uint16_t seed) {
    /*
     * Given the set of schemes, run an identical network
     * on each of the schemes for the given seed.

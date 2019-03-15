@@ -11,9 +11,9 @@ void Tests::Print(FILE* of,
    std::ostringstream oss;
    oss << toWrite;
    if (toFile) {
-      fprintf(of, "%s,", oss.str().c_str());
+      fprintf(of, "%s", oss.str().c_str());
    } else {
-      printf("%s,", oss.str().c_str());
+      printf("%s", oss.str().c_str());
    }
 }
 
@@ -45,6 +45,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
       for (double x : inputs[i]) {
          Print(of, x, toFile);
       }
+      Print(of, ", ", toFile);
       Print(of, secondString, toFile);
       Print(of, outputs[i], toFile);
       Print(of, "\n", toFile);
