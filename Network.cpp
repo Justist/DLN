@@ -80,7 +80,7 @@ void Network::forward() {
       _hiddenLayers[0][h + 1] = -_weightsFromInputs[0][h];
       for (uint16_t i = 1; i < _inputs.size(); i++) {
          _hiddenLayers[0][h + 1] +=
-            _weightsFromInputs[i][h] * _inputs[i];
+            _weightsFromInputs[i][h] * General::sigmoid(_inputs[i]);
       }
    }
 
