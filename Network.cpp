@@ -170,3 +170,76 @@ void Network::train() {
       }
    }
 }
+
+void Network::writeDot(const std::string& filename) {
+    /*
+     * Writes the network to a file in the DOT format.
+     * This way, that file can be opened by GraphViz,
+     * and the network can be visualised.
+     */
+    FILE *of = fopen(filename.c_str(), "w");
+    // Printed at the start
+    fprintf(of, "digraph{\n");
+
+    /* First apply labels to all the nodes. */
+
+    uint16_t iindex = 0;
+    uint16_t hlindex = 0;
+    uint16_t hnindex = 0;
+    for (double in : _inputs) {
+        fprintf(of, "i%d [label = %f];\n", iindex, in);
+        iindex++;
+    }
+
+    for (vecdo layer : _hiddenLayers) {
+        hnindex = 0;
+        for (double node : layer) {
+            fprintf(of, "h%d%d [label = %f];\n", hlindex, hnindex, node);
+            hnindex++;
+        }
+        hlindex++;
+    }
+
+    fprintf(of, "o [label = %f];\n", _calculatedOutput);
+
+    /* Then put in all the edges. */
+
+    for (uint16_t i = 0; i < _inputs.size(); i++) {
+
+        for (uint16_t hn = 1; hn < _hiddenLayers[0].size(); hn++) {
+            fprintf(of, "i%d -> h0%d [label = %f];\n", i, hn, _weightsFromInputs[i][hn]);
+        }
+    }
+
+    for (uint16_t hl = 0; hl < _hiddenLayers.size(); hl++) {
+        for (uint16_t hn1 = 0; hn1 < _hiddenLayers[0].size(); hn1++) {
+            for (uint16_t hn2 = 1; hn2 < _hiddenLayers[0].size(); hn2++) {
+                fprintf(of, "h%d%d -> h%d%d [label = %f];\n", hl, hn1, hl, hn2, _weightsHiddenLayers[hl][hn1][hn2]);
+            }
+        }
+    }
+
+    const uint16_t lastHiddenLayer = _hiddenLayers.size() - 1;
+    for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) {
+        fprintf(of, "h%d%d -> o [label = %f];\n", lastHiddenLayer, hn, _weightsToOutput[hn][0]);
+    }
+
+
+    /* And then set the ranks of all nodes. */
+
+    fprintf(of, "{ rank=same; ");
+    for (uint16_t i = 0; i < _inputs.size(); i++) { fprintf(of, "i%d, ", i); }
+    fprintf(of, "}\n");
+
+    for (uint16_t hl = 0; hl < _hiddenLayers.size(); hl++) {
+        fprintf(of, "{ rank=same; ");
+        for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) { fprintf(of, "h%d%d, ", hl, hn); }
+        fprintf(of, "}\n");
+    }
+
+    // In case of multiple output nodes, also implement that
+
+    // Printed at the end
+    fprintf(of, "}");
+    fclose(of);
+}

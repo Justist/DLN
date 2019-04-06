@@ -184,7 +184,8 @@ public:
    void calculatedOutput(const double& a) { _calculatedOutput = a;}
    
    void scheme(const std::string& a) { _scheme = a; }
-   
+
+   void writeDot(const std::string& filename);
 };
 
 #endif

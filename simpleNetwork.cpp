@@ -196,6 +196,7 @@ void run(Network n,
                                            "e" + std::to_string(currentEpoch));
          }
          tests.runTest(param, test, true);
+         n.writeDot(param.fileName + ".dot");
       }
       currentEpoch++;
    }
