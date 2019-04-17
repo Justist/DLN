@@ -41,6 +41,49 @@ vecdo initialiseWeightsByScheme(const std::string& scheme,
    return weights;
 }
 
+inline void pullScheme(Network& n) {
+   /*
+    * "Pull" the weights of the network together according to the scheme of the network.
+    * This means that the weights which have been assigned the same letter will get a
+    * small nudge to come closer to each other.
+    * The nudge is half the distance to the average of their weights.
+    */
+    std::string scheme = n.scheme();
+    auto schemeLength = static_cast<unsigned int>(scheme.length());
+    vecdo weightSums(schemeLength, 0.0);
+    auto wFIFlat = General::flatten(n.weightsFromInputs());
+    auto wHLFlat = General::flatten(n.weightsHiddenLayers());
+    auto wTOFlat = General::flatten(n.weightsToOutput());
+    vecdo allWeightsFlat = General::flatten({wFIFlat, wHLFlat, wTOFlat});
+    std::vector<unsigned int> letterCount(schemeLength, 0);
+    unsigned int index = 0;
+    
+    for (unsigned int i = 0; i < schemeLength; i++) {
+       index = static_cast<unsigned int>(scheme[i] - 'A');
+       weightSums[index] += allWeightsFlat[i];
+       letterCount[index]++;
+    }
+    
+    // Take the averages of the weightSums
+    vecdo weightAverages(schemeLength, 0.0);
+    for (unsigned int j = 0; j < schemeLength; j++) {
+       index = static_cast<unsigned int>(scheme[j] - 'A');
+       weightAverages[index] = letterCount[index] > 0 ? weightSums[index] / 
+       letterCount[index] : 0;
+    }
+    
+    // Then use these to nudge the weights
+    for (unsigned int k = 0; k < schemeLength; k++) {
+      index = static_cast<unsigned int>(scheme[k] - 'A');
+      allWeightsFlat[k] -= (allWeightsFlat[k] - 
+                            weightAverages[index]) / 2.0;
+    }
+    
+    // Then update the weights according to the flat weight vector
+    n.initialiseWeights(0, //seed (not relevant in this case)
+                        allWeightsFlat); //scheme weights
+}
+
 Network makeNetwork(const uint16_t inputs,
                     const uint16_t hiddenLayers,
                     const uint16_t hiddenNodes,
@@ -143,7 +186,8 @@ void run(Network n,
          std::string fileName,
          const bool seedtest,
          const std::string& test,
-         const bool convergenceTest = true) {
+         const bool convergenceTest = true,
+         const bool nudgetest = true) {
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -195,6 +239,7 @@ void run(Network n,
                                                       std::to_string(maxEpochs)),
                                            "e" + std::to_string(currentEpoch));
          }
+         if (nudgetest) { pullScheme(n); }
          tests.runTest(param, test, true);
          n.writeDot(param.fileName + ".dot");
       }
@@ -202,8 +247,8 @@ void run(Network n,
    }
 }
 
-void runSchemes(const std::unordered_set<std::string> schemes,
-                const InputArgs ia,
+void runSchemes(const std::unordered_set<std::string>& schemes,
+                const InputArgs& ia,
                 const uint16_t inputs,
                 const uint16_t outputs,
                 const bool toFile,
@@ -366,7 +411,7 @@ int main (const int argc, char **argv) {
    if (seedtest) {
       float progress = 0.0;
       updateStatusBar(progress);
-      const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
+      const uint16_t startseed = 100, endseed = 100/*0*/, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
       std::vector< std::future< void > > threads(steps);

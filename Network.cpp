@@ -74,7 +74,20 @@ void Network::forward() {
     */
    const auto hiddenLayers = amHiddenLayers();
    const auto hiddenNodes  = amHiddenNodes();
+   
+   std::cerr << "Inputs: ";
+   for (auto i : _inputs) { std::cerr << i << "; "; }
+   std::cerr << std::endl;
+   
+   std::cerr << "Weights: ";
+   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
+      for (uint16_t i = 0; i < _inputs.size(); i++) {
+         std::cerr << _weightsFromInputs[i][h] << "; ";
+      }
+   }
+   std::cerr << std::endl;
 
+      // TODO check if this matches
    for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       //bias has value -1
       _hiddenLayers[0][h + 1] = -_weightsFromInputs[0][h];
@@ -159,7 +172,7 @@ void Network::train() {
       for (uint16_t i = 0; i < _inputs.size(); i++) {
          // Totally not cheating around small numbers
          double weight = _weightsFromInputs[i][h];
-         double addition = _alpha * _inputs[i] * deltas[0][h + 1];
+         double addition = _alpha * General::sigmoid(_inputs[i]) * deltas[0][h + 1];
          if (weight > 0 && weight < pow(10, -100)) {
             _weightsFromInputs[i][h] = addition;
          } else if (weight < 0 && weight > pow(-10, -100)) {

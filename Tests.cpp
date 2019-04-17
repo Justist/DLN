@@ -102,6 +102,8 @@ void Tests::ABC(vecdo& inputs, double& output) {
              static_cast<double>(b),
              static_cast<double>(c)};
    
+   std::cerr << "a: " << a << "b: " << b << "c: " << c << std::endl;
+   
    const long d = b * b - 4 * a * c;
    
    if(d < 0) { output = 0.0; }
