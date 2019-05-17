@@ -29,17 +29,18 @@ void Network::initialiseWeights(const uint16_t seed,
     * The layers are returned by reference.
     */
     
-   const auto inputNodes   = amInputNodes() + 1;
+   const auto inputNodes   = amInputNodes();
    const auto hiddenNodes  = amHiddenNodes();
    const auto hiddenLayers = amHiddenLayers();
    const auto outputNodes  = amOutputNodes();
    
    bool useScheme = false;
    if (!schemeWeights.empty()) { useScheme = true; }
+   
    for (uint16_t i = 0; i < inputNodes; i++) {
       for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
          _weightsFromInputs[i][h] = useScheme ?
-                                   schemeWeights[i*hiddenNodes + (h - 1)] :
+                                   schemeWeights[i*hiddenNodes + h] :
                                    General::randomWeight(seed);
       }
    }
@@ -75,6 +76,7 @@ void Network::forward() {
    const auto hiddenLayers = amHiddenLayers();
    const auto hiddenNodes  = amHiddenNodes();
    
+   /*
    std::cerr << "Inputs: ";
    for (auto i : _inputs) { std::cerr << i << "; "; }
    std::cerr << std::endl;
@@ -86,13 +88,16 @@ void Network::forward() {
       }
    }
    std::cerr << std::endl;
+   */
+   
+   // Last node of a layer is the bias node, having a constant value of -1.
 
-      // TODO check if this matches
-   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
+   const auto inputSize = _inputs.size();
+   for (uint16_t h = 0; h < hiddenNodes; h++) {
       //bias has value -1
-      _hiddenLayers[0][h + 1] = -_weightsFromInputs[0][h];
-      for (uint16_t i = 1; i < _inputs.size(); i++) {
-         _hiddenLayers[0][h + 1] +=
+      _hiddenLayers[0][h] = -_weightsFromInputs[inputSize - 1][h];
+      for (uint16_t i = 0; i < inputSize - 1; i++) {
+         _hiddenLayers[0][h] +=
             _weightsFromInputs[i][h] * General::sigmoid(_inputs[i]);
       }
    }
@@ -103,9 +108,9 @@ void Network::forward() {
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
          //bias has value -1
-         _hiddenLayers[l + 1][hn + 1] = -_weightsHiddenLayers[l][0][hn];
-         for (uint16_t hp = 1; hp < hiddenNodes; hp++) {
-            _hiddenLayers[l + 1][hn + 1] +=
+         _hiddenLayers[l + 1][hn + 1] = -_weightsHiddenLayers[l][hiddenNodes - 1][hn];
+         for (uint16_t hp = 0; hp < hiddenNodes - 1; hp++) {
+            _hiddenLayers[l + 1][hn] +=
                _weightsHiddenLayers[l][hp][hn] * 
                General::sigmoid(_hiddenLayers[l][hp]);
          }
@@ -113,8 +118,8 @@ void Network::forward() {
    }
 
    // only 1 output
-   _calculatedOutput = -_weightsToOutput[0][0];
-   for (uint16_t h = 1; h < hiddenNodes; h++) {
+   _calculatedOutput = -_weightsToOutput[hiddenNodes - 1][0];
+   for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       _calculatedOutput += _weightsToOutput[h][0] *
                            General::sigmoid(_hiddenLayers[hiddenLayers - 1][h]);
    }

@@ -7,15 +7,19 @@
 /*// Global variables to enable multithreading
 unordered_set<std::string> globalSchemes;
 mutex mtx;*/
+float progress = 0.0; //for the progressbar
 
 struct InputArgs {
    bool schemes;
    uint8_t layers;
-   uint8_t nodes;
+   uint8_t inputnodes;
+   uint8_t hiddennodes;
+   uint8_t outputnodes;
    uint64_t epochs;
    double alpha;
    uint16_t seed;
    std::string test;
+   bool toFile;
    std::string folder;
 };
 
@@ -37,6 +41,7 @@ vecdo initialiseWeightsByScheme(const std::string& scheme,
       } else {
          weights[i] = General::trueRandomWeight(seed, weights);
       }
+      current = scheme[i];
    }
    return weights;
 }
@@ -84,11 +89,7 @@ inline void pullScheme(Network& n) {
                         allWeightsFlat); //scheme weights
 }
 
-Network makeNetwork(const uint16_t inputs,
-                    const uint16_t hiddenLayers,
-                    const uint16_t hiddenNodes,
-                    const uint16_t outputs,
-                    const double alpha,
+Network makeNetwork(const InputArgs& ia,
                     const uint16_t seed,
                     const std::string& scheme = "") {
    /*
@@ -100,26 +101,25 @@ Network makeNetwork(const uint16_t inputs,
     * The '+ 1' after inputs and hiddenNodes is to account
     * for the bias nodes, which are added to the network.
     */
-   const auto hiddenPlusBias = static_cast<uint16_t>(hiddenNodes + 1);
-   vecvecdo wFI(inputs + 1, vecdo(hiddenNodes));
-   std::vector< vecvecdo > wHL(hiddenLayers,
-                          vecvecdo(hiddenPlusBias,
-                                   vecdo(hiddenNodes)));
-   vecvecdo wTO(hiddenPlusBias, vecdo(outputs));
+   vecvecdo wFI(ia.inputnodes, vecdo(ia.hiddennodes));
+   std::vector< vecvecdo > wHL(ia.layers,
+                          vecvecdo(ia.hiddennodes,
+                                   vecdo(ia.hiddennodes)));
+   vecvecdo wTO(ia.hiddennodes, vecdo(ia.outputnodes));
    vecdo schemeVector = {};
    if (scheme.length() > 0) {
       schemeVector = initialiseWeightsByScheme(scheme, seed);
    }
    
    // Here we construct a temporary network and feed it to this function
-   Network tempNetwork(vecdo(inputs),
+   Network tempNetwork(vecdo(ia.inputnodes),
                        wFI,
-                       vecvecdo(hiddenLayers,
-                                vecdo(hiddenPlusBias)),
+                       vecvecdo(ia.layers,
+                                vecdo(ia.hiddennodes)),
                        wHL,
                        wTO,
                        0.0,
-                       alpha,
+                       ia.alpha,
                        0.0,
                        scheme);
    
@@ -180,14 +180,14 @@ std::unordered_set<std::string> generateInitialSchemes(std::string scheme,
 }*/
 
 void run(Network n,
-         const uint64_t maxEpochs,
+         const InputArgs& ia,
          const uint16_t seed,
-         const bool toFile,
          std::string fileName,
-         const bool seedtest,
-         const std::string& test,
          const bool convergenceTest = true,
          const bool nudgetest = true) {
+
+   //TODO: Assumes usage of schemes, might want code which does not.
+   
    /*
     * Given the Network, train the network on the
     * XOR problem in the given amount of epochs.
@@ -203,44 +203,44 @@ void run(Network n,
       "abc"
    };
    
-   assert(acceptableTests.find(test) != acceptableTests.end() && 
+   assert(acceptableTests.find(ia.test) != acceptableTests.end() &&
           "Given test is not implemented (yet)!");
    
    Tests tests;
    double error;
    
-   if (fileName.empty()) { fileName = "simple." + test + "output"; }
-   Tests::TestParameters param(n, toFile, fileName, "a", true, seed, "");
+   if (fileName.empty()) { fileName = "simple." + ia.test + "output"; }
+   Tests::TestParameters param(n, ia.toFile, fileName, "a", true, seed, "");
 
-   while (currentEpoch < maxEpochs) {
-      tests.runSmallTest(inputVector, expectedOutput, test);
+   while (currentEpoch < ia.epochs) {
+      tests.runSmallTest(inputVector, expectedOutput, ia.test);
       n.inputs(inputVector);
       n.expectedOutput(expectedOutput);
       n.train();
       param.network = n;
 
       if (convergenceTest && currentEpoch % 10 == 0) {
-         error = tests.runTest(param, test, false);
+         error = tests.runTest(param, ia.test, false);
          if (error < 0.1) {
             if (!param.fileName.empty()) {
             param.fileName = regex_replace(fileName,
                                            std::regex("e" +
-                                                      std::to_string(maxEpochs)),
+                                                      std::to_string(ia.epochs)),
                                            "e" + std::to_string(currentEpoch));
             }
-            tests.runTest(param, test, true); //to print the result
+            tests.runTest(param, ia.test, true); //to print the result
             break;
          }
       }
-      if (currentEpoch % (maxEpochs / 20) == 0) {
+      if (currentEpoch % (ia.epochs / 20) == 0) {
          if (!param.fileName.empty()) {
             param.fileName = regex_replace(fileName,
                                            std::regex("e" +
-                                                      std::to_string(maxEpochs)),
+                                                      std::to_string(ia.epochs)),
                                            "e" + std::to_string(currentEpoch));
          }
          if (nudgetest) { pullScheme(n); }
-         tests.runTest(param, test, true);
+         tests.runTest(param, ia.test, true);
          n.writeDot(param.fileName + ".dot");
       }
       currentEpoch++;
@@ -249,10 +249,6 @@ void run(Network n,
 
 void runSchemes(const std::unordered_set<std::string>& schemes,
                 const InputArgs& ia,
-                const uint16_t inputs,
-                const uint16_t outputs,
-                const bool toFile,
-                const bool seedtest,
                 const uint16_t seed) {
    /*
     * Given the set of schemes, run an identical network
@@ -260,7 +256,7 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
     * It also creates the name of the file for the results
     * to be written to.
     */
-   std::string fileName = "hoi";
+   std::string fileName;
    __attribute__((unused)) const auto unused =
                static_cast<uint16_t>(system(("mkdir " +
                                              ia.folder +
@@ -270,27 +266,22 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
                  "w" + scheme                               +
                  "e" + std::to_string(ia.epochs)            +
                  "a" + General::to_string_prec(ia.alpha, 2) +
-                 "i" + std::to_string(inputs)               +
+                 "i" + std::to_string(ia.inputnodes)               +
                  "l" + std::to_string(ia.layers)            +
-                 "h" + std::to_string(ia.nodes)             +
-                 "o" + std::to_string(outputs)              +
+                 "h" + std::to_string(ia.hiddennodes)             +
+                 "o" + std::to_string(ia.outputnodes)              +
                  "." + ia.test                              + 
                  "output";
       printf("filename = %s\n", fileName.c_str());
       run(
-         makeNetwork(inputs,
-                     ia.layers,
-                     ia.nodes,
-                     outputs,
-                     ia.alpha,
+         makeNetwork(ia,
                      seed,
                      scheme),
-         ia.epochs, seed, toFile, fileName, seedtest, ia.test
+         ia, seed, fileName
       );
    }
 }
 
-float progress = 0.0; //global
 void updateStatusBar (const double percent) {
    /*
     * Update the progressbar by percent percent, then
@@ -312,14 +303,20 @@ void updateStatusBar (const double percent) {
 void usage(const std::string& programName) {
    printf("Usage: %s [-s] [-lneadt]() [-h]\n", programName.c_str());
    const char* toPrint = R"(
-   -s            : If given, the program uses schemes.
-   -l <integer>  : The amount of hidden layers in the network.
-   -n <integer>  : The amount of hidden nodes in each hidden layer.
-   -e <integer>  : The amount of epochs to be run.
-   -a <double>   : The alpha of the network.
-   -d <integer>  : The seed of the network.
-   -t <string>   : The test to be run.
-   -f <string>   : The name of the folder to store the results in.
+   Option <input>: What it does (default value).
+   
+   -s            : If given, the program uses schemes (off).
+   -l <integer>  : The amount of hidden layers in the network (2).
+   -i <integer>  : The amount of inputs given to the network (2).
+   -n <integer>  : The amount of hidden nodes in each hidden layer (2).
+   -o <integer>  : The amount of outputs expected from the network (1).
+   -e <integer>  : The amount of epochs to be run (20K).
+   -a <double>   : The alpha of the network (0.5).
+   -d <integer>  : The seed of the network (1230).
+   -t <string>   : The test to be run (xor).
+   -c            : If given, the program prints to the commandline instead
+                   of to files (off).
+   -f <string>   : The name of the folder to store the results in (output/).
    )";
    printf("%s\n", toPrint);
 }
@@ -329,16 +326,22 @@ InputArgs parseArgs(const int argc, char **argv) {
    
    int c;
    
+   // The + 1 on the input and hidden nodes amounts is to take the bias nodes
+   // into account. These are constant and always -1.
+   
    ia.schemes = false;
    ia.layers = 2;
-   ia.nodes = 2;
+   ia.inputnodes = 2 + 1;
+   ia.hiddennodes = 2 + 1;
+   ia.outputnodes = 1;
    ia.epochs = 20000;
    ia.alpha = 0.5;
    ia.seed = 1230;
    ia.test = "xor";
+   ia.toFile = true;
    ia.folder = "output/";
    
-   while ((c = getopt (argc, argv, "sl:n:e:a:d:t:f:")) != -1) {
+   while ((c = getopt (argc, argv, "sl:i:n:o:e:a:d:t:cf:")) != -1) {
       switch (c) {
          case 's':
             ia.schemes = true;
@@ -347,8 +350,16 @@ InputArgs parseArgs(const int argc, char **argv) {
             if (optarg) { ia.layers = static_cast<uint8_t>(
                                         std::atoi(optarg)); }
             break;
+         case 'i':
+            if (optarg) { ia.inputnodes  = static_cast<uint8_t>(
+                    std::atoi(optarg)) + 1; }
+            break;
          case 'n':
-            if (optarg) { ia.nodes  = static_cast<uint8_t>(
+            if (optarg) { ia.hiddennodes  = static_cast<uint8_t>(
+                    std::atoi(optarg)) + 1; }
+            break;
+         case 'o':
+            if (optarg) { ia.outputnodes  = static_cast<uint8_t>(
                                         std::atoi(optarg)); }
             break;
          case 'e':
@@ -364,6 +375,9 @@ InputArgs parseArgs(const int argc, char **argv) {
             break;
          case 't':
             if (optarg) { ia.test   = optarg; }
+            break;
+         case 'c':
+            ia.toFile = false;
             break;
          case 'f':
             if (optarg) { ia.folder = optarg; }
@@ -389,29 +403,26 @@ int main (const int argc, char **argv) {
       fprintf(stderr, "%s\n", e.what());
       return -1;
    }
-
-   // + 1 for the bias node
-   const uint8_t inputs = 3;
-   const uint8_t outputs = 1;
-
-   const auto hiddenPlusBias = static_cast<uint16_t>(ia.nodes + 1);
+   
+   // The weights to bias nodes should not be considered in the scheme, as
+   // they are irrelevant as the bias node has a constant value.
    const auto amountWeights =
            static_cast<uint16_t>(
-                   ((inputs + 1) * ia.nodes)                     +
-                   (hiddenPlusBias * ia.nodes * (ia.layers - 1)) +
-                   (hiddenPlusBias * outputs));
+                   (ia.inputnodes  * (ia.hiddennodes - 1))                     +
+                   (ia.hiddennodes * (ia.hiddennodes - 1) * (ia.layers - 1)) +
+                   (ia.hiddennodes * ia.outputnodes));
    const std::string initialScheme(amountWeights, 'A');
    const std::unordered_set<std::string> schemes = 
       generateInitialSchemes(initialScheme);
    
-   // Do we write the results to a file?
-   const bool toFile = true;
-   // Do we run the program for multiple seeds?
-   const bool seedtest = true;
+   // These are created as struct variables cannot be passed to an async function.
+   // They are used, although code analysis may deny that.
+   const bool toFile = ia.toFile;
+   const auto inputs = ia.inputnodes;
+   const auto outputs = ia.outputnodes;
    
-   if (seedtest) {
-      float progress = 0.0;
-      updateStatusBar(progress);
+   if (ia.schemes) {
+      updateStatusBar(0.0); // should be empty at the start
       const uint16_t startseed = 100, endseed = 100/*0*/, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
@@ -425,19 +436,12 @@ int main (const int argc, char **argv) {
                                        outputs,
                                        s,
                                        toFile] {
-            runSchemes(schemes, ia, inputs, outputs,
-                       toFile, seedtest, s);
+            runSchemes(schemes, ia, s);
             updateStatusBar(1.0 / (float) steps);
          });
       }
    } else {
-      runSchemes(schemes,
-                 ia,
-                 inputs,
-                 outputs,
-                 toFile,
-                 seedtest,
-                 ia.seed);
+      runSchemes(schemes, ia, ia.seed);
    }
    //to prevent the statusbar from staying at the bottom of the terminal
    std::cout << std::endl; 
