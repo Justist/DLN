@@ -30,7 +30,7 @@ void Network::initialiseWeights(const uint16_t seed,
     */
     
    const auto inputNodes   = amInputNodes() + 1;
-   const auto hiddenNodes  = amHiddenNodes() + 1;
+   const auto hiddenNodes  = amHiddenNodes();
    const auto hiddenLayers = amHiddenLayers();
    const auto outputNodes  = amOutputNodes();
    
@@ -218,16 +218,27 @@ void Network::writeDot(const std::string& filename) {
     /* Then put in all the edges. */
 
     for (uint16_t i = 0; i < _inputs.size(); i++) {
-
+        printf("een inputnode!\n");
         for (uint16_t hn = 1; hn < _hiddenLayers[0].size(); hn++) {
-            fprintf(of, "i%d -> h0%d [label = %f];\n", i, hn, _weightsFromInputs[i][hn]);
+            fprintf(of, "i%d -> h0%d [label = %f];\n", i, hn, _weightsFromInputs[i][hn - 1]);
+            printf("een inputedge!\n");
         }
     }
+    
+    printf("Weights from input: \n");
+    for (double weight : General::flatten(_weightsFromInputs)) {
+       printf("%f,  ", weight);
+    }
+    printf("\n");
 
-    for (uint16_t hl = 0; hl < _hiddenLayers.size(); hl++) {
+    // -1 to account for the fact there is 1 layer more than edges in between
+    for (uint16_t hl = 0; hl < _hiddenLayers.size() - 1; hl++) {
+        printf("een layer! totaal: %d\n", _hiddenLayers.size());
         for (uint16_t hn1 = 0; hn1 < _hiddenLayers[0].size(); hn1++) {
+            printf("een prevnode! totaal: %d\n", _hiddenLayers[0].size());
             for (uint16_t hn2 = 1; hn2 < _hiddenLayers[0].size(); hn2++) {
                 fprintf(of, "h%d%d -> h%d%d [label = %f];\n", hl, hn1, hl, hn2, _weightsHiddenLayers[hl][hn1][hn2]);
+                printf("een hiddenedge!\n");
             }
         }
     }
@@ -235,19 +246,23 @@ void Network::writeDot(const std::string& filename) {
     const uint16_t lastHiddenLayer = _hiddenLayers.size() - 1;
     for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) {
         fprintf(of, "h%d%d -> o [label = %f];\n", lastHiddenLayer, hn, _weightsToOutput[hn][0]);
+        printf("een outputedge!\n");
     }
 
 
     /* And then set the ranks of all nodes. */
 
-    fprintf(of, "{ rank=same; ");
-    for (uint16_t i = 0; i < _inputs.size(); i++) { fprintf(of, "i%d, ", i); }
-    fprintf(of, "}\n");
+    fprintf(of, "{ rank=same;");
+    for (uint16_t i = 0; i < _inputs.size(); i++) { fprintf(of, " i%d,", i); }
+    // Move filepointer 1 back
+    fseek(of, -1, SEEK_CUR);
+    fprintf(of, " }\n");
 
     for (uint16_t hl = 0; hl < _hiddenLayers.size(); hl++) {
-        fprintf(of, "{ rank=same; ");
-        for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) { fprintf(of, "h%d%d, ", hl, hn); }
-        fprintf(of, "}\n");
+        fprintf(of, "{ rank=same;");
+        for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) { fprintf(of, " h%d%d,", hl, hn); }
+        fseek(of, -1, SEEK_CUR);
+        fprintf(of, " }\n");
     }
 
     // In case of multiple output nodes, also implement that
@@ -255,4 +270,6 @@ void Network::writeDot(const std::string& filename) {
     // Printed at the end
     fprintf(of, "}");
     fclose(of);
+    
+    throw("stop hier maar");
 }

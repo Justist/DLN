@@ -114,8 +114,8 @@ Network makeNetwork(const uint16_t inputs,
    // Here we construct a temporary network and feed it to this function
    Network tempNetwork(vecdo(inputs),
                        wFI,
-                       vecvecdo(hiddenPlusBias,
-                                vecdo(hiddenNodes)),
+                       vecvecdo(hiddenLayers,
+                                vecdo(hiddenPlusBias)),
                        wHL,
                        wTO,
                        0.0,
@@ -260,7 +260,7 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
     * It also creates the name of the file for the results
     * to be written to.
     */
-   std::string fileName;
+   std::string fileName = "hoi";
    __attribute__((unused)) const auto unused =
                static_cast<uint16_t>(system(("mkdir " +
                                              ia.folder +
@@ -276,6 +276,7 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
                  "o" + std::to_string(outputs)              +
                  "." + ia.test                              + 
                  "output";
+      printf("filename = %s\n", fileName.c_str());
       run(
          makeNetwork(inputs,
                      ia.layers,
