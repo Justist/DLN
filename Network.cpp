@@ -183,6 +183,9 @@ void Network::train() {
 
    for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
       for (uint16_t i = 0; i < inputNodes; i++) {
+         if (_weightsFromInputs[i][h] > 10) {
+            fprintf(stderr, "Higher weight than 10!\ni: %d, h: %d, weight: %f\n_inputs[i]: %f, sigmoid: %f\n deltas[0][h]: %f\n", i, h, _weightsFromInputs[i][h], _inputs[i], General::sigmoid(_inputs[i]), deltas[0][h]);
+         }
          _weightsFromInputs[i][h] += _alpha *
                                      General::sigmoid(_inputs[i]) *
                                      deltas[0][h];
