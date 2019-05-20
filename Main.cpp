@@ -106,6 +106,14 @@ Network makeNetwork(const InputArgs& ia,
                           vecvecdo(ia.hiddennodes,
                                    vecdo(ia.hiddennodes)));
    vecvecdo wTO(ia.hiddennodes, vecdo(ia.outputnodes));
+   vecdo inputLayer(ia.inputnodes);
+   vecvecdo hiddenLayers(ia.layers,
+                         vecdo(ia.hiddennodes));
+   for (vecdo& layer : hiddenLayers) {
+      // The value is actually never used, but it gives a better view
+      // of what's happening when the graph is drawn.
+      layer[ia.hiddennodes - 1] = -1.0;
+   }
    vecdo schemeVector = {};
    if (scheme.length() > 0) {
       schemeVector = initialiseWeightsByScheme(scheme, seed);
@@ -114,8 +122,7 @@ Network makeNetwork(const InputArgs& ia,
    // Here we construct a temporary network and feed it to this function
    Network tempNetwork(vecdo(ia.inputnodes),
                        wFI,
-                       vecvecdo(ia.layers,
-                                vecdo(ia.hiddennodes)),
+                       hiddenLayers,
                        wHL,
                        wTO,
                        0.0,
@@ -239,7 +246,7 @@ void run(Network n,
                                                       std::to_string(ia.epochs)),
                                            "e" + std::to_string(currentEpoch));
          }
-         if (nudgetest) { pullScheme(n); }
+         //if (nudgetest) { pullScheme(n); }
          tests.runTest(param, ia.test, true);
          n.writeDot(param.fileName + ".dot");
       }
@@ -272,7 +279,6 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
                  "o" + std::to_string(ia.outputnodes)              +
                  "." + ia.test                              + 
                  "output";
-      printf("filename = %s\n", fileName.c_str());
       run(
          makeNetwork(ia,
                      seed,
@@ -307,9 +313,7 @@ void usage(const std::string& programName) {
    
    -s            : If given, the program uses schemes (off).
    -l <integer>  : The amount of hidden layers in the network (2).
-   -i <integer>  : The amount of inputs given to the network (2).
    -n <integer>  : The amount of hidden nodes in each hidden layer (2).
-   -o <integer>  : The amount of outputs expected from the network (1).
    -e <integer>  : The amount of epochs to be run (20K).
    -a <double>   : The alpha of the network (0.5).
    -d <integer>  : The seed of the network (1230).
@@ -331,9 +335,7 @@ InputArgs parseArgs(const int argc, char **argv) {
    
    ia.schemes = false;
    ia.layers = 2;
-   ia.inputnodes = 2 + 1;
    ia.hiddennodes = 2 + 1;
-   ia.outputnodes = 1;
    ia.epochs = 20000;
    ia.alpha = 0.5;
    ia.seed = 1230;
@@ -341,7 +343,7 @@ InputArgs parseArgs(const int argc, char **argv) {
    ia.toFile = true;
    ia.folder = "output/";
    
-   while ((c = getopt (argc, argv, "sl:i:n:o:e:a:d:t:cf:")) != -1) {
+   while ((c = getopt (argc, argv, "sl:n:e:a:d:t:cf:")) != -1) {
       switch (c) {
          case 's':
             ia.schemes = true;
@@ -350,17 +352,9 @@ InputArgs parseArgs(const int argc, char **argv) {
             if (optarg) { ia.layers = static_cast<uint8_t>(
                                         std::atoi(optarg)); }
             break;
-         case 'i':
-            if (optarg) { ia.inputnodes  = static_cast<uint8_t>(
-                    std::atoi(optarg)) + 1; }
-            break;
          case 'n':
             if (optarg) { ia.hiddennodes  = static_cast<uint8_t>(
                     std::atoi(optarg)) + 1; }
-            break;
-         case 'o':
-            if (optarg) { ia.outputnodes  = static_cast<uint8_t>(
-                                        std::atoi(optarg)); }
             break;
          case 'e':
             if (optarg) { ia.epochs = static_cast<uint64_t>(
@@ -386,6 +380,17 @@ InputArgs parseArgs(const int argc, char **argv) {
             usage(argv[0]);
             throw("Undefined option!");
       }
+    }
+    
+    // There may be a better way, but this works
+    // + 1 is to indicate the bias node.
+    if (ia.test == "xor") {
+       ia.inputnodes = 2 + 1;
+       ia.outputnodes = 1;
+    }
+    if (ia.test == "abc") {
+       ia.inputnodes = 3 + 1;
+       ia.outputnodes = 1;
     }
     
     return ia;

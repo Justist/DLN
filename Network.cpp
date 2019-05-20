@@ -1,23 +1,23 @@
 #include "Network.hpp"
 
-Network::Network(const vecdo inputs,
-                 const vecvecdo wFI,
-                 const vecvecdo hL,
-                 const std::vector< vecvecdo > wHL,
-                 const vecvecdo wTO,
-                 const double eO,
-                 const double alpha,
-                 const double cO,
-                 const std::string scheme) {
-   _inputs = inputs;
-   _weightsFromInputs = wFI;
-   _hiddenLayers = hL;
+Network::Network(const vecdo&                   inputs,
+                 const vecvecdo&                wFI,
+                 const vecvecdo&                hL,
+                 const std::vector< vecvecdo >& wHL,
+                 const vecvecdo&                wTO,
+                 const double&                  eO,
+                 const double&                  alpha,
+                 const double&                  cO,
+                 const std::string&             scheme) {
+   _inputs              = inputs;
+   _weightsFromInputs   = wFI;
+   _hiddenLayers        = hL;
    _weightsHiddenLayers = wHL;
-   _weightsToOutput = wTO;
-   _expectedOutput = eO;
-   _alpha = alpha;
-   _calculatedOutput = cO;
-   _scheme = scheme;
+   _weightsToOutput     = wTO;
+   _expectedOutput      = eO;
+   _alpha               = alpha;
+   _calculatedOutput    = cO;
+   _scheme              = scheme;
 }
 
 void Network::initialiseWeights(const uint16_t seed,
@@ -50,7 +50,8 @@ void Network::initialiseWeights(const uint16_t seed,
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             _weightsHiddenLayers[l][hp][hn] = 
                useScheme ?
-                  schemeWeights[l*hiddenNodes + hp + hn] :
+                  schemeWeights[(inputNodes * (hiddenNodes - 1)) +
+                                (l * hiddenNodes) + hp + hn] :
                   General::randomWeight(seed);
          }
       }
@@ -59,9 +60,11 @@ void Network::initialiseWeights(const uint16_t seed,
    for (uint16_t h = 0; h < hiddenNodes; h++) {
       for (uint16_t o = 0; o < outputNodes; o++) {
          _weightsToOutput[h][o] = useScheme ?
-                                  schemeWeights[o*hiddenNodes +
-                                                h +
-                                                (hiddenNodes - 1)*inputNodes] :
+                                  schemeWeights[
+                                       (inputNodes * (hiddenNodes - 1)) +
+                                        ((hiddenLayers - 1) *
+                                         hiddenNodes * (hiddenNodes - 1)) +
+                                       (o * hiddenNodes + h)]:
                                   General::randomWeight(seed);
       }
    }
@@ -108,7 +111,7 @@ void Network::forward() {
    for (uint16_t l = 0; l < hiddenLayers - 1; l++) {
       for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
          //bias has value -1
-         _hiddenLayers[l + 1][hn + 1] = -_weightsHiddenLayers[l][hiddenNodes - 1][hn];
+         _hiddenLayers[l + 1][hn] = -_weightsHiddenLayers[l][hiddenNodes - 1][hn];
          for (uint16_t hp = 0; hp < hiddenNodes - 1; hp++) {
             _hiddenLayers[l + 1][hn] +=
                _weightsHiddenLayers[l][hp][hn] * 
@@ -135,7 +138,9 @@ void Network::train() {
     * be possible, but it works for now.
     */
    const auto hiddenLayers = amHiddenLayers();
+   const auto inputNodes   = amInputNodes();
    const auto hiddenNodes  = amHiddenNodes();
+   const auto outputNodes  = amOutputNodes();
    
    // Forward
    forward();
@@ -147,13 +152,16 @@ void Network::train() {
    vecvecdo deltas(hiddenLayers, vecdo(hiddenNodes, 0.0));
 
    for (uint16_t h = 0; h < hiddenNodes; h++) {
-      deltas[hiddenLayers - 1][h] += _weightsToOutput[h][0] * deltaOutput;
+      for (uint16_t o = 0; o < outputNodes; o++) {
+         deltas[hiddenLayers - 1][h] += _weightsToOutput[h][o] * deltaOutput;
+         _weightsToOutput[h][o] +=
+              _alpha                                                *
+              General::sigmoid(_hiddenLayers[hiddenLayers - 1][h])  *
+              deltaOutput;
+      }
+   
       deltas[hiddenLayers - 1][h] *=
-         General::sigmoid_d(_hiddenLayers[hiddenLayers - 1][h]);
-      _weightsToOutput[h][0] +=
-         _alpha * 
-         General::sigmoid(_hiddenLayers[hiddenLayers - 1][h]) * 
-         deltaOutput;
+           General::sigmoid_d(_hiddenLayers[hiddenLayers - 1][h]);
    }
 
    for (auto l = static_cast<int16_t>(hiddenLayers - 2); l >= 0; l--) {
@@ -161,23 +169,27 @@ void Network::train() {
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             deltas[l][hp] +=
                _weightsHiddenLayers[l][hp][hn] * 
-               deltas[l + 1][hn + 1];
+               deltas[l + 1][hn];
          }
          deltas[l][hp] *= General::sigmoid_d(_hiddenLayers[l][hp]);
          for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
             _weightsHiddenLayers[l][hp][hn] +=
                _alpha * 
                General::sigmoid(_hiddenLayers[l][hp]) * 
-               deltas[l + 1][hn + 1];
+               deltas[l + 1][hn];
          }
       }
    }
 
    for (uint16_t h = 0; h < hiddenNodes - 1; h++) {
-      for (uint16_t i = 0; i < _inputs.size(); i++) {
+      for (uint16_t i = 0; i < inputNodes; i++) {
+         _weightsFromInputs[i][h] += _alpha *
+                                     General::sigmoid(_inputs[i]) *
+                                     deltas[0][h];
+         /*
          // Totally not cheating around small numbers
          double weight = _weightsFromInputs[i][h];
-         double addition = _alpha * General::sigmoid(_inputs[i]) * deltas[0][h + 1];
+         double addition = _alpha * General::sigmoid(_inputs[i]) * deltas[0][h];
          if (weight > 0 && weight < pow(10, -100)) {
             _weightsFromInputs[i][h] = addition;
          } else if (weight < 0 && weight > pow(-10, -100)) {
@@ -185,6 +197,7 @@ void Network::train() {
          } else {
             _weightsFromInputs[i][h] += addition;
          }
+         */
       }
    }
 }
@@ -195,63 +208,53 @@ void Network::writeDot(const std::string& filename) {
      * This way, that file can be opened by GraphViz,
      * and the network can be visualised.
      */
+   
+    const auto hiddenLayers = amHiddenLayers();
+    const auto inputNodes   = amInputNodes();
+    const auto hiddenNodes  = amHiddenNodes();
+    const auto outputNodes  = amOutputNodes();
+    
     FILE *of = fopen(filename.c_str(), "w");
     // Printed at the start
     fprintf(of, "digraph{\n");
 
     /* First apply labels to all the nodes. */
 
-    uint16_t iindex = 0;
-    uint16_t hlindex = 0;
-    uint16_t hnindex = 0;
-    for (double in : _inputs) {
-        fprintf(of, "i%d [label = %f];\n", iindex, in);
-        iindex++;
+    for (uint16_t iindex = 0; iindex < inputNodes; iindex++) {
+        fprintf(of, "i%d [label = %f];\n", iindex, _inputs[iindex]);
     }
 
-    for (vecdo layer : _hiddenLayers) {
-        hnindex = 0;
-        for (double node : layer) {
-            fprintf(of, "h%d%d [label = %f];\n", hlindex, hnindex, node);
-            hnindex++;
+    for (uint16_t hlindex = 0; hlindex < hiddenLayers; hlindex++) {
+        for (uint16_t hnindex = 0; hnindex < hiddenNodes; hnindex++) {
+            fprintf(of, "h%d%d [label = %f];\n", hlindex, hnindex, _hiddenLayers[hlindex][hnindex]);
         }
-        hlindex++;
     }
 
-    fprintf(of, "o [label = %f];\n", _calculatedOutput);
+    // TODO place for loop when calculatedOutput is a vector
+    fprintf(of, "o0 [label = %f];\n", _calculatedOutput);
 
     /* Then put in all the edges. */
 
-    for (uint16_t i = 0; i < _inputs.size(); i++) {
-        printf("een inputnode!\n");
-        for (uint16_t hn = 1; hn < _hiddenLayers[0].size(); hn++) {
-            fprintf(of, "i%d -> h0%d [label = %f];\n", i, hn, _weightsFromInputs[i][hn - 1]);
-            printf("een inputedge!\n");
+    for (uint16_t i = 0; i < inputNodes; i++) {
+        for (uint16_t hn = 0; hn < hiddenNodes - 1; hn++) {
+            fprintf(of, "i%d -> h0%d [label = %f];\n", i, hn, _weightsFromInputs[i][hn]);
         }
     }
     
-    printf("Weights from input: \n");
-    for (double weight : General::flatten(_weightsFromInputs)) {
-       printf("%f,  ", weight);
-    }
-    printf("\n");
-
     // -1 to account for the fact there is 1 layer more than edges in between
-    for (uint16_t hl = 0; hl < _hiddenLayers.size() - 1; hl++) {
-        printf("een layer! totaal: %d\n", _hiddenLayers.size());
-        for (uint16_t hn1 = 0; hn1 < _hiddenLayers[0].size(); hn1++) {
-            printf("een prevnode! totaal: %d\n", _hiddenLayers[0].size());
-            for (uint16_t hn2 = 1; hn2 < _hiddenLayers[0].size(); hn2++) {
+    for (uint16_t hl = 0; hl < hiddenLayers - 1; hl++) {
+        for (uint16_t hn1 = 0; hn1 < hiddenNodes; hn1++) {
+            for (uint16_t hn2 = 0; hn2 < hiddenNodes - 1; hn2++) {
                 fprintf(of, "h%d%d -> h%d%d [label = %f];\n", hl, hn1, hl, hn2, _weightsHiddenLayers[hl][hn1][hn2]);
-                printf("een hiddenedge!\n");
             }
         }
     }
 
-    const uint16_t lastHiddenLayer = _hiddenLayers.size() - 1;
-    for (uint16_t hn = 0; hn < _hiddenLayers[0].size(); hn++) {
-        fprintf(of, "h%d%d -> o [label = %f];\n", lastHiddenLayer, hn, _weightsToOutput[hn][0]);
-        printf("een outputedge!\n");
+    const uint16_t lastHiddenLayer = hiddenLayers - 1;
+    for (uint16_t hn = 0; hn < hiddenNodes; hn++) {
+       for (uint16_t out = 0; out < outputNodes; out++) {
+          fprintf(of, "h%d%d -> o%d [label = %f];\n", lastHiddenLayer, hn, out, _weightsToOutput[hn][out]);
+       }
     }
 
 
@@ -275,6 +278,4 @@ void Network::writeDot(const std::string& filename) {
     // Printed at the end
     fprintf(of, "}");
     fclose(of);
-    
-    throw("stop hier maar");
 }

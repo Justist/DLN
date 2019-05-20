@@ -52,15 +52,15 @@ private:
 
 public:
    
-   Network(vecdo inputs,
-           vecvecdo wFI,
-           vecvecdo hL,
-           std::vector< vecvecdo > wHL,
-           vecvecdo wTO,
-           double eO,
-           double alpha,
-           double cO,
-           std::string scheme);
+   Network(const vecdo& inputs,
+           const vecvecdo& wFI,
+           const vecvecdo& hL,
+           const std::vector< vecvecdo >& wHL,
+           const vecvecdo& wTO,
+           const double& eO,
+           const double& alpha,
+           const double& cO,
+           const std::string& scheme);
            
    void initialiseWeights(uint16_t seed,
                           const vecdo& schemeWeights = {});

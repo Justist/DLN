@@ -97,12 +97,10 @@ void Tests::ABC(vecdo& inputs, double& output) {
    const auto b = static_cast<int16_t>(min + (rand() % max - min + 1));
    const auto c = static_cast<int16_t>(min + (rand() % max - min + 1));
    
-   inputs = {-1.0,
-             static_cast<double>(a),
+   inputs = {static_cast<double>(a),
              static_cast<double>(b),
-             static_cast<double>(c)};
-   
-   std::cerr << "a: " << a << "b: " << b << "c: " << c << std::endl;
+             static_cast<double>(c),
+             -1.0};
    
    const long d = b * b - 4 * a * c;
    
@@ -151,7 +149,7 @@ double Tests::XORTest(const TestParameters tp, const bool print) {
    double error = 0.0;
    for (float i = -1; i <= 1; i += 2) {
       for (float j = -1; j <= 1; j += 2) {
-         n.inputs({-1.0, i, j});
+         n.inputs({i, j, -1.0});
          n.expectedOutput(i != j);
          n.forward();
          outputDifference = n.expectedOutput() -
@@ -230,10 +228,10 @@ double Tests::ABCTest(const TestParameters tp, const bool print) {
    double error = 0.0;
    
    for (vecdo test : testcases) {
-      n.inputs({-1.0, 
-                General::sigmoid(test[0]), 
+      n.inputs({General::sigmoid(test[0]),
                 General::sigmoid(test[1]), 
-                General::sigmoid(test[2])});
+                General::sigmoid(test[2]),
+                -1.0});
       n.expectedOutput(General::sigmoid(test[3]));
       n.forward();
       outputDifference = n.expectedOutput() -
