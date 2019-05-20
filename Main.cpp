@@ -246,7 +246,7 @@ void run(Network n,
                                                       std::to_string(ia.epochs)),
                                            "e" + std::to_string(currentEpoch));
          }
-         //if (nudgetest) { pullScheme(n); }
+         if (nudgetest) { pullScheme(n); }
          tests.runTest(param, ia.test, true);
          n.writeDot(param.fileName + ".dot");
       }
@@ -273,10 +273,10 @@ void runSchemes(const std::unordered_set<std::string>& schemes,
                  "w" + scheme                               +
                  "e" + std::to_string(ia.epochs)            +
                  "a" + General::to_string_prec(ia.alpha, 2) +
-                 "i" + std::to_string(ia.inputnodes)               +
+                 "i" + std::to_string(ia.inputnodes)        +
                  "l" + std::to_string(ia.layers)            +
-                 "h" + std::to_string(ia.hiddennodes)             +
-                 "o" + std::to_string(ia.outputnodes)              +
+                 "h" + std::to_string(ia.hiddennodes)       +
+                 "o" + std::to_string(ia.outputnodes)       +
                  "." + ia.test                              + 
                  "output";
       run(
@@ -413,7 +413,7 @@ int main (const int argc, char **argv) {
    // they are irrelevant as the bias node has a constant value.
    const auto amountWeights =
            static_cast<uint16_t>(
-                   (ia.inputnodes  * (ia.hiddennodes - 1))                     +
+                   (ia.inputnodes  * (ia.hiddennodes - 1))                   +
                    (ia.hiddennodes * (ia.hiddennodes - 1) * (ia.layers - 1)) +
                    (ia.hiddennodes * ia.outputnodes));
    const std::string initialScheme(amountWeights, 'A');
@@ -428,7 +428,7 @@ int main (const int argc, char **argv) {
    
    if (ia.schemes) {
       updateStatusBar(0.0); // should be empty at the start
-      const uint16_t startseed = 100, endseed = 100/*0*/, stepseed = 10;
+      const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 
       std::vector< std::future< void > > threads(steps);
