@@ -18,19 +18,24 @@ struct InputArgs {
    uint64_t epochs;
    double alpha;
    uint16_t seed;
+   unsigned int shuffleSeed;
    std::string test;
    bool toFile;
    std::string folder;
 };
 
 vecdo initialiseWeightsByScheme(const std::string& scheme,
-                                const unsigned int seed) {
+                                const unsigned int seed,
+                                const unsigned int shuffleSeed) {
    /*
     * Function takes a scheme in format "aaabbbcccddd" etc,
     * where equal letters represent the same 'random' 
     * weight in that position.
     * Then it makes a vector of equal length with on each
     * position a 'random' weight, according to this scheme.
+    * If we want to perform a different permutation of weights,
+    * this is applied by shuffling the weights. A seed of 1
+    * just reverses the vector.
     */
    char current = scheme[0];
    vecdo weights(scheme.length(), -1.0);
@@ -42,6 +47,12 @@ vecdo initialiseWeightsByScheme(const std::string& scheme,
          weights[i] = General::trueRandomWeight(seed, weights);
       }
       current = scheme[i];
+   }
+   if (shuffleSeed == 1) {
+      std::reverse(weights.begin(), weights.end());
+   }
+   if (shuffleSeed > 1) {
+      std::shuffle(weights.begin(), weights.end(), std::default_random_engine(shuffleSeed));
    }
    return weights;
 }
@@ -116,7 +127,7 @@ Network makeNetwork(const InputArgs& ia,
    }
    vecdo schemeVector = {};
    if (scheme.length() > 0) {
-      schemeVector = initialiseWeightsByScheme(scheme, seed);
+      schemeVector = initialiseWeightsByScheme(scheme, seed, ia.shuffleSeed);
    }
    
    // Here we construct a temporary network and feed it to this function
@@ -307,7 +318,7 @@ void updateStatusBar (const double percent) {
 }
 
 void usage(const std::string& programName) {
-   printf("Usage: %s [-s] [-lneadt]() [-h]\n", programName.c_str());
+   printf("Usage: %s [-s] [-lneadrtcf]() [-h]\n", programName.c_str());
    const char* toPrint = R"(
    Option <input>: What it does (default value).
    
@@ -317,10 +328,13 @@ void usage(const std::string& programName) {
    -e <integer>  : The amount of epochs to be run (20K).
    -a <double>   : The alpha of the network (0.5).
    -d <integer>  : The seed of the network (1230).
+   -r <integer>  : The seed to shuffle the scheme with. 0 means no shuffle,
+                   1 means reverse, higher values are fed to an rng (0).
    -t <string>   : The test to be run (xor).
    -c            : If given, the program prints to the commandline instead
                    of to files (off).
    -f <string>   : The name of the folder to store the results in (output/).
+   -h            : Print this help message (off).
    )";
    printf("%s\n", toPrint);
 }
@@ -339,11 +353,12 @@ InputArgs parseArgs(const int argc, char **argv) {
    ia.epochs = 20000;
    ia.alpha = 0.5;
    ia.seed = 1230;
+   ia.shuffleSeed = 0;
    ia.test = "xor";
    ia.toFile = true;
    ia.folder = "output/";
    
-   while ((c = getopt (argc, argv, "sl:n:e:a:d:t:cf:")) != -1) {
+   while ((c = getopt (argc, argv, "sl:n:e:a:d:r:t:cf:")) != -1) {
       switch (c) {
          case 's':
             ia.schemes = true;
@@ -367,6 +382,9 @@ InputArgs parseArgs(const int argc, char **argv) {
             if (optarg) { ia.seed   = static_cast<uint16_t>(
                                         std::atoi(optarg)); }
             break;
+         case 'r':
+            if (optarg) { ia.shuffleSeed = std::atoi(optarg); }
+            break;
          case 't':
             if (optarg) { ia.test   = optarg; }
             break;
@@ -376,9 +394,13 @@ InputArgs parseArgs(const int argc, char **argv) {
          case 'f':
             if (optarg) { ia.folder = optarg; }
             break;
-         default:
+         case 'h':
             usage(argv[0]);
-            throw("Undefined option!");
+            exit(0);
+         default:
+            printf("Undefined option -%c!\n", c);
+            usage(argv[0]);
+            throw("");
       }
     }
     

@@ -2,7 +2,7 @@ CC = g++
 STD = -std=c++11
 THR = -pthread
 OPTDEBUG = -O3
-ERROR = -Wall -Wextra
+ERROR = -Wall -Wextra -Wpedantic
 CFLAGS = $(STD) $(THR)
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
