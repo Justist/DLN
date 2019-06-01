@@ -14,11 +14,14 @@ import threading as thr
 
 ### Threaded functions
 
-def threadfunctionfirst(fileInput):
+def threadfunctionfirst(fileInput, inputdir, outputdir):
     filename = os.fsdecode(fileInput)
     scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
     try:
-        epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
+        if(filename[-3:] == "dot"): #this doesnt work for some reason
+            return #don't look at the dot files
+        else:
+            epoch = re.search(r"e(.*)a", filename).group(1)
     except AttributeError:
         return #those are the same as the e20000 anyway
     with open(outputdir + "e" + epoch + ".schemeerrors", "a") as sea:
@@ -26,12 +29,13 @@ def threadfunctionfirst(fileInput):
             errorSum = 0.0
             for line in fo:
                 ls = line.split()
+                if len(ls) is not 4:
+                    return
                 errorSum += float(ls[3])
             sea.write(scheme + "," + str(errorSum) + "\n")
-            fo.flush()
         sea.flush()
-        
-def threadfunctionsecond(result):
+
+def threadfunctionsecond(result, outputdir):
     filename = outputdir + "/" + os.fsdecode(result)
     with open(filename, "r") as a:
         lines = sorted(set(a.readlines()))
@@ -39,7 +43,7 @@ def threadfunctionsecond(result):
             for line in lines:
                 b.write(line)
             b.flush()
-        a.flush() 
+        a.flush()
 
 ### Extraction functions
 
@@ -57,7 +61,7 @@ def initialFunction(inputdir, outputdir):
    resultsdirectory = os.fsencode(outputdir)
 
    for filePointer in os.listdir(inputdirectory):
-       t = thr.Thread(target = threadfunctionfirst, args = (filePointer, ))
+       t = thr.Thread(target = threadfunctionfirst, args = (filePointer, inputdir, outputdir))
        while thr.active_count() > 100:
            sleep(0.005)
        t.start()
@@ -68,7 +72,7 @@ def initialFunction(inputdir, outputdir):
 
    #can be shorter possibly, but it works
    for result in os.listdir(resultsdirectory):
-       u = thr.Thread(target = threadfunctionsecond, args = (result, ))
+       u = thr.Thread(target = threadfunctionsecond, args = (result, outputdir))
        while thr.active_count() > 100:
            sleep(0.005)
        u.start()
@@ -85,9 +89,10 @@ def extractResults(outputdir):
    """
    for fullfilename in glob(outputdir + "*.sorted"):
       filePointer = open(fullfilename, "r")
-      epoch = os.path.basename(fullfilename).replace(".schemeerrors.sorted", "")[1:]
-
       lines = filePointer.readlines()
+      filePointer.close()
+
+      epoch = os.path.basename(fullfilename).replace(".schemeerrors.sorted", "")[1:]
 
       highestvalue = 0.0
       highestscheme = ""
@@ -95,7 +100,7 @@ def extractResults(outputdir):
       lowestscheme = ""
       for line in lines:
          ls = line.split(',')
-         sys.stderr.write("line is " + line + "\n")
+         #sys.stderr.write("line is " + line + "\n")
          scheme = ls[0]
          value = float(ls[1])
          if value > highestvalue:
@@ -104,8 +109,6 @@ def extractResults(outputdir):
          if value < lowestvalue:
             lowestvalue = value
             lowestscheme = scheme
-      filePointer.flush()
-      filePointer.close()
       with open(outputdir + "e" + epoch + ".extracted", "w") as n:
          n.write("first,"    + lines[0]      +
                  "last,"     + lines[-1]     +
@@ -185,7 +188,7 @@ def readableVariations(outputdir, regString = "*.rounded"):
               if i >= halflenfile:
                   alllines[i - halflenfile] = alllines[i - halflenfile][:-1] + " " + line
           alllines = alllines[:halflenfile]
-      a.flush()
+          a.flush()
       with open(filename + ".readable", "w") as b:
           for line in alllines:
               b.write(line)
