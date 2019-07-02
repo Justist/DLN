@@ -1,5 +1,4 @@
 import os
-import psutil
 import re
 import sys
 import threading as thr
@@ -9,7 +8,7 @@ if len(sys.argv) is not 3:
     raise Exception("Wrong number of arguments given!")
 
 directoryname = sys.argv[1]
-resultsdir = sys.argv[2]
+resultsdirname = sys.argv[2]
 
 directory = os.fsencode(directoryname)
 if not os.path.exists(resultsdirname):
@@ -21,7 +20,7 @@ def threadfunctionfirst(file):
     filename = os.fsdecode(file)
     scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
     try:
-        epoch = re.search(r"o1e(.*).xoroutput", filename).group(1)
+        epoch = re.search(r"o1e(.*).(.*)output", filename).group(1)
     except AttributeError:
         return #those are the same as the e20000 anyway
     with open(resultsdirname + "e" + epoch + ".schemeerrors", "a") as sea:

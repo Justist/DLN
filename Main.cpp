@@ -201,8 +201,8 @@ void run(Network n,
          const InputArgs& ia,
          const uint16_t seed,
          std::string fileName,
-         const bool convergenceTest = true,
-         const bool nudgetest = true) {
+         const bool convergenceTest = false,
+         const bool nudgetest = false) {
 
    //TODO: Assumes usage of schemes, might want code which does not.
    
@@ -257,12 +257,14 @@ void run(Network n,
                                                       std::to_string(ia.epochs)),
                                            "e" + std::to_string(currentEpoch));
          }
-         if (nudgetest) { pullScheme(n); }
+         if (nudgetest && currentEpoch > 0) { pullScheme(n); }
          tests.runTest(param, ia.test, true);
          n.writeDot(param.fileName + ".dot");
       }
       currentEpoch++;
    }
+   //also print the last result
+   tests.runTest(param, ia.test, true);
 }
 
 void runSchemes(const std::unordered_set<std::string>& schemes,
@@ -450,6 +452,7 @@ int main (const int argc, char **argv) {
    
    if (ia.schemes) {
       updateStatusBar(0.0); // should be empty at the start
+      //TODO: Remove the comment tags around the 0! 
       const uint16_t startseed = 100, endseed = 1000, stepseed = 10;
       const uint32_t steps = (endseed / stepseed) - ((startseed - 1) / stepseed);
 

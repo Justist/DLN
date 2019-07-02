@@ -12,6 +12,10 @@ from time import sleep
 import sys
 import threading as thr
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import colors
+
 ### Threaded functions
 
 def threadfunctionfirst(fileInput, inputdir, outputdir):
@@ -21,7 +25,7 @@ def threadfunctionfirst(fileInput, inputdir, outputdir):
         if(filename[-3:] == "dot"): #this doesnt work for some reason
             return #don't look at the dot files
         else:
-            epoch = re.search(r"e(.*)a", filename).group(1)
+            epoch = re.search(r"e(.*)a0", filename).group(1)
     except AttributeError:
         return #those are the same as the e20000 anyway
     with open(outputdir + "e" + epoch + ".schemeerrors", "a") as sea:
@@ -126,6 +130,8 @@ def extractVariation(outputdir):
    """
    variancevalues = defaultdict(lambda: 0)
    variancecounts = defaultdict(lambda: 0)
+   allvalues = defaultdict(lambda: 0)
+   allcounts = defaultdict(lambda: 0)
    for filename in glob(outputdir + "*.sorted"):
       filePointer = open(filename, "r")
       epoch = os.path.basename(filename).replace(".schemeerrors.sorted", "")
@@ -136,18 +142,25 @@ def extractVariation(outputdir):
          variance = ord(scheme[-1]) - ord('A')
          variancevalues[variance] += value
          variancecounts[variance] += 1
+         allvalues[variance] += value
+         allcounts[variance] += 1
       filePointer.flush()
       filePointer.close()
       with open(outputdir + epoch + "variation.output", "a") as v:
-         for k in variancecounts:
-            v.write(str(k) + ": " + str(variancevalues[k]/variancecounts[k]) + "\n")
+         for key in variancecounts:
+            v.write(str(key) + ": " + str(variancevalues[key]/variancecounts[key]) + "\n")
          v.flush()
       variancevalues = defaultdict(lambda: 0)
       variancecounts = defaultdict(lambda: 0)
+   
+   with open(outputdir + "overallvariation.output", "a") as w:
+         for key in allcounts:
+            w.write(str(key) + ": " + str(allvalues[key]/allcounts[key]) + "\n")
+         w.flush()
 
 ### Paper functions
 
-def roundVariations(outputdir, regString = "*.variation.output"):
+def roundVariations(outputdir, regString = "*variation.output"):
    """
    Just round the error values of the variations.
    This is a function to make the values more aesthetically
@@ -202,10 +215,9 @@ def developmentExtracted(outputdir):
       with open(filename, "r") as filePointer:
          name = os.path.basename(filename).replace(".extracted", "")
          epochLocation = name.find("e")
-         epoch = "last"
-         if epochLocation > 0:
+         epoch = "-1"
+         if epochLocation >= 0:
             epoch = str(name[epochLocation + 1:])
-            name = name[:epochLocation]
 
          lines = filePointer.readlines()
 
@@ -213,7 +225,8 @@ def developmentExtracted(outputdir):
          for x in ["first", "last", "highest", "lowest"]:
             with open(outputdir + name + "-" + x, "a") as f:
                ls = lines[i][:-1].split(",")
-               f.write(epoch + "," + ls[2] + "," + ls[1][:15] + "\n")
+               #scheme + value
+               f.write(ls[1] + "," + ls[2] + "\n")
             i += 1
          filePointer.flush()
 
@@ -241,18 +254,77 @@ def makeVerbatim(outputdir, regString, captionString):
             """)
             b.flush()
          a.flush()
+         
+def autolabel(bars, ax, previousbarheights = []):
+    """
+    Attach a text label above each bar displaying its value
+    """
+    
+    if previousbarheights == []:
+       previousbarheights = [0.0] * len(bars)
+    
+    barheights = []
+    index = 0
+    for bar in bars:
+        height = bar.get_height()
+        barheights.extend(height)
+        prevheight = previousbarheights[index]
+        if prevheight - 0.2 <= height <= prevheight + 0.2:
+           height += 1
+        ax.text(bar.get_x() + bar.get_width() / 2., height + 0.1,
+                '%d' % int(bar.get_height()), fontsize=14,
+                ha='center', va='bottom')
+        index += 1
+    return barheights
+        
+         
+def bargraph(outputdir, maxEpoch,
+              first, last, high, low):
+   """
+   Part of the makeGraphExtremes function, this 
+   draws a bar graph with the given information
+   """
+   if not (len(first) == len(last) == len(high) == len(low)):
+      sys.stderr.write("Lengths of extremes are not equal!\nfirst: {0}\n last: {1}\n, high: {2}\n, low: {3}\n".format(len(first), len(last), len(high), len(low)))
+   
+   epochGroups = len(first)
+   
+   plt.figure(1)
+   fig, ax = plt.subplots(figsize=(20, 15))
+   index = np.arange(epochGroups)
+   barWidth = 0.15
+   firstBars = ax.bar(index, first, barWidth, color='xkcd:grapefruit', label="First")
+   lastBars = ax.bar(index + barWidth, last, barWidth, color='xkcd:yellow tan', label="Last")
+   highBars = ax.bar(index + 2 * barWidth, high, barWidth, color='xkcd:dark yellow green', label="Highest")
+   lowBars = ax.bar(index + 3 * barWidth, low, barWidth, color='xkcd:dark blue grey', label="Lowest")
+   
+   """
+   autolabel(lowBars, ax, autolabel(
+                highBars, ax, autolabel(
+                   lastBars, ax, autolabel(
+                      firstBars, ax))))
+   """
+   
+   ax.set_xlabel("Amount of epochs")
+   ax.set_ylabel("Sum of errors")
+   ax.set_title("Extremes per epoch")
+   ax.set_xticks(index + 2 * barWidth)
+   ax.set_xticklabels([str(x + 1) for x in range(4)])
+   ax.get_yaxis().get_major_formatter().set_useOffset(False)
+   ax.set_ylim([min(low) - 5, max(high) + 5])
+   ax.legend()
+   fig.tight_layout()
 
-def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
-   import numpy as np
-   import matplotlib.pyplot as plt
-   from matplotlib import colors
+   plt.show()
+   plt.savefig(outputdir + "extremesbar.png")
 
+def makeGraphExtremes(outputdir, maxEpoch = 20000):
    first = ()
    last = ()
    high = ()
    low = ()
 
-   for filename in glob(outputdir + "*.extracted"):
+   for filename in sorted(glob(outputdir + "*.extracted")):
       with open(filename, "r") as filePointer:
          for line in filePointer:
             ls = line.split(",")
@@ -265,29 +337,8 @@ def makeGraphExtremes(outputdir, epochGroups = 20, maxEpoch = 20000):
             elif ls[0] == "lowest":
                low += (float(ls[2]),)
 
-   fig, ax = plt.subplots(figsize=(20, 15))
-   index = np.arange(epochGroups)
-   barWidth = 0.15
-   firstbars = ax.bar(index, first, barWidth, color=colors.to_rgb('xkcd:grapefruit'), label="First")
-   firstbars = ax.bar(index + barWidth, last, barWidth, color='xkcd:yellow tan', label="Last")
-   firstbars = ax.bar(index + 2 * barWidth, high, barWidth, color='xkcd:dark yellow green', label="Highest")
-   firstbars = ax.bar(index + 3 * barWidth, low, barWidth, color='xkcd:dark blue grey', label="Lowest")
-
-   ax.set_xlabel("Epochs")
-   ax.set_ylabel("Sum of errors")
-   ax.set_title("Extremes per epoch")
-   ax.set_xticks(index + 2 * barWidth)
-   ax.set_xticklabels([str(x / 1000) + "k"
-                       for x in range(maxEpoch // epochGroups,
-                                      maxEpoch,
-                                      maxEpoch // epochGroups)])
-   ax.get_yaxis().get_major_formatter().set_useOffset(False)
-   ax.set_ylim([min(low) - 5, max(high) + 5])
-   ax.legend()
-   fig.tight_layout()
-
-   plt.show()
-   plt.savefig(outputdir + "extremes.png")
+   bargraph(outputdir, maxEpoch,
+            first, last, high, low)
 
 
 ### Main
@@ -314,6 +365,7 @@ def main():
 
    if not os.path.exists(inputdir):
       raise Exception("Inputdir does not exist! Please check your path!")
+
 
    initialFunction(inputdir, outputdir)
    extractResults(outputdir)

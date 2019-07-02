@@ -214,7 +214,12 @@ void Network::writeDot(const std::string& filename) {
     const auto hiddenNodes  = amHiddenNodes();
     const auto outputNodes  = amOutputNodes();
     
-    FILE *of = fopen(filename.c_str(), "w");
+    FILE *of = NULL;
+    while (of == NULL) {
+       perror("fopen");
+       usleep(10); //Let us not clog the system with fopen calls
+       of = fopen(filename.c_str(), "w");
+    }
     // Printed at the start
     fprintf(of, "digraph{\n");
 
