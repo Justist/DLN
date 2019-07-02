@@ -215,10 +215,20 @@ void Network::writeDot(const std::string& filename) {
     const auto outputNodes  = amOutputNodes();
     
     FILE *of = NULL;
-    while (of == NULL) {
-       perror("fopen");
-       usleep(10); //Let us not clog the system with fopen calls
+    unsigned int failcount = 0;
+    while (true) {
        of = fopen(filename.c_str(), "w");
+       if (of == NULL) {
+          perror("fopen");
+          failcount++;
+          fprintf(stderr, "Failcount: %d\n", failcount);
+          if (failcount > 1000) {
+             exit(1);
+          }
+          usleep(10); //Let us not clog the system with fopen calls
+       } else {
+          break;
+       }
     }
     // Printed at the start
     fprintf(of, "digraph{\n");
