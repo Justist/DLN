@@ -259,7 +259,7 @@ void run(Network n,
          }
          if (nudgetest && currentEpoch > 0) { pullScheme(n); }
          tests.runTest(param, ia.test, true);
-         n.writeDot(param.fileName + ".dot");
+         //n.writeDot(param.fileName + ".dot");
       }
       currentEpoch++;
    }
