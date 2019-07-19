@@ -20,7 +20,7 @@ class Tests {
          Network network;
          bool toFile;
          std::string fileName;
-         std::string writeMode;
+         const char *writeMode;
          bool seedtest;
          int seed;
          std::string epoch;
@@ -29,7 +29,7 @@ class Tests {
          TestParameters(Network n,
                         const bool t,
                         std::string f,
-                        std::string w,
+                        const char *w,
                         const bool st,
                         const int s,
                         const std::string& e = "",
@@ -38,7 +38,7 @@ class Tests {
                         network(std::move(n)),
                         toFile(t),
                         fileName(std::move(f)),
-                        writeMode(std::move(w)),
+                        writeMode(w),
                         seedtest(st),
                         seed(s),
                         addition(std::move(a))
@@ -67,7 +67,7 @@ class Tests {
                         const vecdo& outputs,
                         bool toFile = false,
                         const std::string& filename = "",
-                        const std::string& writeMode = "w",
+                        const char *writeMode = "w",
                         const std::string& firstString = "In: ",
                         const std::string& secondString = "Out: ",
                         bool equalSize = true);

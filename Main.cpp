@@ -228,7 +228,8 @@ void run(Network n,
    double error;
    
    if (fileName.empty()) { fileName = "simple." + ia.test + "output"; }
-   Tests::TestParameters param(n, ia.toFile, fileName, "a", true, seed, "");
+   const char *writeMode = "a";
+   Tests::TestParameters param(n, ia.toFile, fileName, writeMode, true, seed, "");
 
    while (currentEpoch < ia.epochs) {
       tests.runSmallTest(inputVector, expectedOutput, ia.test);

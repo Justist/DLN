@@ -87,6 +87,25 @@ namespace General {
       assert(randomNumber != -1.0);
       return randomNumber;
    }
+   
+   inline FILE *openFile (const std::string& filename, const char *writeMode = "w") {
+      FILE *of = nullptr;
+      unsigned int failcount = 0;
+      while (true) {
+         of = fopen(filename.c_str(), writeMode);
+         if (of == nullptr) {
+            failcount++;
+            if (failcount > 1000000) {
+               fprintf(stderr, "File could not be opened within 10 seconds!\nFilename: %s\n", filename.c_str());
+               exit(1);
+            }
+            usleep(10); //Wait for the previous operation on the file to end
+         } else {
+            break;
+         }
+      }
+      return of;
+   }
 }
 
 #endif

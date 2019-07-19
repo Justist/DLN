@@ -21,7 +21,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
                          const vecdo& outputs,
                          const bool toFile/* = false*/,
                          const std::string& filename/* = ""*/,
-                         const std::string& writeMode/* = "w"*/,
+                         const char *writeMode/* = "w"*/,
                          const std::string& firstString/* = "In: "*/,
                          const std::string& secondString/* = "Out: "*/,
                          const bool equalSize/* = true*/) {
@@ -38,7 +38,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
    assert(((toFile && !filename.empty()) || !toFile) &&
           "No filename given but expected!");
    if (toFile) {
-      of = fopen(filename.c_str(), writeMode.c_str());
+      of = General::openFile(filename, writeMode);
    }
    for (unsigned long i = 0; i < inputSize; i++) {
       Print(of, firstString, toFile);
@@ -50,7 +50,7 @@ void Tests::PrintResults(const vecvecdo& inputs,
       Print(of, outputs[i], toFile);
       Print(of, "\n", toFile);
    }
-   fclose(of);
+   if (toFile) { fclose(of); }
 }
 
 void Tests::XOR(vecdo& inputs, double& output) {
@@ -172,8 +172,6 @@ double Tests::XORTest(const TestParameters tp, const bool print) {
                     ".xoroutput";
       }
       filename.insert(filename.find(".xoroutput"), tp.addition);
-      FILE * of = fopen(filename.c_str(), tp.writeMode.c_str());
-      
       PrintResults(inputs, outputs, tp.toFile, filename, tp.writeMode);
       inputs.clear();
       outputs.clear();
@@ -186,7 +184,6 @@ double Tests::XORTest(const TestParameters tp, const bool print) {
          PrintResults(inputs, outputs, tp.toFile, filename, 
                       tp.writeMode, "", "error: ", false);
       }
-      fclose(of);
    }
    return error;
 }
@@ -252,7 +249,6 @@ double Tests::ABCTest(const TestParameters tp, const bool print) {
                     ".abcoutput";
       }
       filename.insert(tp.fileName.find(".abcoutput"), tp.addition);
-      FILE * of = fopen(filename.c_str(), tp.writeMode.c_str());
       PrintResults(inputs, outputs, tp.toFile, filename, tp.writeMode);
       inputs.clear();
       outputs.clear();
@@ -276,7 +272,6 @@ double Tests::ABCTest(const TestParameters tp, const bool print) {
                       "error: ", 
                       false);
       }
-      fclose(of);
    }
    
    return error;
