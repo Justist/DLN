@@ -3,4 +3,3 @@ compiler: gcc
 
 script: 
   - make clean && make all
-  - make run
