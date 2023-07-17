@@ -11,10 +11,11 @@ with open(readname, "r") as a:
         if ":" in line:
             ls = line.split()
             if len(ls) == 4:
-                lines[i] = "{} {}    {} {}\n".format(ls[0], round(float(ls[1]), 4), ls[2],
-                round(float(ls[3]), 4))
+                lines[
+                    i
+                ] = f"{ls[0]} {round(float(ls[1]), 4)}    {ls[2]} {round(float(ls[3]), 4)}\n"
             else:
-                lines[i] = "{} {}\n".format(ls[0], round(float(ls[1]), 4))
+                lines[i] = f"{ls[0]} {round(float(ls[1]), 4)}\n"
 with open(writename, "w") as b:
     for l in lines:
         b.write(l)

@@ -11,8 +11,8 @@ with open(filename, "r") as a:
     for i in range(lenfile):
         line = alllines[i]
         if i >= halflenfile:
-            alllines[i - halflenfile] = alllines[i - halflenfile][:-1] + " " + line
+            alllines[i - halflenfile] = f"{alllines[i - halflenfile][:-1]} {line}"
     alllines = alllines[:halflenfile]
-with open(filename + ".readable", "w") as b:
+with open(f"{filename}.readable", "w") as b:
     for line in alllines:
         b.write(line)
