@@ -18,18 +18,18 @@ epoch = ""
 
 def threadfunctionfirst(file):
     filename = os.fsdecode(file)
-    scheme = re.search(r"w(.*)e[0-9]+", filename).group(1)
+    scheme = re.search(r"w(.*)e[0-9]+", filename)[1]
     try:
-        epoch = re.search(r"o1e(.*).(.*)output", filename).group(1)
+        epoch = re.search(r"o1e(.*).(.*)output", filename)[1]
     except AttributeError:
         return #those are the same as the e20000 anyway
-    with open(resultsdirname + "e" + epoch + ".schemeerrors", "a") as sea:
-        with open(directoryname + "/" + filename, "r") as fo:
+    with open(f"{resultsdirname}e{epoch}.schemeerrors", "a") as sea:
+        with open(f"{directoryname}/{filename}", "r") as fo:
             sum = 0.0
             for line in fo:
                 ls = line.split()
                 sum += float(ls[3])
-            sea.write(scheme + "," + str(sum) + "\n")
+            sea.write(f"{scheme},{str(sum)}" + "\n")
 
 for file in os.listdir(directory):
     t = thr.Thread(target = threadfunctionfirst, args = (file, ))
@@ -41,10 +41,10 @@ while thr.active_count() > 1:
     sleep(0.05)
 
 def threadfunctionsecond(result):
-    filename = resultsdirname + "/" + os.fsdecode(result)
+    filename = f"{resultsdirname}/{os.fsdecode(result)}"
     with open(filename, "r") as a:
         lines = sorted(set(a.readlines()))
-        with open(filename + ".sorted", "w") as b:
+        with open(f"{filename}.sorted", "w") as b:
             for line in lines:
                 b.write(line)
 
